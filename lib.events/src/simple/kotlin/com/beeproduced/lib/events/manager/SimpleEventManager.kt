@@ -9,7 +9,6 @@ import com.beeproduced.lib.events.manager.exceptions.RequestHandlerNotFound
 import com.beeproduced.result.errors.AppError
 import com.github.michaelbull.result.Result
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService

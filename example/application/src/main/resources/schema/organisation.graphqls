@@ -1,0 +1,13 @@
+
+type Person {
+    id: ID!
+}
+
+type Company {
+    id: ID!
+}
+
+extend type Query {
+    companies: [Company!]!
+    persons: [Person!]!
+}
