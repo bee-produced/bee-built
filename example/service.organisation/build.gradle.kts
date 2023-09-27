@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.spring.boot).apply(false)
     alias(libs.plugins.spring.dependencymanagement)
 }
@@ -57,19 +56,6 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testRuntimeOnly(libs.junit.engine)
     testImplementation(libs.springmockk)
-}
-
-kapt {
-    // Fix error: incompatible types: NonExistentClass cannot be converted to Annotation
-    // @error.NonExistentClass
-    // https://stackoverflow.com/a/55646891/12347616
-    correctErrorTypes = true
-    arguments {
-        // Set Mapstruct Configuration options here
-        // https://kotlinlang.org/docs/reference/kapt.html#annotation-processor-arguments
-        // https://mapstruct.org/documentation/stable/reference/html/#configuration-options
-        arg("mapstruct.defaultComponentModel", "spring")
-    }
 }
 
 tasks.withType<Test> {

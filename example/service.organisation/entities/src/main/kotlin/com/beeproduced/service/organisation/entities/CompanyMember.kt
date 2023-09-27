@@ -31,10 +31,10 @@ data class CompanyMember(
     val personId: PersonId,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "company_id", referencedColumnName = "id", insertable = false, updatable = false)
-    val company: Company?,
+    val company: Company? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "person_id", referencedColumnName = "id", insertable = false, updatable = false)
-    val person: Person?,
+    val person: Person? = null,
 ) : DataEntity<CompanyMember> {
     override fun clone(): CompanyMember = this.copy()
 }

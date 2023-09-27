@@ -19,7 +19,16 @@ data class CreateCompany(
     val selection: DataSelection,
 ) : Request<Company>
 
+data class GetAllCompanies(
+    val selection: DataSelection
+) : Request<Collection<Company>>
+
 data class CreatePerson(
     val create: CreatePersonInput,
     val selection: DataSelection,
 ) : Request<Person>
+
+data class GetAllPersons(
+    val selection: DataSelection
+) : Request<Collection<Person>>
+

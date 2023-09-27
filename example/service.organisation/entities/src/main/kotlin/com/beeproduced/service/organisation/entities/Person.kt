@@ -25,6 +25,7 @@ data class Person(
     val memberOf: Set<CompanyMember>?,
     @Column(name = "address_id")
     val addressId: AddressId?,
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id", referencedColumnName = "id", insertable = false, updatable = false)
     val address: Address?
 ) : DataEntity<Person> {
