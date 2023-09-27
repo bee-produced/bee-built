@@ -29,5 +29,6 @@ dependencies {
     api(libs.michael.result)
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)
+    implementation(libs.mapstruct)
 }
 

@@ -40,6 +40,7 @@ class SecurityConfig(
                         "/subscriptions",
                         "/actuator/**",
                         "/graphiql/**",
+                        "/h2-console"
                     )
                     .permitAll()
                 if (env.activeProfiles.contains("dev")) {

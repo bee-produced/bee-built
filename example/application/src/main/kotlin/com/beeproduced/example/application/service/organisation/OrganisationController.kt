@@ -35,17 +35,10 @@ class OrganisationController(
     @DgsQuery
     fun persons(dfe: DataFetchingEnvironment): DataFetcherResult<Collection<PersonDto>> {
         logger.debug("persons()")
-
-        // TODO map to dto
-        eventManager.send(GetAllPersons(dfe.selectionSet.toDataSelection())).map {
-            val here = it
-            println("hey")
-        }
-
-        val persons: AppResult<List<PersonDto>>
-            = Err(InternalAppError("Something went wrong..."))
-
-        return persons
+        return eventManager.send(
+            GetAllPersons(dfe.selectionSet.toDataSelection())
+        )
+            .map(mapper::toPersonDtos)
             .onFailure { e -> logger.error(e.stackTraceToString()) }
             .getDataFetcher()
     }
@@ -53,23 +46,10 @@ class OrganisationController(
     @DgsQuery
     fun companies(dfe: DataFetchingEnvironment): DataFetcherResult<Collection<CompanyDto>> {
         logger.debug("companies()")
-
-        // TODO map to dto
-        eventManager.send(GetAllCompanies(dfe.selectionSet.toDataSelection())).map {
-            val here = it
-            println("hey")
-        }
-
-        val companies: AppResult<List<CompanyDto>> = Ok(listOf(
-            CompanyDto(
-                id = UUID.randomUUID().toString(),
-                name = "MyCompany",
-                employees = null,
-                address = null
-            )
-        ))
-
-        return companies
+        return eventManager.send(
+            GetAllCompanies(dfe.selectionSet.toDataSelection())
+        )
+            .map(mapper::toCompanyDtos)
             .onFailure { e -> logger.error(e.stackTraceToString()) }
             .getDataFetcher()
     }

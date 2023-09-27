@@ -1,5 +1,6 @@
 package com.beeproduced.example.application.service.organisation
 
+import com.beeproduced.example.application.graphql.dto.Address
 import com.beeproduced.example.application.graphql.dto.Company
 import com.beeproduced.example.application.graphql.dto.Person
 
@@ -12,3 +13,4 @@ import com.beeproduced.example.application.graphql.dto.Person
 
 typealias CompanyDto = Company
 typealias PersonDto = Person
+typealias AddressDto = Address
