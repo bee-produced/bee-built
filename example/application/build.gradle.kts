@@ -58,6 +58,7 @@ repositories {
 dependencies {
     // service modules & more
     implementation(project(":service.organisation"))
+    implementation(project(":service.organisation.events"))
     implementation(project(":utils"))
     // in-house libraries
     implementation("com.beeproduced:events")

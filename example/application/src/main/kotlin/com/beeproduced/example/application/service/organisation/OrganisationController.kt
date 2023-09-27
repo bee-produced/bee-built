@@ -44,7 +44,12 @@ class OrganisationController(
         logger.debug("companies()")
 
         val companies: AppResult<List<CompanyDto>> = Ok(listOf(
-            CompanyDto(UUID.randomUUID().toString())
+            CompanyDto(
+                id = UUID.randomUUID().toString(),
+                name = "MyCompany",
+                employees = null,
+                address = null
+            )
         ))
 
         return companies
