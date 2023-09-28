@@ -1,4 +1,4 @@
-package com.beeproduced.example.application.service.organisation
+package com.beeproduced.example.application.organisation.service
 
 import com.beeproduced.service.organisation.entities.Address
 import com.beeproduced.service.organisation.entities.Company

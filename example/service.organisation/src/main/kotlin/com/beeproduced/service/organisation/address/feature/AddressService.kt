@@ -24,7 +24,6 @@ class AddressService(
     @TransactionalResult(
         "organisationTransactionManager",
         exceptionDescription = "Could not create address",
-        readOnly = true
     )
     fun create(create: CreateAddressInput): AppResult<Address> {
         logger.debug("create({})", create)

@@ -1,0 +1,15 @@
+
+type Film {
+    id: ID!
+    title: String!
+    year: Int!
+    synopsis: String!
+    runtime: Int!
+    studios: [Company!]
+    directors: [Person!]
+    cast: [Person!]
+}
+
+extend type Query {
+    films: [Film!]!
+}

@@ -1,4 +1,4 @@
-package com.beeproduced.service.organisation
+package com.beeproduced.service.media
 
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -20,25 +20,25 @@ import javax.sql.DataSource
  * @author Kacper Urbaniec
  * @version 2023-09-27
  */
-@Configuration("OrganisationDbConfig")
+@Configuration("MediaDbConfig")
 @EnableJpaRepositories(
-    basePackages = ["com.beeproduced.service.organisation"],
-    entityManagerFactoryRef = "organisationEntityManager",
-    transactionManagerRef = "organisationTransactionManager"
+    basePackages = ["com.beeproduced.service.media"],
+    entityManagerFactoryRef = "mediaEntityManager",
+    transactionManagerRef = "mediaTransactionManager"
 )
 class DbConfig(val env: Environment) {
 
-    @Bean(name = ["organisationDataSource"])
-    @ConfigurationProperties(prefix = "spring.datasource-organisation")
+    @Bean(name = ["mediaDataSource"])
+    @ConfigurationProperties(prefix = "spring.datasource-media")
     fun usermanagementDataSource(): DataSource {
         return DataSourceBuilder.create().build()
     }
 
-    @Bean(name = ["organisationEntityManager"])
-    fun userEntityManager(@Qualifier("organisationDataSource") dataSource: DataSource): LocalContainerEntityManagerFactoryBean {
+    @Bean(name = ["mediaEntityManager"])
+    fun userEntityManager(@Qualifier("mediaDataSource") dataSource: DataSource): LocalContainerEntityManagerFactoryBean {
         val em = LocalContainerEntityManagerFactoryBean()
         em.setDataSource(dataSource)
-        em.setPackagesToScan("com.beeproduced.service.organisation")
+        em.setPackagesToScan("com.beeproduced.service.media")
         val vendorAdapter = HibernateJpaVendorAdapter()
         em.jpaVendorAdapter = vendorAdapter
         val properties: HashMap<String, Any> = HashMap()
@@ -48,8 +48,8 @@ class DbConfig(val env: Environment) {
         return em
     }
 
-    @Bean(name = ["organisationTransactionManager"])
-    fun userTransactionManager(@Qualifier("organisationEntityManager") userEntityManager: AbstractEntityManagerFactoryBean): PlatformTransactionManager {
+    @Bean(name = ["mediaTransactionManager"])
+    fun userTransactionManager(@Qualifier("mediaEntityManager") userEntityManager: AbstractEntityManagerFactoryBean): PlatformTransactionManager {
         val transactionManager = JpaTransactionManager()
         transactionManager.entityManagerFactory = userEntityManager.getObject()
         return transactionManager

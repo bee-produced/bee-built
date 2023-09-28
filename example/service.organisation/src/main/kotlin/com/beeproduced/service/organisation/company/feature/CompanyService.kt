@@ -34,7 +34,6 @@ class CompanyService(
     @TransactionalResult(
         "organisationTransactionManager",
         exceptionDescription = "Could not create company",
-        readOnly = true
     )
     fun create(
         create: CreateCompanyInput,

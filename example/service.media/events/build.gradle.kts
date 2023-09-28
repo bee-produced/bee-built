@@ -5,11 +5,7 @@ Until https://youtrack.jetbrains.com/issue/KTIJ-19369 is fixed the suppress anno
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlin.kapt)
-    alias(libs.plugins.spring.boot).apply(false)
-    alias(libs.plugins.spring.dependencymanagement)
 }
 
 group = "com.beeproduced"
@@ -22,14 +18,7 @@ repositories {
 }
 
 dependencies {
-    api("com.beeproduced:result")
-    api("com.beeproduced:result") {
-        capabilities { requireCapability("com.beeproduced:result-jpa") }
-    }
-    api(libs.michael.result)
     implementation(libs.kotlin.stdlib)
-    implementation(libs.spring.boot.starter.web)
-    implementation(libs.spring.boot.starter.data.jpa)
-    implementation(libs.mapstruct)
+    implementation("com.beeproduced:events")
+    api(project(":service.media.entities"))
 }
-

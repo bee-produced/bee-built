@@ -33,7 +33,6 @@ class PersonService(
     @TransactionalResult(
         "organisationTransactionManager",
         exceptionDescription = "Could not create person",
-        readOnly = true
     )
     fun create(
         create: CreatePersonInput,

@@ -57,6 +57,8 @@ repositories {
 
 dependencies {
     // service modules & more
+    implementation(project(":service.media"))
+    implementation(project(":service.media.events"))
     implementation(project(":service.organisation"))
     implementation(project(":service.organisation.events"))
     implementation(project(":utils"))

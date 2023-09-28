@@ -1,22 +1,17 @@
-package com.beeproduced.example.application.service.organisation
+package com.beeproduced.example.application.organisation.service
 
 import com.beeproduced.data.dgs.selection.toDataSelection
 import com.beeproduced.lib.events.manager.EventManager
-import com.beeproduced.result.AppResult
-import com.beeproduced.result.errors.InternalAppError
 import com.beeproduced.result.extensions.dgs.getDataFetcher
 import com.beeproduced.service.organisation.events.GetAllCompanies
 import com.beeproduced.service.organisation.events.GetAllPersons
 import com.beeproduced.utils.logFor
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.map
 import com.github.michaelbull.result.onFailure
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsQuery
 import graphql.execution.DataFetcherResult
 import graphql.schema.DataFetchingEnvironment
-import java.util.UUID
 
 /**
  *
