@@ -34,8 +34,8 @@ abstract class OrganisationMapper {
         return entities.map { toPersonDto(it, CycleAvoidingMappingContext()) }
     }
 
-    fun toPersonDtos(entities: Collection<Person>, context: CycleAvoidingMappingContext): List<PersonDto> {
-        return entities.map { toPersonDto(it, context) }
+    fun toPersonDtos(entities: Collection<Person>?, context: CycleAvoidingMappingContext): List<PersonDto> {
+        return entities?.map { toPersonDto(it, context) } ?: emptyList()
     }
 
     @Mapping(
@@ -50,14 +50,15 @@ abstract class OrganisationMapper {
         return entities.map { toCompanyDto(it, CycleAvoidingMappingContext()) }
     }
 
-    fun toCompanyDtos(entities: Collection<Company>, @Context context: CycleAvoidingMappingContext): List<CompanyDto> {
-        return entities.map { toCompanyDto(it, context) }
+    fun toCompanyDtos(entities: Collection<Company>?, @Context context: CycleAvoidingMappingContext): List<CompanyDto> {
+        return entities?.map { toCompanyDto(it, context) } ?: emptyList()
     }
 
     fun companyMemberToCompanies(
-        entity: Collection<CompanyMember>,
+        entity: Collection<CompanyMember>?,
         context: CycleAvoidingMappingContext,
     ): List<Company> {
+        if (entity == null) return emptyList()
         if (entity.any { context.hasVisited(CompanyMember::class.java, Pair(it.companyId, it.personId)) })
             return emptyList()
         for (e in entity)
@@ -65,7 +66,8 @@ abstract class OrganisationMapper {
         return entity.mapNotNull { it.company }
     }
 
-    fun companyMemberToPerson(entity: Collection<CompanyMember>, context: CycleAvoidingMappingContext): List<Person> {
+    fun companyMemberToPerson(entity: Collection<CompanyMember>?, context: CycleAvoidingMappingContext): List<Person> {
+        if (entity == null) return emptyList()
         if (entity.any { context.hasVisited(CompanyMember::class.java, Pair(it.personId, it.companyId)) })
             return emptyList()
         for (e in entity)

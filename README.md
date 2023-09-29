@@ -7,3 +7,17 @@
 <h4 align="center">A collection of modular libraries tailor-made for Kotlin enthusiasts.</h4>
 
 ## *Currently under Construction 🛠️*
+
+### Example Project
+
+An example project showcasing `bee-built` can be found under [example](./example/README.md).
+
+### Modules
+
+* `lib.data`      
+  Easier data handling for GraphQL + JPA, [documentation](./lib.data/README.md)
+* `lib.result`      
+  Functional kotlin bindings, integration with DGS & more      
+* `lib.events`       
+  Simple event manager based on the mediator pattern, based on C#'s [MediatR library](https://github.com/jbogard/MediatR)
+

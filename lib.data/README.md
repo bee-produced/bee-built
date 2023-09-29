@@ -303,7 +303,7 @@ data class FooBarRelation(
 ) : DataEntity<FooBarRelation> { override fun clone() = copy() }
 ```
 
-To establish a relation between a `Foo` & `Bar` entity, one just persists the corresponding relation entity with the primary keys of both entities.
+To establish a relation between a `Foo` & `Bar` entity, one just persists the corresponding relation entity with the primary keys of both entities.
 
 ```kotlin
 var barId: Long = -1
@@ -345,11 +345,11 @@ open fun select(
 open fun delete(dsl: CriteriaDeleteQueryDsl.() -> Unit): DeletedRowsCount
 ```
 
-> ⚠️ When the `dsl` lambda of `delete` is empty (e.g. no `WHERE` clause) *NO* operation will be executed. To delete all entities of a table use `deleteAll` instead. 
+> ⚠️ When the `dsl` lambda of `delete` is empty (e.g. no `WHERE` clause) *NO* operation will be executed. To delete all entities of a table use `deleteAll` instead. 
 
 The `dsl` lambdas do not use the native Criteria Query API, but the [Kotlin JDSL](https://github.com/line/kotlin-jdsl) abstraction is used instead. It allows the JPA Criteria API to be written more easily with Kotlin. [Development and readability is often improved in comparison of calling the native Criteria API, which is not optimised for Kotlin](https://engineering.linecorp.com/en/blog/kotlinjdsl-jpa-criteria-api-with-kotlin).
 
-The following example shows how to query with a `WHERE` clause referencing an entity from a  `JOINED` table.
+The following example shows how to query with a `WHERE` clause referencing an entity from a  `JOINED` table.
 
 ```kotlin
 var collection1Id: Long = -1
@@ -414,7 +414,7 @@ The Criteria API offers even more possibilities. It is recommended to  work thro
 
 If there is a mismatch between the GraphQL schema and the JPA model,  especially for relation tables that are not present in GraphQL, automatic data selection may fail.
 
-Suppose there is a `ClubMember` relationship that models an `m:n`  relationship with properties `member` of type `User` & `club` of  type `Club`. Each user has a `memberOf` property that points to the  `ClubMember` table.
+Suppose there is a `ClubMember` relationship that models an `m:n`  relationship with properties `member` of type `User` & `club` of  type `Club`. Each user has a `memberOf` property that points to the  `ClubMember` table.
 
 However, the GraphQL schema has no representation for `ClubMember`, the `memberOf` property in the GraphQL world only specifies a list of  `Clubs`. The automatic data selection would not load the clubs of `ClumbMember` in the relational word.
 
@@ -432,7 +432,7 @@ selection.skipOverEntries.addSkipOver(
 
 > ⚠️ API is not stabilised yet and can change in the future.
 
-A skip over can be of type `SkipOverOnce` & `SkipOverAll`. Prefer the latter one when a graph contains multiple problematic relations at different depths as `SkipOverOnce` will only skip the first occurrence.
+A skip over can be of type `SkipOverOnce` & `SkipOverAll`. Prefer the latter one when a graph contains multiple problematic relations at different depths as `SkipOverOnce` will only skip the first occurrence.
 
 
 
