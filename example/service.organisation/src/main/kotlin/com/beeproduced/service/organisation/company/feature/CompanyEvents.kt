@@ -4,6 +4,7 @@ import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.lib.events.requestHandler
 import com.beeproduced.result.AppResult
 import com.beeproduced.service.organisation.entities.Company
+import com.beeproduced.service.organisation.events.CompaniesExist
 import com.beeproduced.service.organisation.events.CreateCompany
 import com.beeproduced.service.organisation.events.GetAllCompanies
 import com.beeproduced.service.organisation.utils.organisationAdapter
@@ -25,10 +26,13 @@ class CompanyEvents(
     private fun register() {
         eventManager.register(requestHandler(::create))
         eventManager.register(requestHandler(::getAll))
+        eventManager.register(requestHandler(::exists))
     }
 
     private fun create(request: CreateCompany): AppResult<Company>
         = service.create(request.create, request.selection.organisationAdapter())
     private fun getAll(request: GetAllCompanies): AppResult<Collection<Company>>
         = service.getAll(request.selection.organisationAdapter())
+    private fun exists(request: CompaniesExist): AppResult<Unit>
+        = service.exists(request.ids)
 }

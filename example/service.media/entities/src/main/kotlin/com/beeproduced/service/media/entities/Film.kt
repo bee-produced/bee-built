@@ -5,6 +5,7 @@ import com.beeproduced.service.organisation.entities.CompanyId
 import com.beeproduced.service.organisation.entities.PersonId
 import com.beeproduced.utils.UUIDSetConverter
 import jakarta.persistence.*
+import java.time.Instant
 import java.util.UUID
 
 /**
@@ -28,16 +29,17 @@ data class Film(
     val year: Int,
     val synopsis: String,
     val runtime: Int,
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "studio_ids", columnDefinition = "TEXT")
     @Convert(converter = UUIDSetConverter::class)
-    val studios: Set<CompanyId>,
-    @Column(columnDefinition = "TEXT")
+    val studioIds: Set<CompanyId>,
+    @Column(name = "director_ids", columnDefinition = "TEXT")
     @Convert(converter = UUIDSetConverter::class)
-    val directors: Set<PersonId>,
-    // Reserved keyword http://www.h2database.com/html/advanced.html#keywords
-    @Column(name = "film_cast", columnDefinition = "TEXT")
+    val directorIds: Set<PersonId>,
+    @Column(name = "cast_ids", columnDefinition = "TEXT")
     @Convert(converter = UUIDSetConverter::class)
-    val cast: Set<PersonId>,
+    val castIds: Set<PersonId>,
+    @Column(name = "added_on")
+    val addedOn: Instant
 ) : DataEntity<Film> {
     override fun clone(): Film = this.copy()
 }

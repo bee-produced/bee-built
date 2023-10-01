@@ -3,6 +3,7 @@ package com.beeproduced.service.organisation.company.feature
 import com.beeproduced.data.selection.DataSelection
 import com.beeproduced.data.selection.EmptySelection
 import com.beeproduced.result.AppResult
+import com.beeproduced.result.errors.BadRequestError
 import com.beeproduced.result.extensions.functional.andThenToPair
 import com.beeproduced.result.jpa.transactional.TransactionalResult
 import com.beeproduced.service.organisation.address.feature.AddressService
@@ -11,6 +12,7 @@ import com.beeproduced.service.organisation.entities.input.CreateAddressInput
 import com.beeproduced.service.organisation.entities.input.CreateCompanyInput
 import com.beeproduced.service.organisation.person.feature.PersonService
 import com.beeproduced.utils.logFor
+import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.map
 import org.springframework.stereotype.Service
@@ -91,5 +93,15 @@ class CompanyService(
     fun getAll(selection: DataSelection): AppResult<List<Company>> {
         logger.debug("getAll({})", selection)
         return Ok(repository.select(selection))
+    }
+
+    @TransactionalResult(
+        "organisationTransactionManager",
+        exceptionDescription = "Could not check companies",
+        readOnly = true
+    )
+    fun exists(ids: Collection<CompanyId>): AppResult<Unit> {
+        return if (repository.existsAll(ids)) Ok(Unit)
+        else Err(BadRequestError("Could not find some companies"))
     }
 }

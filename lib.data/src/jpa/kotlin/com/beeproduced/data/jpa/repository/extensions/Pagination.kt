@@ -22,7 +22,7 @@ class Pagination<V, CV, C, W>(
     private val repository: BaseDataRepository<V, *>,
     private val orderBy: ColumnSpec<CV>,
     private val cursor: Cursor<V, CV, C>,
-    private val where: (W) -> PredicateSpec,
+    private val where: (W) -> PredicateSpec? = { null },
     private val dsl: CriteriaQueryDsl<*>.() -> Unit = {}
 ) where V : DataEntity<V>, CV : Comparable<CV> {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -43,7 +43,7 @@ class Pagination<V, CV, C, W>(
 
     private fun handleQuery(
         limit: Int, cursor: C?, whereValues: W,
-        queryWhere: (W) -> PredicateSpec,
+        queryWhere: (W) -> PredicateSpec?,
         ascending: Boolean,
         selection: DataSelection
     ): PaginationResult<V, C> {
@@ -64,7 +64,7 @@ class Pagination<V, CV, C, W>(
         }
     }
 
-    private fun countElements(direction: PredicateSpec, baseWhereSpec: PredicateSpec): Long {
+    private fun countElements(direction: PredicateSpec, baseWhereSpec: PredicateSpec?): Long {
         return repository.count {
             this.apply(dsl)
             this.whereAnd(
@@ -78,7 +78,7 @@ class Pagination<V, CV, C, W>(
         selectedElementCount: Long,
         limit: Int,
         cursor: C,
-        baseWhereSpec: PredicateSpec,
+        baseWhereSpec: PredicateSpec?,
         ascending: Boolean,
         selection: DataSelection
     ): PaginationResult<V, C> {
@@ -128,7 +128,7 @@ class Pagination<V, CV, C, W>(
     private fun initialQuery(
         totalElementCount: Long,
         limit: Int,
-        baseWhereSpec: PredicateSpec,
+        baseWhereSpec: PredicateSpec?,
         ascending: Boolean,
         selection: DataSelection
     ): PaginationResult<V, C> {

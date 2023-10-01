@@ -3,6 +3,9 @@ package com.beeproduced.example.application
 import com.beeproduced.data.selection.SimpleSelection
 import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.result.AppResult
+import com.beeproduced.service.media.entities.Film
+import com.beeproduced.service.media.entities.input.CreateFilmInput
+import com.beeproduced.service.media.events.CreateFilm
 import com.beeproduced.service.organisation.entities.Company
 import com.beeproduced.service.organisation.entities.Person
 import com.beeproduced.service.organisation.entities.input.CreateAddressInput
@@ -33,14 +36,17 @@ class DataGenerator(
 
     private val personCount = 5
     private val companyCount = 2
+    private val filmCount = 10
     private lateinit var persons: List<Person>
     private lateinit var companies: List<Company>
+    private lateinit var films: List<Film>
 
     @EventListener(ApplicationReadyEvent::class)
     fun generate() {
         logger.info("Starting data generation...")
         setupPersons()
         setupCompanies()
+        setupFilms()
         logger.info("Data generation finished")
     }
 
@@ -78,6 +84,26 @@ class DataGenerator(
             eventManager.send(CreateCompany(create, selection)).getOrFail()
         }
         logger.info("Created ${companies.count()} companies: ${companies.map { it.id }}")
+    }
+
+    private fun setupFilms() {
+        val studios = listOf(companies.random())
+        val directors = listOf(persons.random())
+        val cast = listOf(persons.random(), persons.random())
+        films = (0 until filmCount).map {
+            val create = CreateFilmInput(
+                faker.movie.title(),
+                (1960..2023).random(),
+                faker.movie.quote(),
+                (40..180).random(),
+                studios.map { it.id },
+                directors.map { it.id },
+                cast.map { it.id }
+            )
+            val selection = SimpleSelection(setOf())
+            eventManager.send(CreateFilm(create, selection)).getOrFail()
+        }
+        logger.info("Created ${films.count()} films: ${films.map { it.id }}")
     }
 
     private fun <V> AppResult<V>.getOrFail(): V {

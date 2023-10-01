@@ -5,11 +5,18 @@ type Film {
     year: Int!
     synopsis: String!
     runtime: Int!
+    studioIds: [ID!]!
     studios: [Company!]
+    directorIds: [ID!]!
     directors: [Person!]
+    castIds: [ID!]!
     cast: [Person!]
+    addedOn: DateTime!
 }
 
 extend type Query {
+    # TODO pagination
     films: [Film!]!
+    # TODO add
+    # TODO update
 }

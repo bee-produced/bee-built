@@ -79,4 +79,14 @@ class PersonService(
         if (persons.count() == uniqueIds.count()) return Ok(persons)
         return Err(BadRequestError("Could not find all persons"))
     }
+
+    @TransactionalResult(
+        "organisationTransactionManager",
+        exceptionDescription = "Could not check persons",
+        readOnly = true
+    )
+    fun exists(ids: Collection<PersonId>): AppResult<Unit> {
+        return if (repository.existsAll(ids)) Ok(Unit)
+        else Err(BadRequestError("Could not find some persons"))
+    }
 }

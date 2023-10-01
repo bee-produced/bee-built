@@ -1,6 +1,8 @@
 # noinspection GraphQLTypeRedefinition
 
 scalar Upload
+scalar DateTime
+
 type Query
 # type Mutation
 # Uncomment if one wishes to support & extend subscriptions in the schema
