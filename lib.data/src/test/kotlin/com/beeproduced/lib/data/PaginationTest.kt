@@ -19,6 +19,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -302,5 +303,125 @@ class PaginationTest {
             assertTrue(message.node.createdOn.isBefore(lastDate), "is not descending")
             lastDate = message.node.createdOn
         }
+    }
+
+    @Test
+    fun `when cursor fetching 1 element ascending, should have previous and next page`() {
+        //setup
+        var data = listOf<PaginatedFoo>()
+        transaction.executeWithoutResult {
+            data = paginatedFooRepository.persistAll(generateData())
+        }
+        val start = data[0] //1st element
+        assertTrue(start.createdBy == "Hans")
+
+        //act
+        val params = PaginatedFooRepository.PaginatedFooParameter(
+            "Hans",
+            first = 1,
+            after = PaginatedFooRepository.encodeCursor(start)
+        )
+        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val edges = requireNotNull(result.edges)
+        val info = requireNotNull(result.pageInfo)
+
+        //assert
+        assertTrue(info.hasNextPage, "hasNextPage should be true")
+        assertTrue(info.hasPreviousPage, "hasPreviousPage should be true")
+        assertTrue("Cursor should not be in result") { edges.none { it.node.id == start.id } }
+        assertTrue(edges.size == 1)
+
+        var lastDate = Instant.MIN
+        for (message in edges) {
+            assertEquals("Hans", message.node.createdBy, "is not createdBy")
+            assertTrue(message.node.createdOn.isAfter(start.createdOn), "is not respecting cursor start")
+            assertTrue(message.node.createdOn.isAfter(lastDate), "is not ascending")
+            lastDate = message.node.createdOn
+        }
+    }
+
+    @Test
+    fun `when cursor fetching 1 element descending, should have previous and next page`() {
+        //setup
+        var data = listOf<PaginatedFoo>()
+        transaction.executeWithoutResult {
+            data = paginatedFooRepository.persistAll(generateData())
+        }
+        val end = data[24] //25th element
+        assertTrue(end.createdBy == "Hans")
+
+        //act
+        val params = PaginatedFooRepository.PaginatedFooParameter(
+            "Hans",
+            last = 1,
+            before = PaginatedFooRepository.encodeCursor(end)
+        )
+        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val edges = requireNotNull(result.edges)
+        val info = requireNotNull(result.pageInfo)
+
+        //assert
+        assertTrue(info.hasNextPage, "hasNextPage should be true")
+        assertTrue(info.hasPreviousPage, "hasPreviousPage should be true")
+        assertTrue("Cursor should not be in result") { edges.none { it.node.id == end.id } }
+        assertTrue(edges.size == 1)
+
+        var lastDate = Instant.MAX
+        for (message in edges) {
+            assertEquals("Hans", message.node.createdBy, "is not createdBy")
+            assertTrue(message.node.createdOn.isBefore(end.createdOn), "is not respecting cursor end")
+            assertTrue(message.node.createdOn.isBefore(lastDate), "is not descending")
+            lastDate = message.node.createdOn
+        }
+    }
+
+    @Test
+    fun `when cursor fetching before first element, should have no page`() {
+        //setup
+        var data = listOf<PaginatedFoo>()
+        transaction.executeWithoutResult {
+            data = paginatedFooRepository.persistAll(generateData())
+        }
+        val start = data[0] //1st element
+        assertTrue(start.createdBy == "Hans")
+        val modifiedStart = start.copy(createdOn = start.createdOn.minusSeconds(60))
+
+        //act
+        val params = PaginatedFooRepository.PaginatedFooParameter(
+            "Hans",
+            first = 1,
+            after = PaginatedFooRepository.encodeCursor(modifiedStart)
+        )
+        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val edges = requireNotNull(result.edges)
+
+        //assert
+        assertNull(result.pageInfo)
+        assertTrue(edges.isEmpty())
+    }
+
+    @Test
+    fun `when cursor fetching after last element, should have previous and next page`() {
+        //setup
+        var data = listOf<PaginatedFoo>()
+        transaction.executeWithoutResult {
+            data = paginatedFooRepository.persistAll(generateData())
+        }
+        val end = data[24] //25th element
+        assertTrue(end.createdBy == "Hans")
+        val modifiedEnd = end.copy(createdOn = end.createdOn.plusSeconds(60))
+
+        //act
+        val params = PaginatedFooRepository.PaginatedFooParameter(
+            "Hans",
+            last = 1,
+            before = PaginatedFooRepository.encodeCursor(modifiedEnd)
+        )
+        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val edges = requireNotNull(result.edges)
+
+        //assert
+        assertNull(result.pageInfo)
+        assertTrue(edges.isEmpty())
     }
 }

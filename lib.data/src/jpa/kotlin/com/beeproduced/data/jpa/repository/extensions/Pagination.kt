@@ -89,7 +89,8 @@ class Pagination<V, CV, C, W>(
         val elementsBeforeCursor = countElements(beforeSpec, baseWhereSpec)
         val elementsAfterCursor = countElements(afterSpec, baseWhereSpec)
 
-        if (selectedElementCount == (elementsAfterCursor + elementsBeforeCursor)) {
+        // Debate if this is still needed
+        /* if (selectedElementCount == (elementsAfterCursor + elementsBeforeCursor)) {
             logger.warn(
                 "Pivot element was included in the count. Repository: {}, OrderBy: {}",
                 repository::class,
@@ -98,9 +99,15 @@ class Pagination<V, CV, C, W>(
             val pivotField = orderBy.entity.type.getDeclaredField(orderBy.path)
             if (Temporal::class.java.isAssignableFrom(pivotField.type))
                 logger.warn("Could be due to time-related precision problems")
-        }
+        } */
 
-        if (elementsBeforeCursor == 0L) return PaginationResult()
+        // Check if query with given cursor was valid
+        // If so, pivot element should not be included in before/after cursor queries
+        // resulting in being one element lower from all elements
+        val elementsToQuery =
+            (selectedElementCount - elementsBeforeCursor - elementsAfterCursor) == 1L
+        if (!elementsToQuery)
+            return PaginationResult()
 
         val queriedElements = repository.select(selection) {
             this.apply(dsl)
@@ -115,11 +122,12 @@ class Pagination<V, CV, C, W>(
             Edge(entity, this.cursor.encode(entity))
         }
 
+        // Lower-equal should be used in page determination because of pivot element
         val pageInfo = PageInfo(
             startCursor = queriedElements.firstOrNull()?.cursor,
             endCursor = queriedElements.lastOrNull()?.cursor,
-            hasPreviousPage = if (ascending) elementsBeforeCursor > 0 else elementsBeforeCursor > limit,
-            hasNextPage = if (ascending) elementsAfterCursor > limit else elementsAfterCursor > 0
+            hasPreviousPage = if (ascending) elementsBeforeCursor >= 0 else elementsBeforeCursor > limit,
+            hasNextPage = if (ascending) elementsAfterCursor > limit else elementsAfterCursor >= 0
         )
 
         return PaginationResult(queriedElements, pageInfo)
