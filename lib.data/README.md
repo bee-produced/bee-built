@@ -4,6 +4,7 @@
      <strong>Easier data handling for GraphQL + JPA</strong>
   </p>
 </div>
+
 ## 💡 Motivation
 
 * *Query what you need*: Automatic query translation from e.g. GraphQL

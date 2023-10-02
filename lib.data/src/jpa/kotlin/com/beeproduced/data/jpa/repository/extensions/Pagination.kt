@@ -10,7 +10,6 @@ import com.linecorp.kotlinjdsl.query.spec.predicate.LessThanValueSpec
 import com.linecorp.kotlinjdsl.query.spec.predicate.PredicateSpec
 import com.linecorp.kotlinjdsl.querydsl.CriteriaQueryDsl
 import org.slf4j.LoggerFactory
-import java.time.temporal.Temporal
 
 /**
  *

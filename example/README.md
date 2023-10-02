@@ -48,3 +48,45 @@ query {
 }
 ```
 
+---
+
+Also, pagination can now be easily implemented with JPA entities.
+
+```
+query {
+  recentlyAddedFilms(
+    last: 5,
+  ) {
+    edges {
+      node {
+        id
+        title
+        year
+        synopsis
+        studios {
+          id
+          name
+        }
+        directors {
+          id
+          firstname
+          lastname
+        }
+        cast {
+          id
+          firstname
+          lastname
+        }
+      }
+      cursor
+    }
+    pageInfo {
+      startCursor
+      endCursor
+      hasNextPage
+      hasPreviousPage
+    }
+  }
+}
+```
+

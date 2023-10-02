@@ -97,6 +97,19 @@ class CompanyService(
 
     @TransactionalResult(
         "organisationTransactionManager",
+        exceptionDescription = "Could not fetch all companies",
+        readOnly = true
+    )
+    fun getByIds(ids: Collection<PersonId>, selection: DataSelection): AppResult<List<Company>> {
+        logger.debug("getByIds({}, {})", ids, selection)
+        val uniqueIds = ids.toSet()
+        val companies = repository.selectByIds(uniqueIds, selection)
+        if (companies.count() == uniqueIds.count()) return Ok(companies)
+        return Err(BadRequestError("Could not find all persons"))
+    }
+
+    @TransactionalResult(
+        "organisationTransactionManager",
         exceptionDescription = "Could not check companies",
         readOnly = true
     )

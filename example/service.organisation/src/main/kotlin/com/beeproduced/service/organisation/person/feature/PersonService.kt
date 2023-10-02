@@ -75,7 +75,7 @@ class PersonService(
     fun getByIds(ids: Collection<PersonId>, selection: DataSelection): AppResult<List<Person>> {
         logger.debug("getByIds({}, {})", ids, selection)
         val uniqueIds = ids.toSet()
-        val persons = repository.selectByIds(uniqueIds)
+        val persons = repository.selectByIds(uniqueIds, selection)
         if (persons.count() == uniqueIds.count()) return Ok(persons)
         return Err(BadRequestError("Could not find all persons"))
     }

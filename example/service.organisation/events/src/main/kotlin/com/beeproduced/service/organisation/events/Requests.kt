@@ -25,6 +25,11 @@ data class GetAllCompanies(
     val selection: DataSelection
 ) : Request<Collection<Company>>
 
+data class GetCompaniesByIds(
+    val ids: Collection<CompanyId>,
+    val selection: DataSelection
+) : Request<Collection<Company>>
+
 data class CompaniesExist(
     val ids: Collection<CompanyId>
 ) : Request<Unit>
@@ -35,6 +40,11 @@ data class CreatePerson(
 ) : Request<Person>
 
 data class GetAllPersons(
+    val selection: DataSelection
+) : Request<Collection<Person>>
+
+data class GetPersonsByIds(
+    val ids: Collection<PersonId>,
     val selection: DataSelection
 ) : Request<Collection<Person>>
 
