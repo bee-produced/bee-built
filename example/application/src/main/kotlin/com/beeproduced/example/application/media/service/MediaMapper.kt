@@ -2,7 +2,9 @@ package com.beeproduced.example.application.media.service
 
 import com.beeproduced.data.jpa.repository.extensions.PaginationResult
 import com.beeproduced.service.media.entities.Film
+import com.beeproduced.service.media.entities.input.CreateFilmInput
 import com.beeproduced.service.media.entities.input.FilmPagination
+import com.beeproduced.service.media.entities.input.UpdateFilmInput
 import graphql.relay.Connection
 import graphql.relay.DefaultConnection
 import graphql.relay.DefaultConnectionCursor
@@ -55,4 +57,13 @@ abstract class MediaMapper {
             before = before
         )
     }
+
+    @Mapping(target = "studios", source = "studioIds")
+    @Mapping(target = "directors", source = "directorIds")
+    @Mapping(target = "cast", source = "castIds")
+    abstract fun toEntity(dto: AddFilmDto): CreateFilmInput
+    @Mapping(target = "studios", source = "studioIds")
+    @Mapping(target = "directors", source = "directorIds")
+    @Mapping(target = "cast", source = "castIds")
+    abstract fun toEntity(dto: EditFilmDto): UpdateFilmInput
 }

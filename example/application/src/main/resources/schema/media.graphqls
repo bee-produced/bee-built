@@ -25,8 +25,32 @@ type FilmEdge {
     cursor: String
 }
 
+input AddFilm {
+    title: String!
+    year: Int!
+    synopsis: String!
+    runtime: Int!
+    studioIds: [ID!]!
+    directorIds: [ID!]!
+    castIds: [ID!]!
+}
+
+input EditFilm {
+    id: ID!
+    title: String
+    year: Int
+    synopsis: String
+    runtime: Int
+    studioIds: [ID!]
+    directorIds: [ID!]
+    castIds: [ID!]
+}
+
 extend type Query {
     recentlyAddedFilms(last: Int, before: String, first: Int, after: String): FilmConnection!
-    # TODO add
-    # TODO update
+}
+
+extend type Mutation {
+    addFilm(input: AddFilm!): Film!
+    editFilm(input: EditFilm!): Film!
 }

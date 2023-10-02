@@ -1,5 +1,7 @@
 package com.beeproduced.example.application.media.service
 
+import com.beeproduced.example.application.graphql.dto.AddFilm
+import com.beeproduced.example.application.graphql.dto.EditFilm
 import com.beeproduced.example.application.graphql.dto.Film
 
 /**
@@ -10,3 +12,5 @@ import com.beeproduced.example.application.graphql.dto.Film
  */
 
 typealias FilmDto = Film
+typealias AddFilmDto = AddFilm
+typealias EditFilmDto = EditFilm

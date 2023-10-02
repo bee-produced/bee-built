@@ -6,6 +6,7 @@ import com.beeproduced.lib.events.Request
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.input.CreateFilmInput
 import com.beeproduced.service.media.entities.input.FilmPagination
+import com.beeproduced.service.media.entities.input.UpdateFilmInput
 
 /**
  *
@@ -16,6 +17,11 @@ import com.beeproduced.service.media.entities.input.FilmPagination
 
 data class CreateFilm(
     val create: CreateFilmInput,
+    val selection: DataSelection
+): Request<Film>
+
+data class UpdateFilm(
+    val update: UpdateFilmInput,
     val selection: DataSelection
 ): Request<Film>
 

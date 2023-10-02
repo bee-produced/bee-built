@@ -4,7 +4,7 @@ scalar Upload
 scalar DateTime
 
 type Query
-# type Mutation
+type Mutation
 # Uncomment if one wishes to support & extend subscriptions in the schema
 # type Subscription
 

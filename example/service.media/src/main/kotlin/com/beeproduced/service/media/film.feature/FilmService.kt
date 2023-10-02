@@ -5,20 +5,19 @@ import com.beeproduced.data.selection.DataSelection
 import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.result.AppResult
 import com.beeproduced.result.errors.BadRequestError
+import com.beeproduced.result.extensions.errors.andThenOnSuccess
 import com.beeproduced.result.jpa.transactional.TransactionalResult
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.FilmId
 import com.beeproduced.service.media.entities.input.CreateFilmInput
 import com.beeproduced.service.media.entities.input.FilmPagination
+import com.beeproduced.service.media.entities.input.UpdateFilmInput
 import com.beeproduced.service.organisation.entities.CompanyId
 import com.beeproduced.service.organisation.entities.PersonId
 import com.beeproduced.service.organisation.events.CompaniesExist
 import com.beeproduced.service.organisation.events.PersonsExist
 import com.beeproduced.utils.logFor
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.andThen
-import com.github.michaelbull.result.map
+import com.github.michaelbull.result.*
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -40,7 +39,6 @@ class FilmService(
     @TransactionalResult(
         "mediaTransactionManager",
         exceptionDescription = "Could not create film",
-        readOnly = true
     )
     fun create(
         create: CreateFilmInput,
@@ -65,15 +63,44 @@ class FilmService(
     }
 
     fun organisationIdsExist(
-        companyIds: Collection<CompanyId>,
-        personIds: Collection<PersonId>
+        companyIds: Collection<CompanyId>?,
+        personIds: Collection<PersonId>?
     ): AppResult<Unit> {
-        val companyResult = if (companyIds.isEmpty()) Ok(Unit)
+        val companyResult = if (companyIds.isNullOrEmpty()) Ok(Unit)
         else eventManager.send(CompaniesExist(companyIds))
         return companyResult.andThen {
-            if (personIds.isEmpty()) Ok(Unit)
+            if (personIds.isNullOrEmpty()) Ok(Unit)
             else eventManager.send(PersonsExist(personIds))
         }
+    }
+
+    @TransactionalResult(
+        "mediaTransactionManager",
+        exceptionDescription = "Could not update film",
+    )
+    fun update(
+        update: UpdateFilmInput,
+        selection: DataSelection
+    ): AppResult<Film> {
+        logger.debug("update({}, {})", update, selection)
+        return repository.selectById(update.id)
+            .toResultOr { BadRequestError("No film with id ${update.id} found") }
+            .andThenOnSuccess {
+                val personIds = mutableListOf<PersonId>()
+                    .also { update.directors?.let(it::addAll) }
+                    .also { update.cast?.let(it::addAll) }
+                organisationIdsExist(update.studios, personIds)
+            }.map { film ->
+                repository.update(film.copy(
+                    title = update.title ?: film.title,
+                    year = update.year ?: film.year,
+                    synopsis = update.synopsis ?: film.synopsis,
+                    runtime = update.runtime ?: film.runtime,
+                    studioIds = update.studios?.toSet() ?: film.studioIds,
+                    directorIds = update.directors?.toSet() ?: film.directorIds,
+                    castIds = update.cast?.toSet() ?: film.castIds,
+                ))
+            }
     }
 
     @TransactionalResult(
