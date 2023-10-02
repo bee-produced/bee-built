@@ -14,9 +14,19 @@ type Film {
     addedOn: DateTime!
 }
 
+# noinspection GraphQLUnresolvedReference,GraphQLMissingType
+type FilmConnection {
+    edges: [FilmEdge]
+    pageInfo: PageInfo
+}
+
+type FilmEdge {
+    node: Film
+    cursor: String
+}
+
 extend type Query {
-    # TODO pagination
-    films: [Film!]!
+    recentlyAddedFilms(last: Int, before: String, first: Int, after: String): FilmConnection!
     # TODO add
     # TODO update
 }

@@ -1,9 +1,11 @@
 package com.beeproduced.service.media.events
 
+import com.beeproduced.data.jpa.repository.extensions.PaginationResult
 import com.beeproduced.data.selection.DataSelection
 import com.beeproduced.lib.events.Request
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.input.CreateFilmInput
+import com.beeproduced.service.media.entities.input.FilmPagination
 
 /**
  *
@@ -20,3 +22,8 @@ data class CreateFilm(
 data class GetAllFilms(
     val selection: DataSelection
 ): Request<Collection<Film>>
+
+data class GetRecentlyAddedFilms(
+    val pagination: FilmPagination,
+    val selection: DataSelection
+): Request<PaginationResult<Film, String>>

@@ -1,5 +1,6 @@
 package com.beeproduced.service.media.film.feature
 
+import com.beeproduced.data.jpa.repository.extensions.PaginationResult
 import com.beeproduced.data.selection.DataSelection
 import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.result.AppResult
@@ -8,6 +9,7 @@ import com.beeproduced.result.jpa.transactional.TransactionalResult
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.FilmId
 import com.beeproduced.service.media.entities.input.CreateFilmInput
+import com.beeproduced.service.media.entities.input.FilmPagination
 import com.beeproduced.service.organisation.entities.CompanyId
 import com.beeproduced.service.organisation.entities.PersonId
 import com.beeproduced.service.organisation.events.CompaniesExist
@@ -72,6 +74,24 @@ class FilmService(
             if (personIds.isEmpty()) Ok(Unit)
             else eventManager.send(PersonsExist(personIds))
         }
+    }
+
+    @TransactionalResult(
+        "mediaTransactionManager",
+        exceptionDescription = "Could not fetch all films",
+        readOnly = true
+    )
+    fun getRecentlyAdded(
+        pagination: FilmPagination,
+        selection: DataSelection
+    ): AppResult<PaginationResult<Film, String>> {
+        return Ok(repository.recentlyAdded(
+            pagination.first,
+            pagination.after,
+            pagination.last,
+            pagination.before,
+            selection
+        ))
     }
 
     @TransactionalResult(
