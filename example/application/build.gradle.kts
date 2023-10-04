@@ -17,6 +17,9 @@ plugins {
     alias(libs.plugins.kotlin.allopen)
     alias(libs.plugins.kotlin.noarg)
     java
+    alias(libs.plugins.ksp)
+    id("bee.generative")
+
 }
 
 allprojects {
@@ -74,6 +77,8 @@ dependencies {
     implementation("com.beeproduced:data") {
         capabilities { requireCapability("com.beeproduced:data-dgs") }
     }
+    implementation("com.beeproduced:bee.fetched")
+    ksp("com.beeproduced:bee.generative")
     // external dependencies
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)
@@ -130,6 +135,10 @@ tasks.withType<GenerateJavaTask> {
         "DateTime" to "java.time.Instant",
         "Upload" to "org.springframework.web.multipart.MultipartFile"
     )
+}
+
+beeGenerative {
+    arg("test", "test")
 }
 
 kapt {

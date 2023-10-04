@@ -1,5 +1,5 @@
 [versions]
-bee-built = "0.0.1-SNAPSHOT"
+bee-built = "0.1.0-SNAPSHOT"
 springboot-base = "3.0.2"
 springboot-dependencymanagement = "1.1.0"
 kotlin-base = "1.8.0"
@@ -23,6 +23,7 @@ springmockk = "4.0.2"
 datafaker = "1.14.0"
 jakarta-mail-api = "2.0.1"
 jakarta-mail = "2.0.1"
+ksp-base = "1.8.0-1.0.9"
 
 [libraries]
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "springboot-base" }
@@ -68,6 +69,8 @@ springmockk = { group = "com.ninja-squad", name = "springmockk", version = "4.0.
 datafaker = { group = "io.github.serpro69", name = "kotlin-faker", version = "1.14.0" }
 jakarta-mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.0.1" }
 jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.1" }
+ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-base" }
+ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp-base" }
 
 [plugins]
 kotlinter = { id = "org.jmailen.kotlinter", version = "3.13.0" }
@@ -81,3 +84,4 @@ spring-boot = { id = "org.springframework.boot", version.ref = "springboot-base"
 spring-dependencymanagement = { id = "io.spring.dependency-management", version.ref = "springboot-dependencymanagement" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-base" }
 dgs-codegen = { id = "com.netflix.dgs.codegen", version = "5.6.9" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-base"}
