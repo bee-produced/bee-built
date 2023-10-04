@@ -1,0 +1,83 @@
+[versions]
+bee-built = "0.0.1-SNAPSHOT"
+springboot-base = "3.0.2"
+springboot-dependencymanagement = "1.1.0"
+kotlin-base = "1.8.0"
+kotlin-jvm = "1.8.0"
+dgs = "6.0.1"
+spring-security = "6.0.2"
+mapstruct = "1.5.3.Final"
+junit = "5.8.1"
+kotlinter = "3.13.0"
+dgs-codegen = "5.6.9"
+jackson-module-kotlin = "2.13.4"
+h2 = "2.1.214"
+konform = "0.4.0"
+michael-result = "1.1.16"
+jdsl = "2.2.0.RELEASE"
+aspectjrt = "1.9.19"
+jakarta-persistence-api = "3.1.0"
+hibernate-core = "6.1.6.Final"
+caffeine = "3.1.2"
+springmockk = "4.0.2"
+datafaker = "1.14.0"
+jakarta-mail-api = "2.0.1"
+jakarta-mail = "2.0.1"
+
+[libraries]
+spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "springboot-base" }
+spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "springboot-base" }
+spring-web = { group = "org.springframework", name = "spring-web", version.ref = "springboot-base" }
+spring-boot-starter-data-jpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa", version.ref = "springboot-base" }
+spring-boot-starter-aop = { group = "org.springframework.boot", name = "spring-boot-starter-aop", version.ref = "springboot-base" }
+spring-boot-starter-websocket = { group = "org.springframework.boot", name = "spring-boot-starter-websocket", version.ref = "springboot-base" }
+spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation", version.ref = "springboot-base" }
+spring-boot-starter-cache = { group = "org.springframework.boot", name = "spring-boot-starter-cache", version.ref = "springboot-base" }
+spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "springboot-base" }
+spring-boot-starter-security = { group = "org.springframework.boot", name = "spring-boot-starter-security", version.ref = "springboot-base" }
+spring-boot-starter-data-jdbc = { group = "org.springframework.boot", name = "spring-boot-starter-data-jdbc", version.ref = "springboot-base" }
+spring-boot-starter-oauth2-resource-server = { group = "org.springframework.boot", name = "spring-boot-starter-oauth2-resource-server", version.ref = "springboot-base" }
+spring-boot-starter-oauth2-client = { group = "org.springframework.boot", name = "spring-boot-starter-oauth2-client", version.ref = "springboot-base" }
+spring-security-config = { group = "org.springframework.security", name = "spring-security-config", version.ref = "spring-security" }
+spring-security-messaging = { group = "org.springframework.security", name = "spring-security-messaging", version.ref = "spring-security" }
+spring-security-web = { group = "org.springframework.security", name = "spring-security-web", version.ref = "spring-security" }
+spring-security-core = { group = "org.springframework.security", name = "spring-security-core", version.ref = "spring-security" }
+spring-security-test = { group = "org.springframework.security", name = "spring-security-test", version.ref = "spring-security" }
+mapstruct = { group = "org.mapstruct", name = "mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { group = "org.mapstruct", name = "mapstruct-processor", version.ref = "mapstruct" }
+dgs-platform = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-platform-dependencies", version.ref = "dgs" }
+dgs-spring-starter = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-spring-boot-starter", version.ref = "dgs" }
+dgs-subscription-websockets = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-subscriptions-websockets-autoconfigure", version.ref = "dgs" }
+dgs-extended-scalars = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-extended-scalars", version.ref = "dgs" }
+dgs-pagination = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-pagination", version.ref = "dgs" }
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = "2.13.4" }
+h2 = { group = "com.h2database", name = "h2", version = "2.1.214" }
+konform = { group = "io.konform", name = "konform", version = "0.4.0" }
+michael-result = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version = "1.1.16" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin-base" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin-base" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin-base" }
+junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
+junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+jdsl = { group = "com.linecorp.kotlin-jdsl", name = "hibernate-kotlin-jdsl-jakarta", version = "2.2.0.RELEASE" }
+aspectjrt = { group = "org.aspectj", name = "aspectjrt", version = "1.9.19" }
+jakarta-persistence-api = { group = "jakarta.persistence", name = "jakarta.persistence-api", version = "3.1.0" }
+hibernate-core = { group = "org.hibernate", name = "hibernate-core", version = "6.1.6.Final" }
+caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version = "3.1.2" }
+springmockk = { group = "com.ninja-squad", name = "springmockk", version = "4.0.2" }
+datafaker = { group = "io.github.serpro69", name = "kotlin-faker", version = "1.14.0" }
+jakarta-mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.0.1" }
+jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.1" }
+
+[plugins]
+kotlinter = { id = "org.jmailen.kotlinter", version = "3.13.0" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin-base" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-jvm" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin-base" }
+kotlin-noarg = { id = "org.jetbrains.kotlin.plugin.noarg", version.ref = "kotlin-base" }
+kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin-base" }
+kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin-base" }
+spring-boot = { id = "org.springframework.boot", version.ref = "springboot-base" }
+spring-dependencymanagement = { id = "io.spring.dependency-management", version.ref = "springboot-dependencymanagement" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-base" }
+dgs-codegen = { id = "com.netflix.dgs.codegen", version = "5.6.9" }

@@ -1,0 +1,56 @@
+
+type Film {
+    id: ID!
+    title: String!
+    year: Int!
+    synopsis: String!
+    runtime: Int!
+    studioIds: [ID!]!
+    studios: [Company!]
+    directorIds: [ID!]!
+    directors: [Person!]
+    castIds: [ID!]!
+    cast: [Person!]
+    addedOn: DateTime!
+}
+
+# noinspection GraphQLUnresolvedReference,GraphQLMissingType
+type FilmConnection {
+    edges: [FilmEdge]
+    pageInfo: PageInfo
+}
+
+type FilmEdge {
+    node: Film
+    cursor: String
+}
+
+input AddFilm {
+    title: String!
+    year: Int!
+    synopsis: String!
+    runtime: Int!
+    studioIds: [ID!]!
+    directorIds: [ID!]!
+    castIds: [ID!]!
+}
+
+input EditFilm {
+    id: ID!
+    title: String
+    year: Int
+    synopsis: String
+    runtime: Int
+    studioIds: [ID!]
+    directorIds: [ID!]
+    castIds: [ID!]
+}
+
+extend type Query {
+    recentlyAddedFilms(last: Int, before: String, first: Int, after: String): FilmConnection!
+}
+
+extend type Mutation {
+    addFilm(input: AddFilm!): Film!
+    editFilm(input: EditFilm!): Film!
+}
