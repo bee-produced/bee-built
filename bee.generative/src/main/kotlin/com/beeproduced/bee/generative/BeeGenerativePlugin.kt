@@ -1,6 +1,7 @@
 package com.beeproduced.bee.generative
 
 import com.google.devtools.ksp.gradle.KspExtension
+import com.google.devtools.ksp.gradle.KspTask
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -34,6 +35,12 @@ class BeeGenerativePlugin : Plugin<Project>{
     }
 
     private fun configureKsp(project: Project, configMap: Map<String, String>) {
+
+        // project.tasks.withType(KspTask::class.java).configureEach {
+        //     it.
+        // }
+
+
         // TODO: Make transitive dependency requirement?
         // project.plugins.apply("com.google.devtools.ksp")
         val kspExtension = project.extensions.getByType(KspExtension::class.java)

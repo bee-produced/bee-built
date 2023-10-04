@@ -37,14 +37,15 @@ class DataProcessor(
 
         val serviceLoader = ServiceLoader.load(
             BeeGenerativeFeature::class.java,
-            null
+            DataProcessor::class.java.classLoader
         )
 
         for (feature in serviceLoader) {
-            logger.warn("new feature in ksp: ${feature::class.java.name}")
+            logger.warn("New feature in ksp: ${feature::class.java.name}")
             feature.process()
+            logger.warn(feature::class.java.name)
         }
-        logger.warn("service loader: ${serviceLoader.count()}")
+        logger.warn("Service loader: ${serviceLoader.count()}")
 
         // if (!options.containsKey(packageNameProp))
         //     throw Exception("Please provide package name to ksp via `$packageNameProp` property")

@@ -77,7 +77,7 @@ dependencies {
     implementation("com.beeproduced:data") {
         capabilities { requireCapability("com.beeproduced:data-dgs") }
     }
-    implementation("com.beeproduced:bee.fetched")
+    ksp("com.beeproduced:bee.fetched")
     ksp("com.beeproduced:bee.generative")
     // external dependencies
     implementation(libs.kotlin.stdlib)
@@ -139,6 +139,7 @@ tasks.withType<GenerateJavaTask> {
 
 beeGenerative {
     arg("test", "test")
+    arg("great", "great")
 }
 
 kapt {
