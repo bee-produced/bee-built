@@ -3,8 +3,13 @@ package com.beeproduced.bee.generative
 import com.google.devtools.ksp.gradle.KspExtension
 import com.google.devtools.ksp.gradle.KspTask
 import org.gradle.api.Action
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.dsl.DependencyHandler
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.reflect.TypeOf
 import java.util.ServiceLoader
 
 /**
@@ -21,8 +26,17 @@ open class BeeGenerativePluginExtension {
     }
 }
 
+open class BeeDependencies(private val dependencies: DependencyHandler) {
+    operator fun invoke(dependencyNotation: String): Dependency? {
+        return dependencies.add("ksp", dependencyNotation)
+    }
+}
+
 class BeeGenerativePlugin : Plugin<Project>{
     override fun apply(project: Project) {
+        project.dependencies.extensions.add(
+            "bee", BeeDependencies(project.dependencies)
+        )
         val extension = project
             .extensions
             .create(
