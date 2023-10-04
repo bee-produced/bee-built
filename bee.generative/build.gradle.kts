@@ -9,6 +9,10 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     java
     `java-gradle-plugin`
+    `kotlin-dsl`
+    // TODO: Fix versioning?
+    // https://youtrack.jetbrains.com/issue/KT-54238
+    id("org.jetbrains.kotlin.plugin.sam.with.receiver") version("1.8.0")
 }
 
 group = "com.beeproduced"
@@ -36,7 +40,7 @@ gradlePlugin {
 
 dependencies {
     // implementation(kotlin("gradle-plugin"))
-    implementation(libs.ksp.api)
+    api(libs.ksp.api)
     implementation(libs.kotlin.stdlib)
     implementation(libs.ksp.plugin)
     testImplementation(libs.kotlin.test)

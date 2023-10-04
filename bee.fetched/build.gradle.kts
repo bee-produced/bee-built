@@ -24,12 +24,32 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    create("processor") {
+        java {
+            srcDir("src/processor/kotlin")
+            compileClasspath += main.get().output
+            runtimeClasspath += main.get().output
+            configurations["processorImplementation"].extendsFrom(configurations.implementation.get())
+            configurations["processorRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+        }
+    }
+}
+
+java {
+    registerFeature("processor") {
+        usingSourceSet(sourceSets["processor"])
+    }
+}
+
 dependencies {
-    implementation("com.beeproduced:bee.generative")
     implementation(libs.kotlin.stdlib)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit.api)
     testRuntimeOnly(libs.junit.engine)
+
+    "processorImplementation"("com.beeproduced:bee.generative")
+    "processorImplementation"(libs.kotlin.poet)
 }
 
 tasks.withType<Test> {

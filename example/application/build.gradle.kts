@@ -77,8 +77,9 @@ dependencies {
     implementation("com.beeproduced:data") {
         capabilities { requireCapability("com.beeproduced:data-dgs") }
     }
+    implementation("com.beeproduced:bee.fetched")
     bee("com.beeproduced:bee.fetched")
-    bee("com.beeproduced:bee.generative")
+    ksp("com.beeproduced:bee.generative") // TODO: This should be automatically adjusted
     // external dependencies
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)
@@ -138,8 +139,8 @@ tasks.withType<GenerateJavaTask> {
 }
 
 beeGenerative {
-    arg("test", "test")
-    arg("great", "great")
+    arg("fetchedScanPackage", "com.beeproduced.example.application.graphql.dto")
+    arg("fetchedPackageName", "com.beeproduced.example.application.graphql.fetcher")
 }
 
 kapt {

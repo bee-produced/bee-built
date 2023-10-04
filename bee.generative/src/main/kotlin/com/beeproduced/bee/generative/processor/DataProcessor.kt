@@ -42,8 +42,10 @@ class DataProcessor(
 
         for (feature in serviceLoader) {
             logger.warn("New feature in ksp: ${feature::class.java.name}")
-            feature.process()
+            // feature.process()
             logger.warn(feature::class.java.name)
+            val config = feature.setup(options)
+            logger.warn("Config: $config")
         }
         logger.warn("Service loader: ${serviceLoader.count()}")
 
