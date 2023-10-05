@@ -6,10 +6,7 @@ import com.beeproduced.bee.fetched.annotations.BeeFetched
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.symbol.KSAnnotation
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSType
-import com.google.devtools.ksp.symbol.KSVisitorVoid
+import com.google.devtools.ksp.symbol.*
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsData
 import com.netflix.graphql.dgs.DgsDataLoader
@@ -208,6 +205,9 @@ class BeeFetchedVisitor(
     }
 
     private fun ignoreDto(name: String): Boolean {
+        logger.warn("IGNORE_DTO")
+        logger.warn(name)
+        logger.warn("$typedIgnore")
         val ignoreDefinitions = typedIgnore[name]
         return ignoreDefinitions != null &&
             ignoreDefinitions.all { it.property == null }
@@ -262,12 +262,23 @@ class BeeFetchedVisitor(
             val s = superType.resolve()
             if (s.declaration.packageName.asString().startsWith("org.dataloader")) {
                 typeArgs.addAll(s.arguments.mapNotNull {
-                    it.type?.resolve()?.declaration?.qualifiedName?.asString()
+                    it.type?.let { typeArg ->
+                        val resolvedType = resolveTypeAlias(typeArg.resolve())
+                        resolvedType.declaration.qualifiedName?.asString()
+                    }
                 })
             }
         }
 
         return typeArgs
+    }
+
+    private fun resolveTypeAlias(ksType: KSType): KSType {
+        var currentType = ksType
+        while (currentType.declaration is KSTypeAlias) {
+            currentType = (currentType.declaration as KSTypeAlias).type.resolve()
+        }
+        return currentType
     }
 
     private inline fun <reified T : Annotation> KSClassDeclaration.getAnnotation(): KSAnnotation? {
@@ -277,7 +288,7 @@ class BeeFetchedVisitor(
     private fun KSAnnotation.fetcherMappings(): List<FetcherMappingDefinition> {
         val mappings = arguments.find { it.name?.asString() == "mappings" }?.value as Collection<KSAnnotation>
         return mappings.map { mapping ->
-            val target = (mapping.argumentValue("target") as KSType).declaration.qualifiedName!!.asString()
+            val target = resolveTypeAlias((mapping.argumentValue("target") as KSType)).declaration.qualifiedName!!.asString()
             val property = mapping.argumentValue("property") as String
             val idProperty = mapping.argumentValue("idProperty") as String
             FetcherMappingDefinition(target, property, idProperty)
@@ -287,7 +298,7 @@ class BeeFetchedVisitor(
     private fun KSAnnotation.fetcherIgnores(): List<FetcherIgnoreDefinition> {
         val mappings = arguments.find { it.name?.asString() == "ignore" }?.value as Collection<KSAnnotation>
         return mappings.map { mapping ->
-            val target = (mapping.argumentValue("target") as KSType).declaration.qualifiedName!!.asString()
+            val target = resolveTypeAlias((mapping.argumentValue("target") as KSType)).declaration.qualifiedName!!.asString()
             val property = (mapping.argumentValue("property") as String).let {
                 it.ifEmpty { null }
             }

@@ -81,26 +81,4 @@ class MediaController(
             .onFailure { e -> logger.error(e.stackTraceToString()) }
             .getDataFetcher()
     }
-
-
-    @DgsData(parentType = "Film", field = "studios")
-    fun filmStudios(dfe: DataFetchingEnvironment): CompletableFuture<List<CompanyDto>?> {
-        val dataLoader = dfe.getCompanyDataLoader()
-        val film = dfe.getSource<FilmDto>()
-        return dataLoader.loadMany(film.studioIds)
-    }
-
-    @DgsData(parentType = "Film", field = "directors")
-    fun filmDirectors(dfe: DataFetchingEnvironment): CompletableFuture<List<PersonDto>?> {
-        val dataLoader = dfe.getPersonDataLoader()
-        val film = dfe.getSource<FilmDto>()
-        return dataLoader.loadMany(film.directorIds)
-    }
-
-    @DgsData(parentType = "Film", field = "cast")
-    fun filmCast(dfe: DataFetchingEnvironment): CompletableFuture<List<PersonDto>?> {
-        val dataLoader = dfe.getPersonDataLoader()
-        val film = dfe.getSource<FilmDto>()
-        return dataLoader.loadMany(film.castIds)
-    }
 }
