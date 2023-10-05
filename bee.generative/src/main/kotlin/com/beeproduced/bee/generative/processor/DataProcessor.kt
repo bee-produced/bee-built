@@ -1,6 +1,7 @@
 package com.beeproduced.bee.generative.processor
 
 import com.beeproduced.bee.generative.BeeGenerativeFeature
+import com.beeproduced.bee.generative.BeeGenerativeInput
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -39,16 +40,6 @@ class DataProcessor(
             BeeGenerativeFeature::class.java,
             DataProcessor::class.java.classLoader
         )
-
-        for (feature in serviceLoader) {
-            logger.warn("New feature in ksp: ${feature::class.java.name}")
-            // feature.process()
-            logger.warn(feature::class.java.name)
-            val config = feature.setup(options)
-            logger.warn("Config: $config")
-        }
-        logger.warn("Service loader: ${serviceLoader.count()}")
-
         // if (!options.containsKey(packageNameProp))
         //     throw Exception("Please provide package name to ksp via `$packageNameProp` property")
         // val packageName = options.getValue(packageNameProp)
@@ -82,8 +73,54 @@ class DataProcessor(
         // for (dataLoader in dl) {
         //     dataLoader.accept(AutoFetcherVisitor(codeGenerator, dtos, dependencies, logger), Unit)
         // }
-
+        // TODO: Modularize approach, currently hardcoded
         logger.warn("$options")
+        val dl = resolver
+            .getSymbolsWithAnnotation("com.beeproduced.bee.fetched.annotations.BeeFetched")
+            .mapNotNull { if (it is KSClassDeclaration) it else null }
+            .toList()
+        val dlNames = dl.map { it.simpleName.asString() }
+        logger.warn("Found DL $dlNames")
+
+        val packageName = options.getValue("fetchedScanPackage")
+        val foundDtos = mutableListOf<KSClassDeclaration>()
+        resolver.getAllFiles().forEach { ksFile ->
+            ksFile.declarations.forEach { ksDeclaration ->
+                if (ksDeclaration is KSClassDeclaration) {
+                    val ksPackageName = ksDeclaration.packageName.asString()
+                    if (ksPackageName == packageName)
+                        foundDtos.add(ksDeclaration)
+                }
+
+            }
+        }
+        val names = foundDtos.map { it.simpleName.asString() }
+        logger.warn("Found DTOs $names")
+        val dtos = transform(foundDtos)
+        // logger.warn("$dtos")
+
+
+        for (feature in serviceLoader) {
+            logger.warn("New feature in ksp: ${feature::class.java.name}")
+            // feature.process()
+            logger.warn(feature::class.java.name)
+            val config = feature.setup(options)
+            logger.warn("Config: $config")
+            val dependencies = Dependencies(false, *resolver.getAllFiles().toList().toTypedArray())
+
+            val packages = mutableMapOf(packageName to foundDtos.toSet())
+
+            val input = BeeGenerativeInput(codeGenerator, dependencies, logger, packages, options)
+            val visitor = feature.visitor(input)
+
+            for (dataLoader in dl) {
+                dataLoader.accept(visitor, Unit)
+            }
+
+        }
+        logger.warn("Service loader: ${serviceLoader.count()}")
+
+
         invoked = true
         return emptyList()
     }

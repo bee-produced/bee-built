@@ -1,5 +1,6 @@
 package com.beeproduced.example.application.organisation.service
 
+import com.beeproduced.bee.fetched.annotations.BeeFetched
 import com.beeproduced.data.dgs.selection.toDataSelection
 import com.beeproduced.data.selection.EmptySelection
 import com.beeproduced.lib.events.manager.EventManager
@@ -42,6 +43,7 @@ fun DataFetchingEnvironment.getPersonDataLoader(): DataLoader<String, PersonDto>
     return getDataLoader(PersonDataLoaderName)
 }
 
+@BeeFetched
 @DgsDataLoader(name = PersonDataLoaderName)
 class PersonDataLoader(
     private val eventManager: EventManager,
@@ -75,6 +77,7 @@ fun DataFetchingEnvironment.getCompanyDataLoader(): DataLoader<String, CompanyDt
     return getDataLoader(CompanyDataLoaderName)
 }
 
+@BeeFetched
 @DgsDataLoader(name = CompanyDataLoaderName)
 class CompanyDataLoader(
     private val eventManager: EventManager,
