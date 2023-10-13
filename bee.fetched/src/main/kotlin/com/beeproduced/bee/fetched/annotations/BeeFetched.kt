@@ -25,3 +25,5 @@ annotation class FetcherIgnore(
     val target: KClass<*>,
     val property: String = "",
 )
+
+// TODO: Support Wrapper types

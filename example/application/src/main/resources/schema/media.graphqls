@@ -46,7 +46,19 @@ input EditFilm {
     castIds: [ID!]
 }
 
+# TODO remove later
+type Foo {
+    foo: String!
+}
+
+# TODO remove later
+type Test {
+    test: String!
+    foo: Foo!
+}
+
 extend type Query {
+    test: Test! # TODO remove later
     recentlyAddedFilms(last: Int, before: String, first: Int, after: String): FilmConnection!
 }
 
