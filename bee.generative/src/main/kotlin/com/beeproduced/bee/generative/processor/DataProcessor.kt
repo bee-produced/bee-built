@@ -2,6 +2,7 @@ package com.beeproduced.bee.generative.processor
 
 import com.beeproduced.bee.generative.BeeGenerativeFeature
 import com.beeproduced.bee.generative.BeeGenerativeInput
+import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -33,6 +34,7 @@ class DataProcessor(
         val isCollection: Boolean
     )
 
+    @OptIn(KspExperimental::class)
     override fun process(resolver: Resolver): List<KSAnnotated> {
         if (invoked) return emptyList()
 
@@ -83,17 +85,21 @@ class DataProcessor(
         logger.warn("Found DL $dlNames")
 
         val packageName = options.getValue("fetchedScanPackage")
-        val foundDtos = mutableListOf<KSClassDeclaration>()
-        resolver.getAllFiles().forEach { ksFile ->
-            ksFile.declarations.forEach { ksDeclaration ->
-                if (ksDeclaration is KSClassDeclaration) {
-                    val ksPackageName = ksDeclaration.packageName.asString()
-                    if (ksPackageName == packageName)
-                        foundDtos.add(ksDeclaration)
-                }
+        // val foundDtos = mutableListOf<KSClassDeclaration>()
+        // resolver.getAllFiles().forEach { ksFile ->
+        //     ksFile.declarations.forEach { ksDeclaration ->
+        //         if (ksDeclaration is KSClassDeclaration) {
+        //             val ksPackageName = ksDeclaration.packageName.asString()
+        //             if (ksPackageName == packageName)
+        //                 foundDtos.add(ksDeclaration)
+        //         }
+        //
+        //     }
+        // }
+        val foundDtos = resolver.getDeclarationsFromPackage(packageName)
+            .mapNotNull { if (it is KSClassDeclaration) it else null }
+            .toList()
 
-            }
-        }
         val names = foundDtos.map { it.simpleName.asString() }
         logger.warn("Found DTOs $names")
         val dtos = transform(foundDtos)
