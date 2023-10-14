@@ -50,7 +50,6 @@ dependencies {
 
 
     "processorImplementation"("com.beeproduced:bee.generative")
-    "processorImplementation"(libs.kotlin.poet)
     "processorImplementation"(sourceSets.main.get().output)
     "processorImplementation"(libs.dgs.spring.starter)
 }

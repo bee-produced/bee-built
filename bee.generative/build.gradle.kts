@@ -41,6 +41,7 @@ gradlePlugin {
 dependencies {
     // implementation(kotlin("gradle-plugin"))
     api(libs.ksp.api)
+    api(libs.kotlin.poet)
     implementation(libs.kotlin.stdlib)
     implementation(libs.ksp.plugin)
     testImplementation(libs.kotlin.test)
