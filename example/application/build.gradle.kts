@@ -79,7 +79,6 @@ dependencies {
     }
     implementation("com.beeproduced:bee.fetched")
     bee("com.beeproduced:bee.fetched")
-    ksp("com.beeproduced:bee.generative") // TODO: This should be automatically adjusted
     // external dependencies
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)
