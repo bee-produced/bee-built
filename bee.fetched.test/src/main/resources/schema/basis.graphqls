@@ -1,0 +1,27 @@
+# noinspection GraphQLTypeRedefinition
+
+scalar Upload
+scalar DateTime
+
+type Query
+# type Mutation
+# Uncomment if one wishes to support & extend subscriptions in the schema
+# type Subscription
+
+"Pagination - https://netflix.github.io/dgs/advanced/relay-pagination/"
+directive @connection repeatable on OBJECT
+
+# Generates `PageInfo` type and imports `graphql.relay.PageInfo` for all DTOs
+# Allows to use existing page info classes from `java.graphql` wherever `pageInfo: PageInfo` is referenced
+# in the schema
+type PaginationCodegenHack @connection {
+    id: ID!
+}
+
+"Custom Annotation - https://netflix.github.io/dgs/generating-code-from-schema/#generating-classes-with-custom-annotations"
+directive @annotate(
+    name: String!
+    type: String
+    target: String
+) repeatable on OBJECT | FIELD_DEFINITION | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+

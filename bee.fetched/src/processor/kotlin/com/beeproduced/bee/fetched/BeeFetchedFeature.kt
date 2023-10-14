@@ -41,6 +41,10 @@ class BeeFetchedFeature : BeeGenerativeFeature {
             .annotatedBy
             .getValue(BeeFetchedOption.beeFetchedAnnotationName)
             .map(::transformDataLoader)
+        input.logger.let { logger ->
+            logger.warn("Found dtos: $dtos")
+            logger.warn("Found data loaders: $dataLoaders")
+        }
 
         val codegen = BeeFetchedCodegen(input.codeGenerator, input.dependencies, input.logger, dtos, packageName)
         dataLoaders.forEach { dl -> codegen.processDataLoader(dl) }
