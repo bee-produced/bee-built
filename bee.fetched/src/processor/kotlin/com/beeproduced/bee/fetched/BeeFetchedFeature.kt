@@ -63,20 +63,19 @@ class BeeFetchedFeature : BeeGenerativeFeature {
     private fun transformDtoDetails(ksClass: KSClassDeclaration) =
         ksClass.getAllProperties().map { property ->
             val type = property.type.resolve()
-            if (type.declaration.qualifiedName?.asString() == "kotlin.collections.List" && type.arguments.size == 1) {
-                PropertyDetails(
-                    name = property.simpleName.asString(),
-                    nonCollectionType = type.arguments.first().type?.resolve()?.declaration?.qualifiedName?.asString()
-                        ?: "Unknown",
-                    isCollection = true
-                )
+            val name = property.simpleName.asString()
+            val isNullable = type.isMarkedNullable
+            val (nonCollectionType, isCollection) = if (
+                type.declaration.qualifiedName?.asString() == "kotlin.collections.List" &&
+                type.arguments.size == 1
+            ) {
+                val nonCollectionType = type.arguments.first().type?.resolve()?.declaration?.qualifiedName?.asString()
+                Pair(nonCollectionType ?: "Unknown", true)
             } else {
-                PropertyDetails(
-                    name = property.simpleName.asString(),
-                    nonCollectionType = type.declaration.qualifiedName?.asString() ?: "Unknown",
-                    isCollection = false
-                )
+                val nonCollectionType = type.declaration.qualifiedName?.asString()
+                Pair(nonCollectionType ?: "Unknown", false)
             }
+            PropertyDetails(name, nonCollectionType, isCollection, isNullable)
         }.toList()
 
     private fun transformDataLoader(classDeclaration: KSClassDeclaration): DataLoaderDefinition {
@@ -121,7 +120,8 @@ class BeeFetchedFeature : BeeGenerativeFeature {
     private fun KSAnnotation.fetcherMappings(): List<FetcherMappingDefinition> {
         val mappings = arguments.find { it.name?.asString() == "mappings" }?.value as Collection<KSAnnotation>
         return mappings.map { mapping ->
-            val target = mapping.argumentValue<KSType>("target").resolveTypeAlias().declaration.qualifiedName!!.asString()
+            val target =
+                mapping.argumentValue<KSType>("target").resolveTypeAlias().declaration.qualifiedName!!.asString()
             val property = mapping.argumentValue<String>("property")
             val idProperty = mapping.argumentValue<String>("idProperty")
             FetcherMappingDefinition(target, property, idProperty)
@@ -132,7 +132,8 @@ class BeeFetchedFeature : BeeGenerativeFeature {
     private fun KSAnnotation.fetcherIgnores(): List<FetcherIgnoreDefinition> {
         val mappings = arguments.find { it.name?.asString() == "ignore" }?.value as Collection<KSAnnotation>
         return mappings.map { mapping ->
-            val target = mapping.argumentValue<KSType>("target").resolveTypeAlias().declaration.qualifiedName!!.asString()
+            val target =
+                mapping.argumentValue<KSType>("target").resolveTypeAlias().declaration.qualifiedName!!.asString()
             val property = mapping.argumentValue<String>("property").let {
                 it.ifEmpty { null }
             }

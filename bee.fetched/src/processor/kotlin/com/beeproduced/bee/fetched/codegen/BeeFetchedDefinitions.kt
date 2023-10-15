@@ -1,5 +1,10 @@
 package com.beeproduced.bee.fetched.codegen
 
+import com.beeproduced.bee.generative.util.toPoetClassName
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
+
 /**
  *
  *
@@ -15,8 +20,17 @@ data class DgsDto(
 data class PropertyDetails(
     val name: String,
     val nonCollectionType: String,
-    val isCollection: Boolean
-)
+    val isCollection: Boolean,
+    val isNullable: Boolean
+) {
+    fun toPoetTypename(): TypeName {
+        val cls = if (isCollection) {
+            ClassName("kotlin.collections", "List")
+                .parameterizedBy(nonCollectionType.toPoetClassName())
+        } else nonCollectionType.toPoetClassName()
+        return cls.copy(isNullable)
+    }
+}
 
 data class DataLoaderDefinition(
     val keyType: String,

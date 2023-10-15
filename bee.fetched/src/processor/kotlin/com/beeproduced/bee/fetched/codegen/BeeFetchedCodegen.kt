@@ -37,6 +37,8 @@ class BeeFetchedCodegen(
         definition.autoFetcher.mappings.groupBy { it.target }
     }
 
+    private val kotlinPoetMap = mutableMapOf<String, Any>()
+
     fun processDataLoader(dataLoader: DataLoaderDefinition) {
         definition = dataLoader
         logger.warn("Def: $definition")
@@ -101,17 +103,17 @@ class BeeFetchedCodegen(
     ): FunSpec {
         val simpleName = dto.substringAfterLast(".")
         val dtoType = dto.toPoetClassName()
-        val propertyNonCollectionType = property.nonCollectionType.toPoetClassName()
-        val idType = idProperty.nonCollectionType.toPoetClassName()
-        val propertyType = if (property.isCollection)
-            ClassName("kotlin.collections", "List")
-                .parameterizedBy(propertyNonCollectionType)
-        else propertyNonCollectionType
+
+        val propertyType = property.toPoetTypename()
         val returnType = CompletableFuture::class.asClassName()
             .parameterizedBy(propertyType)
+
         val dfeType = DataFetchingEnvironment::class.asClassName()
+        val propertyNonCollectionType = property.nonCollectionType.toPoetClassName()
+        val idNonCollectionType = idProperty.nonCollectionType.toPoetClassName()
         val dataLoaderType = DataLoader::class.asClassName()
-            .parameterizedBy(idType, propertyNonCollectionType)
+            .parameterizedBy(idNonCollectionType, propertyNonCollectionType)
+
         val completed = CompletableFuture::class.asClassName()
 
         val funcName = "${
@@ -123,6 +125,17 @@ class BeeFetchedCodegen(
                 it.titlecase(Locale.getDefault())
             }
         }"
+
+        // TODO: Streamline this...
+        val IDPropertyName = "%idPropertyName:L"
+        val Property = "%property:L"
+        val Completed = "%completed:T"
+        val map = mapOf(
+            cleanString(IDPropertyName) to idProperty.name,
+            cleanString(Completed) to completed,
+            cleanString(Property) to property.name
+        )
+        kotlinPoetMap.putAll(map)
 
         // TODO: What happens on nullable ids?
         return FunSpec.builder(funcName)
@@ -152,11 +165,15 @@ class BeeFetchedCodegen(
             .addStatement("val dataLoader: %T = dfe.getDataLoader(%S)", dataLoaderType, dataLoader)
             .apply {
                 if (property.isCollection) {
-                    addStatement("val ids = data.%L", idProperty.name)
-                    addStatement("return dataLoader.loadMany(ids)")
+                    addNStatement("val ids = data.$IDPropertyName")
+                    if (idProperty.isNullable)
+                        addNStatement("if (ids.isNullOrEmpty()) return $Completed.completedFuture(data.$Property)")
+                    addNStatement("return dataLoader.loadMany(ids)")
                 } else {
-                    addStatement("val id = data.%L", idProperty.name)
-                    addStatement("return dataLoader.load(id)")
+                    addNStatement("val id = data.$IDPropertyName")
+                    if (idProperty.isNullable)
+                        addNStatement("if (id == null) return $Completed.completedFuture(data.$Property)")
+                    addNStatement("return dataLoader.load(id)")
                 }
             }
             .build()
@@ -192,5 +209,18 @@ class BeeFetchedCodegen(
         }
     }
 
+    fun FunSpec.Builder.addNStatement(format: String) {
+        addNamedCode(format, kotlinPoetMap)
+        addStatement("")
+    }
 
+    fun cleanString(input: String): String {
+        // Check if the string starts with "%" and remove it if true
+        val withoutPrefix = if (input.startsWith("%")) input.substring(1) else input
+        // Check if the string has a ":" followed by another character and remove them if true
+        return if (withoutPrefix.contains(":")) withoutPrefix.substring(
+            0,
+            withoutPrefix.lastIndexOf(":")
+        ) else withoutPrefix
+    }
 }
