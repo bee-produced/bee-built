@@ -15,11 +15,12 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 interface BeeGenerativeFeature {
     fun order(): Int
     fun multipleRoundProcessing(): Boolean
-    fun setup(options: Options): BeeGenerativeConfig
+    fun setup(options: Options, shared: Shared): BeeGenerativeConfig
     fun process(input: BeeGenerativeInput)
 }
 
-typealias BeeGenerativeCallback = (symbols: BeeGenerativeSymbols)->BeeGenerativeConfig
+typealias Shared = MutableMap<String, Any?>
+typealias BeeGenerativeCallback = (symbols: BeeGenerativeSymbols, options: Options, shared: Shared)->BeeGenerativeConfig
 
 data class BeeGenerativeConfig(
     val packages: Set<String> = emptySet(),
@@ -63,6 +64,7 @@ data class BeeGenerativeInput(
     val dependencies: Dependencies,
     val logger: KSPLogger,
     val symbols: BeeGenerativeSymbols,
-    val options: Map<String, String>
+    val options: Options,
+    val shared: Shared,
 )
 

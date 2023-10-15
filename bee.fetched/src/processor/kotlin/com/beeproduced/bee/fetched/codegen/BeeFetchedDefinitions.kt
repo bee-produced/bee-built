@@ -35,6 +35,8 @@ data class PropertyDetails(
 data class DataLoaderDefinition(
     val keyType: String,
     val dtoType: String,
+    val nullableKey: Boolean,
+    val nullableDto: Boolean,
     val autoFetcher: AutoFetcherDefinition,
     // Using annotations directly is not a good idea...
     // org.jetbrains.kotlin.backend.common.BackendException: Backend Internal error: Exception during IR lowering

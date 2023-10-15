@@ -1,9 +1,6 @@
 package com.beeproduced.bee.generative.processor
 
-import com.beeproduced.bee.generative.BeeGenerativeConfig
-import com.beeproduced.bee.generative.BeeGenerativeFeature
-import com.beeproduced.bee.generative.BeeGenerativeInput
-import com.beeproduced.bee.generative.BeeGenerativeSymbols
+import com.beeproduced.bee.generative.*
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.*
@@ -25,6 +22,7 @@ class DataProcessor(
     private val options: Options,
 ) : SymbolProcessor {
     private var invoked = false
+    private val shared: Shared = mutableMapOf()
 
     private val beeFeatures = ServiceLoader.load(
         BeeGenerativeFeature::class.java,
@@ -49,7 +47,7 @@ class DataProcessor(
         // Acquire config per feature & merge them
         logger.info("Received Options $options")
         val config = features
-            .map { it.setup(options) }
+            .map { it.setup(options, shared) }
             .let(BeeGenerativeConfig.Companion::merge)
         logger.info("Received Config to parse $config")
 
@@ -63,7 +61,8 @@ class DataProcessor(
             dependencies = dependencies,
             logger = logger,
             symbols = symbols,
-            options = options
+            options = options,
+            shared = shared,
         )
         features.forEach { feature ->
             logger.info("Processing ${feature::class.java.name} ...")
@@ -110,7 +109,7 @@ class DataProcessor(
 
         val symbols = BeeGenerativeSymbols(packages, annotatedBy, classes)
         for (callback in config.callbacks) {
-            val recursiveConfig = callback(symbols)
+            val recursiveConfig = callback(symbols, options, shared)
             getSymbols(resolver, recursiveConfig, packages, annotatedBy, classes)
         }
 

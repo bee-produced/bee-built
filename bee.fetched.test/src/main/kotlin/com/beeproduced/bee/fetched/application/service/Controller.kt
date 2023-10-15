@@ -40,7 +40,7 @@ class Controller {
     }
 
     data class MyGrault(
-        val waldoId: String
+        val waldoId: String,
     )
 
     @DgsQuery

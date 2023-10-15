@@ -2,10 +2,8 @@ package com.beeproduced.bee.fetched
 
 import com.beeproduced.bee.fetched.annotations.BeeFetched
 import com.beeproduced.bee.fetched.codegen.*
-import com.beeproduced.bee.generative.BeeGenerativeConfig
-import com.beeproduced.bee.generative.BeeGenerativeFeature
-import com.beeproduced.bee.generative.BeeGenerativeInput
-import com.beeproduced.bee.generative.BeeGenerativeSymbols
+import com.beeproduced.bee.generative.*
+import com.beeproduced.bee.generative.processor.Options
 import com.beeproduced.bee.generative.util.*
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -27,42 +25,52 @@ class BeeFetchedFeature : BeeGenerativeFeature {
 
     override fun multipleRoundProcessing(): Boolean = false
 
-    private val internalTypes: MutableSet<String> = mutableSetOf()
-    override fun setup(options: Map<String, String>): BeeGenerativeConfig {
-        scanPackage = options.getOption(BeeFetchedOption.scanPackage)
-        packageName = options.getOption(BeeFetchedOption.packageName)
+    override fun setup(options: Options, shared: Shared): BeeGenerativeConfig {
+        scanPackage = options.getOption(BeeFetchedOptions.scanPackage)
+        packageName = options.getOption(BeeFetchedOptions.packageName)
         return BeeGenerativeConfig(
             packages = setOf(scanPackage),
-            annotatedBy = setOf(BeeFetchedOption.beeFetchedAnnotationName),
+            annotatedBy = setOf(BeeFetchedOptions.beeFetchedAnnotationName),
             callbacks = listOf(::getInternalTypesSymbols)
         )
     }
 
-    private fun getInternalTypesSymbols(symbols: BeeGenerativeSymbols): BeeGenerativeConfig {
-        val internalTypesToScan = symbols
+    private fun getInternalTypesSymbols(
+        symbols: BeeGenerativeSymbols, options: Options, shared: Shared
+    ): BeeGenerativeConfig {
+        val internalTypes = symbols
             .annotatedBy
-            .getValue(BeeFetchedOption.beeFetchedAnnotationName)
+            .getValue(BeeFetchedOptions.beeFetchedAnnotationName)
+            .asSequence()
             .mapNotNull { it.getAnnotation<BeeFetched>() }
             .map { it.fetcherInternalTypes() }
             .flatten()
             .map { it.internal }
-        internalTypes.addAll(internalTypesToScan)
+            .toSet()
+        shared[BeeFetchedOptions.internalTypes] = internalTypes
         return BeeGenerativeConfig(classes = internalTypes)
     }
 
     override fun process(input: BeeGenerativeInput) {
-        val dtos = input.symbols.packages.getValue(scanPackage).let(::transformDtos)
+        val dtos = input.symbols.packages
+            .getValue(scanPackage)
+            .let(::transformDtos)
+        val internalTypes = input.shared
+            .getTyped<Set<String>>(BeeFetchedOptions.internalTypes)
+        val internalDtos = internalTypes
+            .mapTo(HashSet()) { input.symbols.classes.getValue(it) }
+            .let(::transformDtos)
         val dataLoaders = input.symbols
             .annotatedBy
-            .getValue(BeeFetchedOption.beeFetchedAnnotationName)
+            .getValue(BeeFetchedOptions.beeFetchedAnnotationName)
             .map(::transformDataLoader)
         input.logger.let { logger ->
-            logger.warn("Found dtos: $dtos")
-            logger.warn("Found data loaders: $dataLoaders")
-            logger.warn("FoundInternalTypes: ${input.symbols.classes}")
+            logger.info("Found data loaders: $dataLoaders")
+            logger.info("Found dtos: $dtos")
+            logger.info("Found internal dtos: $internalDtos")
         }
 
-        val codegen = BeeFetchedCodegen(input.codeGenerator, input.dependencies, input.logger, dtos, packageName)
+        val codegen = BeeFetchedCodegen(input.codeGenerator, input.dependencies, input.logger, dtos, internalDtos, packageName)
         dataLoaders.forEach { dl -> codegen.processDataLoader(dl) }
     }
 
@@ -98,8 +106,8 @@ class BeeFetchedFeature : BeeGenerativeFeature {
         val autoFetcherAnnotation = classDeclaration.getAnnotation<BeeFetched>()
         val dgsDataLoaderAnnotation = classDeclaration.getAnnotation<DgsDataLoader>()
         val typeArgs = extractInterfaceTypeArguments(classDeclaration)
-        val keyType = typeArgs[0]
-        val dtoType = typeArgs[1]
+        val (keyType, nullableKey) = typeArgs[0]
+        val (dtoType, nullableDto) = typeArgs[1]
 
         if (autoFetcherAnnotation == null || dgsDataLoaderAnnotation == null)
             throw IllegalArgumentException("Could not parse [$classDeclaration] as data loader")
@@ -112,11 +120,11 @@ class BeeFetchedFeature : BeeGenerativeFeature {
         )
         val dgsDataLoader = dgsDataLoaderAnnotation.argumentValue("name") as? String ?: ""
 
-        return DataLoaderDefinition(keyType, dtoType, autoFetcher, dgsDataLoader)
+        return DataLoaderDefinition(keyType, dtoType, nullableKey, nullableDto, autoFetcher, dgsDataLoader)
     }
 
-    private fun extractInterfaceTypeArguments(ksClass: KSClassDeclaration): List<String> {
-        val typeArgs = mutableListOf<String>()
+    private fun extractInterfaceTypeArguments(ksClass: KSClassDeclaration): List<Pair<String, Boolean>> {
+        val typeArgs = mutableListOf<Pair<String, Boolean>>()
         for (superType in ksClass.superTypes) {
             val s = superType.resolve()
             if (!s.declaration.packageName.asString().startsWith("org.dataloader"))
@@ -125,7 +133,9 @@ class BeeFetchedFeature : BeeGenerativeFeature {
             typeArgs.addAll(s.arguments.mapNotNull {
                 it.type?.let { typeArg ->
                     val resolvedType = typeArg.resolve().resolveTypeAlias()
-                    resolvedType.declaration.qualifiedName?.asString()
+                    val qualifiedName = resolvedType.declaration.qualifiedName?.asString()
+                    val isNullable = resolvedType.isMarkedNullable
+                    if (qualifiedName != null) Pair(qualifiedName, isNullable) else null
                 }
             })
         }

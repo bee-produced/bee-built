@@ -4,6 +4,7 @@ import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.COMPL
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_FETCHING_ENVIRONMENT
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_LOADER
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DTO
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.ILLEGAL_STATE_EXCEPTION
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._ID_PROPERTY
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._PROPERTY
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DATA_LOADER_NAME
@@ -33,6 +34,7 @@ class BeeFetchedCodegen(
     private val dependencies: Dependencies,
     private val logger: KSPLogger,
     private val dtos: Map<String, DgsDto>,
+    private val internalDtos: Map<String, DgsDto>,
     private val packageName: String
 ) {
 
@@ -43,6 +45,9 @@ class BeeFetchedCodegen(
     }
     private val typedMappings: Map<String, List<FetcherMappingDefinition>> by lazy {
         definition.autoFetcher.mappings.groupBy { it.target }
+    }
+    private val typedInternals: Map<String, List<FetcherInternalTypeDefinition>> by lazy {
+        definition.autoFetcher.internalTypes.groupBy { it.target }
     }
 
     private val poetMap: PoetMap = mutableMapOf()
@@ -58,6 +63,7 @@ class BeeFetchedCodegen(
         const val DATA_LOADER = "%dataloader:T"
         const val DTO = "%dto:T"
         const val DATA_FETCHING_ENVIRONMENT = "%dfe:T"
+        const val ILLEGAL_STATE_EXCEPTION = "%illegalstateexception:T"
     }
 
     fun processDataLoader(dataLoader: DataLoaderDefinition) {
@@ -97,20 +103,31 @@ class BeeFetchedCodegen(
                 logger.info("processDto|skipping property: ${property.nonCollectionType} != ${definition.dtoType}")
                 continue
             }
-
             logger.info("processDto|processing property: $name; ${typedMappings}")
-            val idNames = idNames(name, property)
-            val idProperty = idNames.firstNotNullOfOrNull { properties[it] }
+
+            val internalDto = internalDto(name, property)
+            val (internalName, idProperty, hasProperty) = if (internalDto == null) {
+                val idNames = idNames(name, property)
+                val idProperty = idNames.firstNotNullOfOrNull { properties[it] }
+                Triple(null, idProperty, true)
+            } else {
+                val idNames = idNames(dto.name, property)
+                val internalProperties = internalDto.properties.associateBy { it.name }
+                val idProperty = idNames.firstNotNullOfOrNull { internalProperties[it] }
+                val hasProperty = internalDto.properties.any { property == it }
+                Triple(internalDto.name, idProperty, hasProperty)
+            }
             if (idProperty == null) {
                 logger.info("processDto|no id property found for $name - ${property.name}")
                 continue
             }
+            logger.info("processDto|internalName: $internalName")
             logger.info("processDto|idProperty: ${idProperty.name}")
+            logger.info("processDto|hasProperty: $hasProperty")
 
             addFunction(
                 buildNestedFetcher(
-                    name, property, idProperty,
-                    definition.dataLoader, definition.autoFetcher.safeMode
+                    name, internalName, property, hasProperty, idProperty,
                 )
             )
         }
@@ -119,22 +136,27 @@ class BeeFetchedCodegen(
     }
 
     private fun buildNestedFetcher(
-        dto: String, property: PropertyDetails, idProperty: PropertyDetails,
-        dataLoader: String, safeMode: Boolean,
+        dto: String,
+        internalDto: String?,
+        property: PropertyDetails,
+        hasProperty: Boolean,
+        idProperty: PropertyDetails,
     ): FunSpec {
+        val dataLoader = definition.dataLoader
+        val safeMode = definition.autoFetcher.safeMode
         logger.info("buildNestedFetcher($dto, $property, $idProperty, $dataLoader, $safeMode)")
         val dtoName = dto.substringAfterLast(".")
-        val dtoType = dto.toPoetClassName()
+        val dtoType = (internalDto ?: dto).toPoetClassName()
 
         val propertyType = property.toPoetTypename()
         val returnType = CompletableFuture::class.asClassName()
             .parameterizedBy(propertyType)
 
         val dfeType = DataFetchingEnvironment::class.asClassName()
-        val propertyNonCollectionType = property.nonCollectionType.toPoetClassName()
-        val idNonCollectionType = idProperty.nonCollectionType.toPoetClassName()
+        val dataLoaderDtoType = definition.dtoType.toPoetClassName().copy(definition.nullableDto)
+        val dataLoaderKeyType = definition.keyType.toPoetClassName().copy(definition.nullableKey)
         val dataLoaderType = DataLoader::class.asClassName()
-            .parameterizedBy(idNonCollectionType, propertyNonCollectionType)
+            .parameterizedBy(dataLoaderKeyType, dataLoaderDtoType)
 
         val completed = CompletableFuture::class.asClassName()
 
@@ -156,6 +178,7 @@ class BeeFetchedCodegen(
         poetMap.addMapping(DTO, dtoType)
         poetMap.addMapping(__DTO_NAME, dtoName)
         poetMap.addMapping(DATA_FETCHING_ENVIRONMENT, dfeType)
+        poetMap.addMapping(ILLEGAL_STATE_EXCEPTION, IllegalStateException::class.asClassName())
 
         // TODO: What happens with internal types
         return FunSpec.builder(funcName)
@@ -170,22 +193,36 @@ class BeeFetchedCodegen(
             .returns(returnType)
             .addNStatement("val data = dfe.getSource<$DTO>()")
             .apply {
-                if (safeMode && property.isCollection)
+                if (safeMode && hasProperty && property.isCollection)
                     addNStatement("if (!data.$_PROPERTY.isNullOrEmpty()) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
-                else if (safeMode) // && !property.isCollection
+                else if (safeMode && hasProperty) // && !property.isCollection
                     addNStatement("if (data.$_PROPERTY != null) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
             }
             .addNStatement("val dataLoader: $DATA_LOADER = dfe.getDataLoader($__DATA_LOADER_NAME)")
             .apply {
                 if (property.isCollection) {
                     addNStatement("val ids = data.$_ID_PROPERTY")
-                    if (idProperty.isNullable)
+                    // Early return when no ids given and property is available which is not
+                    // always the case for internal types
+                    if (idProperty.isNullable && hasProperty)
                         addNStatement("if (ids.isNullOrEmpty()) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
+                    // Throw error when data loader only accepts non-nullable keys
+                    // but internal type has nullable key & no backing property as default value
+                    else if (idProperty.isNullable && !dataLoaderKeyType.isNullable) { // && !hasProperty
+                        addNStatement("if (ids == null) throw $ILLEGAL_STATE_EXCEPTION(")
+                        addNStatement("\"Tried to load nullable keys into non-nullable data loader\"")
+                        addNStatement(")")
+                    }
                     addNStatement("return dataLoader.loadMany(ids)")
                 } else {
                     addNStatement("val id = data.$_ID_PROPERTY")
-                    if (idProperty.isNullable)
+                    if (idProperty.isNullable && hasProperty)
                         addNStatement("if (id == null) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
+                    else if (idProperty.isNullable && !dataLoaderKeyType.isNullable) { // && !hasProperty
+                        addNStatement("if (id == null) throw $ILLEGAL_STATE_EXCEPTION(")
+                        addNStatement("  \"Tried to load nullable key into non-nullable data loader\"")
+                        addNStatement(")")
+                    }
                     addNStatement("return dataLoader.load(id)")
                 }
             }
@@ -200,6 +237,21 @@ class BeeFetchedCodegen(
             ignoreDefinitions.all { it.property == null }
         logger.info("ignoreDto|ignore: $ignore")
         return ignore
+    }
+
+    private fun internalDto(name: String, property: PropertyDetails): DgsDto? {
+        logger.info("internalDto($name, $property)")
+        val internalDefinitions = typedInternals[name]
+        logger.info("internalDto|internalDefinitions: $internalDefinitions")
+        val internalType = internalDefinitions?.firstOrNull {
+            (it.target == name && it.property == property.name) ||
+            (it.target == name && it.property == null)
+        }
+        logger.info("internalDto|internalType: $internalType")
+        val dto = if (internalType == null) null
+        else internalDtos.getValue(internalType.internal)
+        logger.info("internalDto|dto: $dto")
+        return dto
     }
 
     private fun idNames(name: String, property: PropertyDetails): Set<String> {

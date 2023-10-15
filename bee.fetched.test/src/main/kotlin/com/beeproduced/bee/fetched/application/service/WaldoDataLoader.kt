@@ -32,7 +32,7 @@ import java.util.concurrent.CompletionStage
     ignore = [
         FetcherIgnore(Garply::class, DgsConstants.GARPLY.Waldo),
         FetcherIgnore(Waldo::class)
-    ]
+    ],
 )
 @DgsDataLoader(name = "Waldo")
 class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo> {
