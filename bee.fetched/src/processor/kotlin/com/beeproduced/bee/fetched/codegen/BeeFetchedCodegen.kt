@@ -157,7 +157,7 @@ class BeeFetchedCodegen(
         poetMap.addMapping(__DTO_NAME, dtoName)
         poetMap.addMapping(DATA_FETCHING_ENVIRONMENT, dfeType)
 
-        // TODO: What happens on nullable ids?
+        // TODO: What happens with internal types
         return FunSpec.builder(funcName)
             .addAnnotation(
                 AnnotationSpec
