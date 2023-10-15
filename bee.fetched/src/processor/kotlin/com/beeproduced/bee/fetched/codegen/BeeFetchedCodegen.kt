@@ -1,5 +1,13 @@
 package com.beeproduced.bee.fetched.codegen
 
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.COMPLETABLE_FUTURE
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_FETCHING_ENVIRONMENT
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_LOADER
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DTO
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._ID_PROPERTY
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._PROPERTY
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DATA_LOADER_NAME
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DTO_NAME
 import com.beeproduced.bee.generative.util.*
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -37,11 +45,24 @@ class BeeFetchedCodegen(
         definition.autoFetcher.mappings.groupBy { it.target }
     }
 
-    private val kotlinPoetMap = mutableMapOf<String, Any>()
+    private val poetMap: PoetMap = mutableMapOf()
+    private fun FunSpec.Builder.addNStatement(format: String)
+        = addNStatementBuilder(format, poetMap)
+    @Suppress("ConstPropertyName")
+    object PoetConstants {
+        const val _ID_PROPERTY = "%idProperty:L"
+        const val _PROPERTY = "%property:L"
+        const val __DATA_LOADER_NAME = "%dataloadername:S"
+        const val __DTO_NAME = "%dtoname:S"
+        const val COMPLETABLE_FUTURE = "%completed:T"
+        const val DATA_LOADER = "%dataloader:T"
+        const val DTO = "%dto:T"
+        const val DATA_FETCHING_ENVIRONMENT = "%dfe:T"
+    }
 
     fun processDataLoader(dataLoader: DataLoaderDefinition) {
+        logger.info("processDataLoader($dataLoader)")
         definition = dataLoader
-        logger.warn("Def: $definition")
         fileName = "${definition.dataLoader}AutoFetcher"
         FileSpec
             .builder(packageName, fileName)
@@ -67,24 +88,24 @@ class BeeFetchedCodegen(
     }
 
     private fun TypeSpec.Builder.processDto(name: String, dto: DgsDto): TypeSpec.Builder {
-        logger.warn("processDto($name, $dto)")
+        logger.info("processDto($name, $dto)")
         if (ignoreDto(name)) return this
         val properties = dto.properties.associateBy { it.name }
-        logger.warn("$properties")
+        logger.info("processDto|properties: $properties")
         for (property in dto.properties) {
-            logger.warn("${property.nonCollectionType} , ${definition.dtoType}")
-            if (property.nonCollectionType != definition.dtoType)
-                continue
-
-            logger.warn("$name; ${typedMappings}")
-            val idNames = idNames(name, property)
-            logger.warn("$idNames")
-            val idProperty = idNames.firstNotNullOfOrNull { properties[it] }
-            if (idProperty == null) {
-                logger.warn("No id property found for $name - ${property.name}")
+            if (property.nonCollectionType != definition.dtoType) {
+                logger.info("processDto|skipping property: ${property.nonCollectionType} != ${definition.dtoType}")
                 continue
             }
-            logger.warn("Found ${idProperty.name}")
+
+            logger.info("processDto|processing property: $name; ${typedMappings}")
+            val idNames = idNames(name, property)
+            val idProperty = idNames.firstNotNullOfOrNull { properties[it] }
+            if (idProperty == null) {
+                logger.info("processDto|no id property found for $name - ${property.name}")
+                continue
+            }
+            logger.info("processDto|idProperty: ${idProperty.name}")
 
             addFunction(
                 buildNestedFetcher(
@@ -101,7 +122,8 @@ class BeeFetchedCodegen(
         dto: String, property: PropertyDetails, idProperty: PropertyDetails,
         dataLoader: String, safeMode: Boolean,
     ): FunSpec {
-        val simpleName = dto.substringAfterLast(".")
+        logger.info("buildNestedFetcher($dto, $property, $idProperty, $dataLoader, $safeMode)")
+        val dtoName = dto.substringAfterLast(".")
         val dtoType = dto.toPoetClassName()
 
         val propertyType = property.toPoetTypename()
@@ -117,7 +139,7 @@ class BeeFetchedCodegen(
         val completed = CompletableFuture::class.asClassName()
 
         val funcName = "${
-            simpleName.replaceFirstChar {
+            dtoName.replaceFirstChar {
                 it.lowercase(Locale.getDefault())
             }
         }${
@@ -126,53 +148,44 @@ class BeeFetchedCodegen(
             }
         }"
 
-        // TODO: Streamline this...
-        val IDPropertyName = "%idPropertyName:L"
-        val Property = "%property:L"
-        val Completed = "%completed:T"
-        val map = mapOf(
-            cleanString(IDPropertyName) to idProperty.name,
-            cleanString(Completed) to completed,
-            cleanString(Property) to property.name
-        )
-        kotlinPoetMap.putAll(map)
+        poetMap.addMapping(_ID_PROPERTY, idProperty.name)
+        poetMap.addMapping(_PROPERTY, property.name)
+        poetMap.addMapping(COMPLETABLE_FUTURE, completed)
+        poetMap.addMapping(DATA_LOADER, dataLoaderType)
+        poetMap.addMapping(__DATA_LOADER_NAME, dataLoader)
+        poetMap.addMapping(DTO, dtoType)
+        poetMap.addMapping(__DTO_NAME, dtoName)
+        poetMap.addMapping(DATA_FETCHING_ENVIRONMENT, dfeType)
 
         // TODO: What happens on nullable ids?
         return FunSpec.builder(funcName)
             .addAnnotation(
                 AnnotationSpec
                     .builder(DgsData::class)
-                    .addMember("parentType = %S", simpleName)
+                    .addMember("parentType = %S", dtoName)
                     .addMember("field = %S", property.name)
                     .build()
             )
             .addParameter("dfe", dfeType)
             .returns(returnType)
-            .addStatement("val data = dfe.getSource<%T>()", dtoType)
+            .addNStatement("val data = dfe.getSource<$DTO>()")
             .apply {
-                if (safeMode && property.isCollection) addStatement(
-                    "if (!data.%L.isNullOrEmpty()) return %T.completedFuture(data.%L)",
-                    property.name,
-                    completed,
-                    property.name
-                ) else if (safeMode && !property.isCollection) addStatement(
-                    "if (data.%L != null) return %T.completedFuture(data.%L)",
-                    property.name,
-                    completed,
-                    property.name
-                )
+                if (safeMode && property.isCollection)
+                    addNStatement("if (!data.$_PROPERTY.isNullOrEmpty()) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
+                else if (safeMode) // && !property.isCollection
+                    addNStatement("if (data.$_PROPERTY != null) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
             }
-            .addStatement("val dataLoader: %T = dfe.getDataLoader(%S)", dataLoaderType, dataLoader)
+            .addNStatement("val dataLoader: $DATA_LOADER = dfe.getDataLoader($__DATA_LOADER_NAME)")
             .apply {
                 if (property.isCollection) {
-                    addNStatement("val ids = data.$IDPropertyName")
+                    addNStatement("val ids = data.$_ID_PROPERTY")
                     if (idProperty.isNullable)
-                        addNStatement("if (ids.isNullOrEmpty()) return $Completed.completedFuture(data.$Property)")
+                        addNStatement("if (ids.isNullOrEmpty()) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
                     addNStatement("return dataLoader.loadMany(ids)")
                 } else {
-                    addNStatement("val id = data.$IDPropertyName")
+                    addNStatement("val id = data.$_ID_PROPERTY")
                     if (idProperty.isNullable)
-                        addNStatement("if (id == null) return $Completed.completedFuture(data.$Property)")
+                        addNStatement("if (id == null) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)")
                     addNStatement("return dataLoader.load(id)")
                 }
             }
@@ -180,25 +193,26 @@ class BeeFetchedCodegen(
     }
 
     private fun ignoreDto(name: String): Boolean {
-        logger.warn("IGNORE_DTO")
-        logger.warn(name)
-        logger.warn("$typedIgnore")
+        logger.info("ignoreDto($name)")
+        logger.info("ignoreDto|typedIgnore: $typedIgnore")
         val ignoreDefinitions = typedIgnore[name]
-        return ignoreDefinitions != null &&
+        val ignore = ignoreDefinitions != null &&
             ignoreDefinitions.all { it.property == null }
+        logger.info("ignoreDto|ignore: $ignore")
+        return ignore
     }
 
     private fun idNames(name: String, property: PropertyDetails): Set<String> {
-        logger.warn("2 ${property.name}")
+        logger.info("idNames($name, $property)")
         val mappingDefinitions = typedMappings[name]
-        logger.warn("$mappingDefinitions")
+        logger.info("idNames|mappingDefinitions: $mappingDefinitions")
         val mapping = mappingDefinitions?.firstOrNull { it.property == property.name }
         if (mapping != null)
             return setOf(mapping.idProperty)
         // PropertyDetails("x", "String", false) => setOf("xId")
         // PropertyDetails("xs", "String", true) => setOf("xsIds", "xIds")
         // PropertyDetails("y", "String", true) => setOf("ysIds", "yIds")
-        return when {
+        val idNames = when {
             property.isCollection && property.name.endsWith("s") -> setOf(
                 "${property.name}Ids",
                 "${property.name.dropLast(1)}Ids"
@@ -207,20 +221,7 @@ class BeeFetchedCodegen(
             property.isCollection -> setOf("${property.name}sIds", "${property.name}Ids")
             else -> setOf("${property.name}Id")
         }
-    }
-
-    fun FunSpec.Builder.addNStatement(format: String) {
-        addNamedCode(format, kotlinPoetMap)
-        addStatement("")
-    }
-
-    fun cleanString(input: String): String {
-        // Check if the string starts with "%" and remove it if true
-        val withoutPrefix = if (input.startsWith("%")) input.substring(1) else input
-        // Check if the string has a ":" followed by another character and remove them if true
-        return if (withoutPrefix.contains(":")) withoutPrefix.substring(
-            0,
-            withoutPrefix.lastIndexOf(":")
-        ) else withoutPrefix
+        logger.info("idNames|idNames: $idNames")
+        return idNames
     }
 }

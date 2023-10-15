@@ -43,13 +43,14 @@ class DataProcessor(
             beeFeatures
         }
         else beeFeatures.filter { it.multipleRoundProcessing() }
+        if (features.isEmpty()) return emptyList()
 
         // Acquire config per feature & merge them
-        logger.warn("Received Options $options")
+        logger.info("Received Options $options")
         val config = features
             .map { it.setup(options) }
             .let(BeeGenerativeConfig.Companion::merge)
-        logger.warn("Received Config to parse $config")
+        logger.info("Received Config to parse $config")
 
         // Get symbols mandated by config
         val symbols = getSymbols(resolver, config)
@@ -64,11 +65,11 @@ class DataProcessor(
             options = options
         )
         features.forEach { feature ->
-            logger.warn("Processing ${feature::class.java.name} ...")
+            logger.info("Processing ${feature::class.java.name} ...")
             feature.process(input)
         }
 
-        logger.warn("Process finished")
+        logger.info( "Process finished")
         return emptyList()
     }
 
