@@ -5,6 +5,7 @@ import com.beeproduced.bee.generative.BeeGenerativeFeature
 import com.beeproduced.bee.generative.BeeGenerativeInput
 import com.beeproduced.bee.generative.BeeGenerativeSymbols
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -73,25 +74,46 @@ class DataProcessor(
         return emptyList()
     }
 
-    @OptIn(KspExperimental::class)
     private fun getSymbols(resolver: Resolver, config: BeeGenerativeConfig): BeeGenerativeSymbols {
-        val packages = mutableMapOf<String, Set<KSClassDeclaration>>()
+        return getSymbols(resolver, config, mutableMapOf(), mutableMapOf(), mutableMapOf())
+    }
+
+    @OptIn(KspExperimental::class)
+    private fun getSymbols(
+        resolver: Resolver,
+        config: BeeGenerativeConfig,
+        packages: MutableMap<String, MutableSet<KSClassDeclaration>>,
+        annotatedBy: MutableMap<String, MutableSet<KSClassDeclaration>>,
+        classes: MutableMap<String, KSClassDeclaration>,
+    ): BeeGenerativeSymbols {
+        logger.info("getSymbols($resolver, $config, $packages, $annotatedBy, $classes)")
         for (p in config.packages) {
             val symbols = resolver
                 .getDeclarationsFromPackage(p)
                 .mapNotNull { if (it is KSClassDeclaration) it else null }
-                .toSet()
+                .toMutableSet()
             packages[p] = symbols
         }
-        val annotatedBy = mutableMapOf<String, Set<KSClassDeclaration>>()
         for (ab in config.annotatedBy) {
             val symbols = resolver
                 .getSymbolsWithAnnotation(ab)
                 .mapNotNull { if (it is KSClassDeclaration) it else null }
-                .toSet()
+                .toMutableSet()
             annotatedBy[ab] = symbols
         }
+        for (cls in config.classes) {
+            val symbol = resolver
+                .getClassDeclarationByName(cls)
+                ?: continue
+            classes[cls] = symbol
+        }
 
-        return BeeGenerativeSymbols(packages, annotatedBy)
+        val symbols = BeeGenerativeSymbols(packages, annotatedBy, classes)
+        for (callback in config.callbacks) {
+            val recursiveConfig = callback(symbols)
+            getSymbols(resolver, recursiveConfig, packages, annotatedBy, classes)
+        }
+
+        return symbols
     }
 }

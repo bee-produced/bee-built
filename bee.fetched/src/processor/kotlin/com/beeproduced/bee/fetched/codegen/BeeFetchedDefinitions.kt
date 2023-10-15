@@ -49,6 +49,7 @@ data class DataLoaderDefinition(
 // https://github.com/google/ksp/issues/1038 (generated dgs code)
 data class AutoFetcherDefinition(
     val mappings: List<FetcherMappingDefinition>,
+    val internalTypes: List<FetcherInternalTypeDefinition>,
     val ignore: List<FetcherIgnoreDefinition>,
     val safeMode: Boolean,
 )
@@ -64,3 +65,8 @@ data class FetcherIgnoreDefinition(
     val property: String?,
 )
 
+data class FetcherInternalTypeDefinition(
+    val target: String,
+    val internal: String,
+    val property: String?
+)

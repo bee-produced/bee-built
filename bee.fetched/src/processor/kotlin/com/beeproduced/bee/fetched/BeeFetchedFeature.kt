@@ -5,6 +5,7 @@ import com.beeproduced.bee.fetched.codegen.*
 import com.beeproduced.bee.generative.BeeGenerativeConfig
 import com.beeproduced.bee.generative.BeeGenerativeFeature
 import com.beeproduced.bee.generative.BeeGenerativeInput
+import com.beeproduced.bee.generative.BeeGenerativeSymbols
 import com.beeproduced.bee.generative.util.*
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -26,13 +27,27 @@ class BeeFetchedFeature : BeeGenerativeFeature {
 
     override fun multipleRoundProcessing(): Boolean = false
 
+    private val internalTypes: MutableSet<String> = mutableSetOf()
     override fun setup(options: Map<String, String>): BeeGenerativeConfig {
         scanPackage = options.getOption(BeeFetchedOption.scanPackage)
         packageName = options.getOption(BeeFetchedOption.packageName)
         return BeeGenerativeConfig(
             packages = setOf(scanPackage),
-            annotatedBy = setOf(BeeFetchedOption.beeFetchedAnnotationName)
+            annotatedBy = setOf(BeeFetchedOption.beeFetchedAnnotationName),
+            callbacks = listOf(::getInternalTypesSymbols)
         )
+    }
+
+    private fun getInternalTypesSymbols(symbols: BeeGenerativeSymbols): BeeGenerativeConfig {
+        val internalTypesToScan = symbols
+            .annotatedBy
+            .getValue(BeeFetchedOption.beeFetchedAnnotationName)
+            .mapNotNull { it.getAnnotation<BeeFetched>() }
+            .map { it.fetcherInternalTypes() }
+            .flatten()
+            .map { it.internal }
+        internalTypes.addAll(internalTypesToScan)
+        return BeeGenerativeConfig(classes = internalTypes)
     }
 
     override fun process(input: BeeGenerativeInput) {
@@ -44,6 +59,7 @@ class BeeFetchedFeature : BeeGenerativeFeature {
         input.logger.let { logger ->
             logger.warn("Found dtos: $dtos")
             logger.warn("Found data loaders: $dataLoaders")
+            logger.warn("FoundInternalTypes: ${input.symbols.classes}")
         }
 
         val codegen = BeeFetchedCodegen(input.codeGenerator, input.dependencies, input.logger, dtos, packageName)
@@ -90,6 +106,7 @@ class BeeFetchedFeature : BeeGenerativeFeature {
 
         val autoFetcher = AutoFetcherDefinition(
             mappings = autoFetcherAnnotation.fetcherMappings(),
+            internalTypes = autoFetcherAnnotation.fetcherInternalTypes(),
             ignore = autoFetcherAnnotation.fetcherIgnores(),
             safeMode = autoFetcherAnnotation.safeArgumentValue<Boolean>("safeMode", true)
         )
@@ -118,26 +135,41 @@ class BeeFetchedFeature : BeeGenerativeFeature {
 
     @Suppress("UNCHECKED_CAST")
     private fun KSAnnotation.fetcherMappings(): List<FetcherMappingDefinition> {
-        val mappings = arguments.find { it.name?.asString() == "mappings" }?.value as Collection<KSAnnotation>
+        val mappings = arguments.find { it.name?.asString() == BeeFetched::mappings.name }?.value as Collection<KSAnnotation>
         return mappings.map { mapping ->
             val target =
-                mapping.argumentValue<KSType>("target").resolveTypeAlias().declaration.qualifiedName!!.asString()
-            val property = mapping.argumentValue<String>("property")
-            val idProperty = mapping.argumentValue<String>("idProperty")
+                mapping.argumentValue<KSType>(FetcherMappingDefinition::target.name).resolveTypeAlias().declaration.qualifiedName!!.asString()
+            val property = mapping.argumentValue<String>(FetcherMappingDefinition::property.name)
+            val idProperty = mapping.argumentValue<String>(FetcherMappingDefinition::idProperty.name)
             FetcherMappingDefinition(target, property, idProperty)
         }
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun KSAnnotation.fetcherIgnores(): List<FetcherIgnoreDefinition> {
-        val mappings = arguments.find { it.name?.asString() == "ignore" }?.value as Collection<KSAnnotation>
+        val mappings = arguments.find { it.name?.asString() == BeeFetched::ignore.name }?.value as Collection<KSAnnotation>
         return mappings.map { mapping ->
             val target =
-                mapping.argumentValue<KSType>("target").resolveTypeAlias().declaration.qualifiedName!!.asString()
-            val property = mapping.argumentValue<String>("property").let {
+                mapping.argumentValue<KSType>(FetcherIgnoreDefinition::target.name).resolveTypeAlias().declaration.qualifiedName!!.asString()
+            val property = mapping.argumentValue<String>(FetcherIgnoreDefinition::property.name).let {
                 it.ifEmpty { null }
             }
             FetcherIgnoreDefinition(target, property)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun KSAnnotation.fetcherInternalTypes(): List<FetcherInternalTypeDefinition> {
+        val mappings = arguments.find { it.name?.asString() == BeeFetched::internalTypes.name }?.value as Collection<KSAnnotation>
+        return mappings.map { mapping ->
+            val target =
+                mapping.argumentValue<KSType>(FetcherInternalTypeDefinition::target.name).resolveTypeAlias().declaration.qualifiedName!!.asString()
+            val internal =
+                mapping.argumentValue<KSType>(FetcherInternalTypeDefinition::internal.name).resolveTypeAlias().declaration.qualifiedName!!.asString()
+            val property = mapping.argumentValue<String>(FetcherInternalTypeDefinition::property.name).let {
+                it.ifEmpty { null }
+            }
+            FetcherInternalTypeDefinition(target, internal, property)
         }
     }
 

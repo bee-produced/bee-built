@@ -2,6 +2,7 @@ package com.beeproduced.bee.fetched.application.service
 
 import com.beeproduced.bee.fetched.annotations.BeeFetched
 import com.beeproduced.bee.fetched.annotations.FetcherIgnore
+import com.beeproduced.bee.fetched.annotations.FetcherInternalType
 import com.beeproduced.bee.fetched.annotations.FetcherMapping
 import com.beeproduced.bee.fetched.graphql.DgsConstants
 import com.beeproduced.bee.fetched.graphql.dto.Corge
@@ -25,8 +26,10 @@ import java.util.concurrent.CompletionStage
     mappings = [
         FetcherMapping(Corge::class, DgsConstants.CORGE.Waldo, DgsConstants.CORGE.CorgeToWaldoId)
     ],
+    internalTypes = [
+        FetcherInternalType(Grault::class, Controller.MyGrault::class, DgsConstants.GRAULT.Waldo)
+    ],
     ignore = [
-        FetcherIgnore(Grault::class, DgsConstants.GRAULT.Waldo), // TODO: Remove when feature implemented
         FetcherIgnore(Garply::class, DgsConstants.GARPLY.Waldo),
         FetcherIgnore(Waldo::class)
     ]
