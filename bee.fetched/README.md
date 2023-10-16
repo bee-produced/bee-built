@@ -9,23 +9,26 @@
 
 ## 💡 Motivation
 
-Calling data loaders using nested data fetchers is pretty straightforward but often requires writing of nearly identical boilerplate code. 
+Calling data loaders via nested data fetches is fairly simple, but often requires writing almost identical boilerplate code. 
 
-Also, these types of data fetchers can be pretty easy to miss while implementing. This leads to incomplete results even if the data loader was correctly defined.
+In addition, these types of data fetchers can be quite easily overlooked during implementation. This leads to incomplete results, even if the data loaders has been defined correctly.
 
-This code generation library tries to solve this problem by automatically generating such nested data fetchers from DGS DTOs & data loader definitions.
+This code generation library attempts to solve this problem by automatically generating such nested data fetches from DGS DTOs and data loader definitions. `bee.fetched` is based on `ksp` for lightweight, idiomatic code generation.
+
+Note that this library builds upon [DGS](https://netflix.github.io/dgs/) and is not intended for use with only `graphql-java`.
 
 ## 🚀 Quickstart
 
 ### 🛠️ Configuration
 
-Following shows the easiest way to incorporate `bee.fetched` into a project.
+The following shows the easiest way to incorporate `bee.fetched` into a project.
 
 `build.gradle.kts`:
 
 ```kotlin
 plugins {
     id("bee.generative")
+    id("com.google.devtools.ksp") version "1.8.0-1.0.9"
 }
 
 dependencies {
@@ -104,9 +107,9 @@ class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo> {
 }
 ```
 
-> ⚠️ Please do not forget to annotate the data loader with `@BeeFetcher`  if one wants to utilise code generation.
+> ⚠️ Please do not forget to annotate the data loader with `@BeeFetched` if one wants to utilise code generation.
 
-> 🪧 Ignore `@BeeFetched` for the moment, the annotation will be explained in the following step by step.
+> 🪧 The `@BeeFetched` annotation will be explained in the following step by step.
 
 With the help of `bee.fetched` all of the corresponding nested data fetchers including their data loader invocations can be automatically generated.
 
@@ -146,7 +149,7 @@ type Quux {
 }
 ```
 
-When this approach is applicable to a DTO the library automatically generates following nested data fetchers without additional configuration.
+When this approach is applicable to a DTO the library automatically generates nested data fetchers without additional configuration.
 
 ```kotlin
 @DgsData(
@@ -374,3 +377,65 @@ class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo>
 
 #### Safety first - Do not load what is already present
 
+By default, `bee.fetched` generates nested data fetcher with an early return when data is already present for the requested field. This feature is called `safeMode` and can be illustrated as follows.
+
+```kotlin
+@DgsData(
+    parentType = "Foo",
+    field = "waldo",
+)
+public fun fooWaldo(dfe: DataFetchingEnvironment): CompletableFuture<Waldo?> {
+    val data = dfe.getSource<Foo>()
+    // Only present with `safeMode=true`
+    if (data.waldo != null) return CompletableFuture.completedFuture(data.waldo)
+    // =========================================================================
+    val dataLoader: DataLoader<String, Waldo> = dfe.getDataLoader("Waldo")
+    val id = data.waldoId
+    return dataLoader.load(id)
+}
+
+@DgsData(
+    parentType = "Bar",
+    field = "waldos",
+)
+public fun barWaldos(dfe: DataFetchingEnvironment): CompletableFuture<List<Waldo>?> {
+    val data = dfe.getSource<Bar>()
+    // Only present with `safeMode=true`
+    if (!data.waldos.isNullOrEmpty()) return CompletableFuture.completedFuture(data.waldos)
+    // ====================================================================================
+    val dataLoader: DataLoader<String, Waldo> = dfe.getDataLoader("Waldo")
+    val ids = data.waldoIds
+    return dataLoader.loadMany(ids)
+}
+```
+
+If one does not want to utilise this feature one can disable the feature for all nested data fetchers.
+
+```kotlin
+@BeeFetched(
+    safeMode = false
+    ...
+)
+@DgsDataLoader(name = "Waldo")
+class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo>
+```
+
+One can also configure the feature on a per field basis.
+
+```kotlin
+@BeeFetched(
+    safeModeOverrides = [
+        FetcherSafeModeOverride(Foo::class, DgsConstants.FOO.Waldo, false),
+        FetcherSafeModeOverride(Bar::class, DgsConstants.BAR.Waldos, false),
+    ]
+    ...
+)
+@DgsDataLoader(name = "Waldo")
+class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo>
+```
+
+> 🪧 This also works in the opposite direction: creating a safe fetcher when the safe mode is set to `false`.
+
+## 🧪 Example & Tests
+
+An example on which this documentation is based on can be found under `bee.fetched.test` in the root project. The tests for this library reside also in this example project.
