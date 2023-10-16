@@ -14,9 +14,18 @@ An example project showcasing `bee-built` can be found under [example](./example
 
 ### Modules
 
+Extend DGS:
+
+* `bee.fetched`      
+  Automatically generate nested data fetchers for usage with data loaders, [documentation](./bee.fetched/README.md)
+
+---
+
+Some changes are currently being made:
+
 * `lib.data`      
   Easier data handling for GraphQL + JPA, [documentation](./lib.data/README.md)
-* `lib.result`      
+* `lib.result`      
   Functional kotlin bindings, integration with DGS & more      
 * `lib.events`       
   Simple event manager based on the mediator pattern, based on C#'s [MediatR library](https://github.com/jbogard/MediatR)

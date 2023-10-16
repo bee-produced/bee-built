@@ -19,7 +19,6 @@ plugins {
     java
     alias(libs.plugins.ksp)
     id("bee.generative")
-
 }
 
 allprojects {
@@ -77,8 +76,7 @@ dependencies {
     implementation("com.beeproduced:data") {
         capabilities { requireCapability("com.beeproduced:data-dgs") }
     }
-    implementation("com.beeproduced:bee.fetched")
-    bee("com.beeproduced:bee.fetched")
+    beeGenerative("com.beeproduced:bee.fetched")
     // external dependencies
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)
