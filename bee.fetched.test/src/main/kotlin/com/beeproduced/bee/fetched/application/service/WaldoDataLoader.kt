@@ -2,10 +2,7 @@ package com.beeproduced.bee.fetched.application.service
 
 import com.beeproduced.bee.fetched.annotations.*
 import com.beeproduced.bee.fetched.graphql.DgsConstants
-import com.beeproduced.bee.fetched.graphql.dto.Corge
-import com.beeproduced.bee.fetched.graphql.dto.Garply
-import com.beeproduced.bee.fetched.graphql.dto.Grault
-import com.beeproduced.bee.fetched.graphql.dto.Waldo
+import com.beeproduced.bee.fetched.graphql.dto.*
 import com.netflix.graphql.dgs.DgsDataLoader
 import org.dataloader.BatchLoaderEnvironment
 import org.dataloader.MappedBatchLoaderWithContext
@@ -24,14 +21,14 @@ import java.util.concurrent.CompletionStage
         FetcherMapping(Corge::class, DgsConstants.CORGE.Waldo, DgsConstants.CORGE.CorgeToWaldoId)
     ],
     internalTypes = [
-        FetcherInternalType(Grault::class, Controller.MyGrault::class, DgsConstants.GRAULT.Waldo)
+        FetcherInternalType(Grault::class, TestController.MyGrault::class, DgsConstants.GRAULT.Waldo),
+        FetcherInternalType(Fred::class, TestController.MyFred::class, DgsConstants.FRED.Waldo),
+        FetcherInternalType(Plugh::class, TestController.MyPlugh::class, DgsConstants.PLUGH.Waldos),
+        FetcherInternalType(Xyzzy::class, TestController.MyXyzzy::class, DgsConstants.XYZZY.Waldos),
     ],
     ignore = [
         FetcherIgnore(Garply::class, DgsConstants.GARPLY.Waldo),
         FetcherIgnore(Waldo::class)
-    ],
-    safeModeOverrides = [
-        FetcherSafeModeOverride(Corge::class, DgsConstants.CORGE.Waldo, true)
     ]
 )
 @DgsDataLoader(name = "Waldo")

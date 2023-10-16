@@ -1,0 +1,71 @@
+type Alpha {
+    # Simple case for singular id
+    zuluId: ID!
+    zulu: Zulu
+}
+
+type Bravo {
+    # Simple case for plural ids
+    zuluIds: [ID!]!
+    zulus: [Zulu!]
+}
+
+type Charlie {
+    # Singular nullable id
+    zuluId: ID
+    zulu: Zulu
+}
+
+type Delta {
+    # Plural nullable id
+    zuluIds: [ID!]
+    zulus: [Zulu!]
+}
+
+type Echo {
+    # Completely unrelated naming
+    echoToZuluId: ID!
+    zulu: Zulu
+}
+
+type Foxtrot {
+    # Should be resolved with internal type id
+    zulu: Zulu
+}
+
+type Golf {
+    # Should be resolved with internal nullable id
+    zulu: Zulu
+}
+
+type Hotel {
+    # Should be resolved with internal type ids
+    zulus: [Zulu!]
+}
+
+type India {
+    # Should be resolved with internal type nullable ids
+    zulus: [Zulu!]
+}
+
+type Juliet {
+    # Implementation should NOT be generated
+    zulu: Zulu
+}
+
+type Zulu {
+    zulu: String!
+}
+
+extend type Query {
+    alpha: Alpha!
+    bravo: Bravo!
+    charlie: Charlie!
+    delta: Delta!
+    echo: Echo!
+    foxtrot: Foxtrot!
+    golf: Golf!
+    hotel: Hotel!
+    india: India!
+    juliet: Juliet!
+}

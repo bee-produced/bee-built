@@ -34,6 +34,21 @@ type Grault {
     waldo: Waldo
 }
 
+type Fred {
+    # Should be resolved with internal nullable id
+    waldo: Waldo
+}
+
+type Plugh {
+    # Should be resolved with internal type ids
+    waldos: [Waldo!]
+}
+
+type Xyzzy {
+    # Should be resolved with internal type nullable ids
+    waldos: [Waldo!]
+}
+
 type Garply {
     # Implementation should NOT be generated
     waldo: Waldo
@@ -50,5 +65,8 @@ extend type Query {
     quux: Quux!
     corge: Corge!
     grault: Grault!
+    fred: Fred!
+    plugh: Plugh!
+    xyzzy: Xyzzy!
     garply: Garply!
 }

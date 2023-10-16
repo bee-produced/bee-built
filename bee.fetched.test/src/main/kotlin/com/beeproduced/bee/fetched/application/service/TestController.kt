@@ -1,9 +1,7 @@
 package com.beeproduced.bee.fetched.application.service
 
-import com.beeproduced.bee.fetched.graphql.DgsConstants
 import com.beeproduced.bee.fetched.graphql.dto.*
 import com.netflix.graphql.dgs.DgsComponent
-import com.netflix.graphql.dgs.DgsData
 import com.netflix.graphql.dgs.DgsQuery
 
 /**
@@ -13,7 +11,7 @@ import com.netflix.graphql.dgs.DgsQuery
  * @version 2023-10-14
  */
 @DgsComponent
-class Controller {
+class TestController {
     @DgsQuery
     fun foo(): Foo {
         return Foo("Foo")
@@ -39,22 +37,36 @@ class Controller {
         return Corge("Corge")
     }
 
-    data class MyGrault(
-        val waldoId: String,
-    )
+    data class MyGrault(val waldoId: String)
 
     @DgsQuery
     fun grault(): MyGrault {
         return MyGrault("Grault")
     }
 
+    data class MyFred(val waldoId: String?)
+
+    @DgsQuery
+    fun fred(): MyFred {
+        return MyFred("Fred")
+    }
+
+    data class MyPlugh(val waldoIds: List<String>)
+
+    @DgsQuery
+    fun plugh(): MyPlugh {
+        return MyPlugh(listOf("Plugh"))
+    }
+
+    data class MyXyzzy(val waldoIds: List<String>?)
+
+    @DgsQuery
+    fun xyzzy(): MyXyzzy {
+        return MyXyzzy(listOf("Xyzzy"))
+    }
+
     @DgsQuery
     fun garply(): Garply {
         return Garply()
-    }
-
-    @DgsData(parentType = DgsConstants.GARPLY.TYPE_NAME, field = DgsConstants.GARPLY.Waldo)
-    fun garplyWaldo(): Waldo {
-        return Waldo("Garply")
     }
 }

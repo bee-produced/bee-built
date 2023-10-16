@@ -40,18 +40,10 @@ class BeeFetchedCodegen(
 
     private lateinit var fileName: String
     private lateinit var definition: DataLoaderDefinition
-    private val typedIgnore: Map<String, List<FetcherIgnoreDefinition>> by lazy {
-        definition.autoFetcher.ignore.groupBy { it.target }
-    }
-    private val typedMappings: Map<String, List<FetcherMappingDefinition>> by lazy {
-        definition.autoFetcher.mappings.groupBy { it.target }
-    }
-    private val typedInternals: Map<String, List<FetcherInternalTypeDefinition>> by lazy {
-        definition.autoFetcher.internalTypes.groupBy { it.target }
-    }
-    private val typedSafeModeOverrides: Map<String, List<FetcherSafeModeOverrideDefinition>> by lazy {
-        definition.autoFetcher.safeModeOverrides.groupBy { it.target }
-    }
+    private lateinit var typedIgnore: Map<String, List<FetcherIgnoreDefinition>>
+    private lateinit var typedMappings: Map<String, List<FetcherMappingDefinition>>
+    private lateinit var typedInternals: Map<String, List<FetcherInternalTypeDefinition>>
+    private lateinit var typedSafeModeOverrides: Map<String, List<FetcherSafeModeOverrideDefinition>>
 
     private val poetMap: PoetMap = mutableMapOf()
     private fun FunSpec.Builder.addNStatement(format: String)
@@ -72,6 +64,10 @@ class BeeFetchedCodegen(
     fun processDataLoader(dataLoader: DataLoaderDefinition) {
         logger.info("processDataLoader($dataLoader)")
         definition = dataLoader
+        typedIgnore = definition.autoFetcher.ignore.groupBy { it.target }
+        typedMappings = definition.autoFetcher.mappings.groupBy { it.target }
+        typedInternals = definition.autoFetcher.internalTypes.groupBy { it.target }
+        typedSafeModeOverrides = definition.autoFetcher.safeModeOverrides.groupBy { it.target }
         fileName = "${definition.dataLoader}AutoFetcher"
         FileSpec
             .builder(packageName, fileName)
@@ -221,7 +217,7 @@ class BeeFetchedCodegen(
                     // but internal type has nullable key & no backing property as default value
                     else if (idProperty.isNullable && !dataLoaderKeyType.isNullable) { // && !hasProperty
                         addNStatement("if (ids == null) throw $ILLEGAL_STATE_EXCEPTION(")
-                        addNStatement("\"Tried to load nullable keys into non-nullable data loader\"")
+                        addNStatement("  \"Tried to load nullable keys into non-nullable data loader\"")
                         addNStatement(")")
                     }
                     addNStatement("return dataLoader.loadMany(ids)")
@@ -245,7 +241,7 @@ class BeeFetchedCodegen(
         logger.info("ignoreDto|typedIgnore: $typedIgnore")
         val ignoreDefinitions = typedIgnore[name]
         val ignore = ignoreDefinitions != null &&
-            ignoreDefinitions.all { it.property == null }
+            ignoreDefinitions.any { it.property == null }
         logger.info("ignoreDto|ignore: $ignore")
         return ignore
     }
