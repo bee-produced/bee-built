@@ -5,7 +5,6 @@ import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
@@ -28,8 +27,9 @@ open class BeeGenerativePluginExtension {
 }
 
 open class BeeDependencies(private val dependencies: DependencyHandler) {
-    operator fun invoke(dependencyNotation: String): Dependency? {
-        return dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
+    operator fun invoke(dependencyNotation: String): Pair<Dependency?, Dependency> {
+        val main = dependencies.add("implementation", dependencyNotation)
+        val processor = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
             val capabilityNotation = if (version != null) {
                 "$group:$name-processor:$version"
             } else "$group:$name-processor"
@@ -37,6 +37,7 @@ open class BeeDependencies(private val dependencies: DependencyHandler) {
                 requireCapability(capabilityNotation)
             }
         })
+        return Pair(main, processor)
     }
 }
 
@@ -54,7 +55,7 @@ class BeeGenerativePlugin : Plugin<Project>{
         project.dependencies.add("ksp", "com.beeproduced:bee.generative:$version")
         // Allows importing bee generative features easily via `bee´ in dependencies block
         project.dependencies.extensions.add(
-            "bee", BeeDependencies(project.dependencies)
+            "beeGenerative", BeeDependencies(project.dependencies)
         )
         // Allows configuring of bee generative features via `beeGenerative` block
         val extension = project
