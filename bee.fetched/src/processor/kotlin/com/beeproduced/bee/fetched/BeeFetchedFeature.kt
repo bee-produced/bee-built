@@ -116,7 +116,8 @@ class BeeFetchedFeature : BeeGenerativeFeature {
             mappings = autoFetcherAnnotation.fetcherMappings(),
             internalTypes = autoFetcherAnnotation.fetcherInternalTypes(),
             ignore = autoFetcherAnnotation.fetcherIgnores(),
-            safeMode = autoFetcherAnnotation.safeArgumentValue<Boolean>("safeMode", true)
+            safeMode = autoFetcherAnnotation.safeArgumentValue<Boolean>("safeMode", true),
+            safeModeOverrides = autoFetcherAnnotation.fetcherSafeModeOverrides()
         )
         val dgsDataLoader = dgsDataLoaderAnnotation.argumentValue("name") as? String ?: ""
 
@@ -180,6 +181,20 @@ class BeeFetchedFeature : BeeGenerativeFeature {
                 it.ifEmpty { null }
             }
             FetcherInternalTypeDefinition(target, internal, property)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun KSAnnotation.fetcherSafeModeOverrides(): List<FetcherSafeModeOverrideDefinition> {
+        val mappings = arguments.find { it.name?.asString() == BeeFetched::safeModeOverrides.name }?.value as Collection<KSAnnotation>
+        return mappings.map { mapping ->
+            val target =
+                mapping.argumentValue<KSType>(FetcherSafeModeOverrideDefinition::target.name).resolveTypeAlias().declaration.qualifiedName!!.asString()
+            val property =
+                mapping.argumentValue<String>(FetcherSafeModeOverrideDefinition::property.name)
+            val safeMode =
+                mapping.argumentValue<Boolean>(FetcherSafeModeOverrideDefinition::safeMode.name)
+            FetcherSafeModeOverrideDefinition(target, property, safeMode)
         }
     }
 

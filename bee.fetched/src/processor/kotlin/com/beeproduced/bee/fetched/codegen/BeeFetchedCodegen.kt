@@ -49,6 +49,9 @@ class BeeFetchedCodegen(
     private val typedInternals: Map<String, List<FetcherInternalTypeDefinition>> by lazy {
         definition.autoFetcher.internalTypes.groupBy { it.target }
     }
+    private val typedSafeModeOverrides: Map<String, List<FetcherSafeModeOverrideDefinition>> by lazy {
+        definition.autoFetcher.safeModeOverrides.groupBy { it.target }
+    }
 
     private val poetMap: PoetMap = mutableMapOf()
     private fun FunSpec.Builder.addNStatement(format: String)
@@ -151,8 +154,9 @@ class BeeFetchedCodegen(
         idProperty: PropertyDetails,
     ): FunSpec {
         val dataLoader = definition.dataLoader
-        val safeMode = definition.autoFetcher.safeMode
+        val safeMode = safeModeOverride(dto, property) ?: definition.autoFetcher.safeMode
         logger.info("buildNestedFetcher($dto, $property, $idProperty, $dataLoader, $safeMode)")
+
         val dtoName = dto.substringAfterLast(".")
         val dtoType = (internalDto ?: dto).toPoetClassName()
 
@@ -292,5 +296,16 @@ class BeeFetchedCodegen(
         }
         logger.info("idNames|idNames: $idNames")
         return idNames
+    }
+
+    private fun safeModeOverride(name: String, property: PropertyDetails): Boolean? {
+        logger.info("safeModeOverride($name, $property)")
+        val safeModeDefinitions = typedSafeModeOverrides[name]
+        logger.info("safeModeOverride|safeModeDefinitions: $safeModeDefinitions")
+        val safeMode = safeModeDefinitions
+            ?.firstOrNull { it.target == name && it.property == property.name}
+            ?.safeMode
+        logger.info("safeModeOverride|safeMode: $safeMode")
+        return safeMode
     }
 }

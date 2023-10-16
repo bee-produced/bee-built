@@ -54,6 +54,7 @@ data class AutoFetcherDefinition(
     val internalTypes: List<FetcherInternalTypeDefinition>,
     val ignore: List<FetcherIgnoreDefinition>,
     val safeMode: Boolean,
+    val safeModeOverrides: List<FetcherSafeModeOverrideDefinition>
 )
 
 data class FetcherMappingDefinition(
@@ -71,4 +72,10 @@ data class FetcherInternalTypeDefinition(
     val target: String,
     val internal: String,
     val property: String?
+)
+
+data class FetcherSafeModeOverrideDefinition(
+    val target: String,
+    val property: String,
+    val safeMode: Boolean,
 )

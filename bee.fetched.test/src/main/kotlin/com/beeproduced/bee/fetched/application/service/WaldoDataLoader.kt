@@ -1,9 +1,6 @@
 package com.beeproduced.bee.fetched.application.service
 
-import com.beeproduced.bee.fetched.annotations.BeeFetched
-import com.beeproduced.bee.fetched.annotations.FetcherIgnore
-import com.beeproduced.bee.fetched.annotations.FetcherInternalType
-import com.beeproduced.bee.fetched.annotations.FetcherMapping
+import com.beeproduced.bee.fetched.annotations.*
 import com.beeproduced.bee.fetched.graphql.DgsConstants
 import com.beeproduced.bee.fetched.graphql.dto.Corge
 import com.beeproduced.bee.fetched.graphql.dto.Garply
@@ -33,6 +30,9 @@ import java.util.concurrent.CompletionStage
         FetcherIgnore(Garply::class, DgsConstants.GARPLY.Waldo),
         FetcherIgnore(Waldo::class)
     ],
+    safeModeOverrides = [
+        FetcherSafeModeOverride(Corge::class, DgsConstants.CORGE.Waldo, true)
+    ]
 )
 @DgsDataLoader(name = "Waldo")
 class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo> {
