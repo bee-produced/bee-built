@@ -1,9 +1,7 @@
 package com.beeproduced.bee.generative.util
 
-import com.google.devtools.ksp.symbol.KSAnnotation
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSType
-import com.google.devtools.ksp.symbol.KSTypeAlias
+import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.symbol.*
 
 /**
  *
@@ -37,4 +35,9 @@ inline fun <reified T: Any> KSAnnotation.argumentValue(argumentName: String): T 
 
 inline fun <reified T: Any> KSAnnotation.safeArgumentValue(argumentName: String, default: T): T {
     return argumentValue(argumentName) as? T ?: default
+}
+
+fun KSPLogger.warnError(message: String, symbol: KSNode? = null) {
+    warn(message, symbol)
+    error(message, symbol)
 }

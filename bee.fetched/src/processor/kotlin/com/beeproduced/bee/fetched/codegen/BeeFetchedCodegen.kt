@@ -103,6 +103,7 @@ class BeeFetchedCodegen(
                 logger.info("processDto|skipping property: ${property.nonCollectionType} != ${definition.dtoType}")
                 continue
             }
+            if (ignoreDtoProperty(name, property.name)) return this
             logger.info("processDto|processing property: $name; ${typedMappings}")
 
             val internalDto = internalDto(name, property)
@@ -111,14 +112,21 @@ class BeeFetchedCodegen(
                 val idProperty = idNames.firstNotNullOfOrNull { properties[it] }
                 Triple(null, idProperty, true)
             } else {
-                val idNames = idNames(dto.name, property)
+                val idNames = idNames(internalDto.name, property)
                 val internalProperties = internalDto.properties.associateBy { it.name }
                 val idProperty = idNames.firstNotNullOfOrNull { internalProperties[it] }
                 val hasProperty = internalDto.properties.any { property == it }
                 Triple(internalDto.name, idProperty, hasProperty)
             }
             if (idProperty == null) {
-                logger.info("processDto|no id property found for $name - ${property.name}")
+                logger.warnError("processDto|no id property found for ${internalDto ?: name} - ${property.name}")
+                continue
+            }
+            if (idProperty.isCollection != property.isCollection) {
+                logger.warnError("processDto|mismatch between id property & property for ${internalDto ?: name} detected")
+                val idPropertyKind = if(idProperty.isCollection) "Collection" else "Non-Collection"
+                val propertyKind = if(property.isCollection) "Collection" else "Non-Collection"
+                logger.warnError("processDto|${idProperty.name} [$idPropertyKind] vs ${property.name} [$propertyKind]")
                 continue
             }
             logger.info("processDto|internalName: $internalName")
@@ -180,7 +188,6 @@ class BeeFetchedCodegen(
         poetMap.addMapping(DATA_FETCHING_ENVIRONMENT, dfeType)
         poetMap.addMapping(ILLEGAL_STATE_EXCEPTION, IllegalStateException::class.asClassName())
 
-        // TODO: What happens with internal types
         return FunSpec.builder(funcName)
             .addAnnotation(
                 AnnotationSpec
@@ -236,6 +243,16 @@ class BeeFetchedCodegen(
         val ignore = ignoreDefinitions != null &&
             ignoreDefinitions.all { it.property == null }
         logger.info("ignoreDto|ignore: $ignore")
+        return ignore
+    }
+
+    private fun ignoreDtoProperty(name: String, property: String): Boolean {
+        logger.info("ignoreDtoProperty($name, $property)")
+        logger.info("ignoreDtoProperty|typedIgnore: $typedIgnore")
+        val ignoreDefinitions = typedIgnore[name]
+        val ignore = ignoreDefinitions != null &&
+            ignoreDefinitions.any { it.property == property }
+        logger.info("ignoreDtoProperty|ignore: $ignore")
         return ignore
     }
 
