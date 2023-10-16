@@ -3,26 +3,19 @@ package com.beeproduced.example.application.media.service
 import com.beeproduced.data.dgs.selection.toDataSelection
 import com.beeproduced.example.application.graphql.dto.AddFilm
 import com.beeproduced.example.application.graphql.dto.EditFilm
-import com.beeproduced.example.application.organisation.service.*
+import com.beeproduced.example.application.graphql.dto.Foo
+import com.beeproduced.example.application.organisation.service.setContext
 import com.beeproduced.lib.events.manager.EventManager
-import com.beeproduced.result.errors.AppError
 import com.beeproduced.result.extensions.dgs.getDataFetcher
-import com.beeproduced.service.media.entities.Film
-import com.beeproduced.service.media.entities.input.CreateFilmInput
 import com.beeproduced.service.media.events.CreateFilm
 import com.beeproduced.service.media.events.GetRecentlyAddedFilms
 import com.beeproduced.service.media.events.UpdateFilm
 import com.beeproduced.utils.logFor
 import com.github.michaelbull.result.*
-import com.netflix.graphql.dgs.DgsComponent
-import com.netflix.graphql.dgs.DgsData
-import com.netflix.graphql.dgs.DgsMutation
-import com.netflix.graphql.dgs.DgsQuery
-import com.netflix.graphql.dgs.InputArgument
+import com.netflix.graphql.dgs.*
 import graphql.execution.DataFetcherResult
 import graphql.relay.Connection
 import graphql.schema.DataFetchingEnvironment
-import java.util.concurrent.CompletableFuture
 
 /**
  *
@@ -82,25 +75,23 @@ class MediaController(
             .getDataFetcher()
     }
 
+    // TODO: Remove later
+    data class MyTest(
+        val id: Int,
+        val test: String
+    )
 
-    @DgsData(parentType = "Film", field = "studios")
-    fun filmStudios(dfe: DataFetchingEnvironment): CompletableFuture<List<CompanyDto>?> {
-        val dataLoader = dfe.getCompanyDataLoader()
-        val film = dfe.getSource<FilmDto>()
-        return dataLoader.loadMany(film.studioIds)
+    @DgsQuery
+    fun test(): MyTest {
+        return MyTest(100, "Test!")
     }
 
-    @DgsData(parentType = "Film", field = "directors")
-    fun filmDirectors(dfe: DataFetchingEnvironment): CompletableFuture<List<PersonDto>?> {
-        val dataLoader = dfe.getPersonDataLoader()
-        val film = dfe.getSource<FilmDto>()
-        return dataLoader.loadMany(film.directorIds)
-    }
+    @DgsData(parentType = "Test", field = "foo")
+    fun testFoo(dfe: DataFetchingEnvironment): Foo {
+        // val myTest = dfe.getSource<Test>() // java.lang.ClassCastException
+        val myTest = dfe.getSource<MyTest>()
 
-    @DgsData(parentType = "Film", field = "cast")
-    fun filmCast(dfe: DataFetchingEnvironment): CompletableFuture<List<PersonDto>?> {
-        val dataLoader = dfe.getPersonDataLoader()
-        val film = dfe.getSource<FilmDto>()
-        return dataLoader.loadMany(film.castIds)
+        logger.info(myTest.toString())
+        return Foo("Foo!")
     }
 }

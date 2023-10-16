@@ -1,0 +1,72 @@
+
+type Foo {
+    # Simple case for singular id
+    waldoId: ID!
+    waldo: Waldo
+}
+
+type Bar {
+    # Simple case for plural ids
+    waldoIds: [ID!]!
+    waldos: [Waldo!]
+}
+
+type Qux {
+    # Singular nullable id
+    waldoId: ID
+    waldo: Waldo
+}
+
+type Quux {
+    # Plural nullable id
+    waldoIds: [ID!]
+    waldos: [Waldo!]
+}
+
+type Corge {
+    # Completely unrelated naming
+    corgeToWaldoId: ID!
+    waldo: Waldo
+}
+
+type Grault {
+    # Should be resolved with internal type id
+    waldo: Waldo
+}
+
+type Fred {
+    # Should be resolved with internal nullable id
+    waldo: Waldo
+}
+
+type Plugh {
+    # Should be resolved with internal type ids
+    waldos: [Waldo!]
+}
+
+type Xyzzy {
+    # Should be resolved with internal type nullable ids
+    waldos: [Waldo!]
+}
+
+type Garply {
+    # Implementation should NOT be generated
+    waldo: Waldo
+}
+
+type Waldo {
+    waldo: String!
+}
+
+extend type Query {
+    foo: Foo!
+    bar: Bar!
+    qux: Qux!
+    quux: Quux!
+    corge: Corge!
+    grault: Grault!
+    fred: Fred!
+    plugh: Plugh!
+    xyzzy: Xyzzy!
+    garply: Garply!
+}

@@ -19,6 +19,7 @@ plugins {
     java
     alias(libs.plugins.ksp)
     id("bee.generative")
+
 }
 
 allprojects {
@@ -58,12 +59,6 @@ repositories {
 }
 
 dependencies {
-    // service modules & more
-    implementation(project(":service.media"))
-    implementation(project(":service.media.events"))
-    implementation(project(":service.organisation"))
-    implementation(project(":service.organisation.events"))
-    implementation(project(":utils"))
     // in-house libraries
     implementation("com.beeproduced:events")
     implementation("com.beeproduced:events") {
@@ -126,9 +121,10 @@ tasks.withType<Test> {
 // See: https://stackoverflow.com/a/70954759/12347616
 tasks.withType<GenerateJavaTask> {
     notCompatibleWithConfigurationCache("Remove later")
-    packageName = "com.beeproduced.example.application.graphql"
+    packageName = "com.beeproduced.bee.fetched.graphql"
     subPackageNameTypes = "dto"
     generateCustomAnnotations = true
+    generateClient = true
     typeMapping = mutableMapOf(
         "DateTime" to "java.time.Instant",
         "Upload" to "org.springframework.web.multipart.MultipartFile"
@@ -136,8 +132,8 @@ tasks.withType<GenerateJavaTask> {
 }
 
 beeGenerative {
-    arg("fetchedScanPackage", "com.beeproduced.example.application.graphql.dto")
-    arg("fetchedPackageName", "com.beeproduced.example.application.graphql.fetcher")
+    arg("fetchedScanPackage", "com.beeproduced.bee.fetched.graphql.dto")
+    arg("fetchedPackageName", "com.beeproduced.bee.fetched.graphql.fetcher")
 }
 
 kapt {
