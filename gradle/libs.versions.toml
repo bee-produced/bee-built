@@ -1,29 +1,29 @@
 [versions]
 bee-built = "0.2.0-SNAPSHOT"
-springboot-base = "3.0.2"
-springboot-dependencymanagement = "1.1.0"
-kotlin-base = "1.8.0"
-kotlin-jvm = "1.8.0"
-dgs = "6.0.1"
-spring-security = "6.0.2"
+springboot-base = "3.1.4"
+springboot-dependencymanagement = "1.1.3"
+kotlin-base = "1.9.10"
+kotlin-jvm = "1.9.10"
+dgs = "7.6.0"
+spring-security = "6.1.4"
 mapstruct = "1.5.3.Final"
 junit = "5.8.1"
 kotlinter = "3.13.0"
-dgs-codegen = "5.6.9"
+dgs-codegen = "6.0.2"
 jackson-module-kotlin = "2.13.4"
 h2 = "2.1.214"
 konform = "0.4.0"
-michael-result = "1.1.16"
+michael-result = "1.1.18"
 jdsl = "2.2.0.RELEASE"
 aspectjrt = "1.9.19"
 jakarta-persistence-api = "3.1.0"
-hibernate-core = "6.1.6.Final"
+hibernate-core = "6.2.9.Final"
 caffeine = "3.1.2"
 springmockk = "4.0.2"
 datafaker = "1.14.0"
 jakarta-mail-api = "2.0.1"
 jakarta-mail = "2.0.1"
-ksp-base = "1.8.0-1.0.9"
+ksp-base = "1.9.10-1.0.13"
 
 [libraries]
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "springboot-base" }
@@ -84,5 +84,5 @@ kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin-bas
 spring-boot = { id = "org.springframework.boot", version.ref = "springboot-base" }
 spring-dependencymanagement = { id = "io.spring.dependency-management", version.ref = "springboot-dependencymanagement" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-base" }
-dgs-codegen = { id = "com.netflix.dgs.codegen", version = "5.6.9" }
+dgs-codegen = { id = "com.netflix.dgs.codegen", version.ref = "dgs-codegen" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-base"}

@@ -34,7 +34,7 @@ class BeeFetchedTest {
     fun `query singular id dataloader (foo)`() {
         val query = GraphQLQueryRequest(
             FooGraphQLQuery(),
-            FooProjectionRoot()
+            projection(::FooProjectionRoot)
                 .waldoId()
                 .waldo().select {
                     waldo()
@@ -55,7 +55,7 @@ class BeeFetchedTest {
     fun `query plural ids dataloader (bar)`() {
         val query = GraphQLQueryRequest(
             BarGraphQLQuery(),
-            BarProjectionRoot()
+            projection(::BarProjectionRoot)
                 .waldoIds()
                 .waldos().select {
                     waldo()
@@ -76,7 +76,7 @@ class BeeFetchedTest {
     fun `query singular nullable id dataloader (qux)`() {
         val query = GraphQLQueryRequest(
             QuxGraphQLQuery(),
-            QuxProjectionRoot()
+            projection(::QuxProjectionRoot)
                 .waldoId()
                 .waldo().select {
                     waldo()
@@ -97,7 +97,7 @@ class BeeFetchedTest {
     fun `query plural nullable ids dataloader (quux)`() {
         val query = GraphQLQueryRequest(
             QuuxGraphQLQuery(),
-            QuuxProjectionRoot()
+            projection(::QuuxProjectionRoot)
                 .waldoIds()
                 .waldos().select {
                     waldo()
@@ -118,7 +118,7 @@ class BeeFetchedTest {
     fun `query singular unrelated id dataloader (corge)`() {
         val query = GraphQLQueryRequest(
             CorgeGraphQLQuery(),
-            CorgeProjectionRoot()
+            projection(::CorgeProjectionRoot)
                 .corgeToWaldoId()
                 .waldo().select {
                     waldo()
@@ -139,7 +139,7 @@ class BeeFetchedTest {
     fun `query singular id internal type dataloader (grault)`() {
         val query = GraphQLQueryRequest(
             GraultGraphQLQuery(),
-            GraultProjectionRoot()
+            projection(::GraultProjectionRoot)
                 .waldo().select {
                     waldo()
                 }
@@ -159,7 +159,7 @@ class BeeFetchedTest {
     fun `query singular nullable id internal type dataloader (fred)`() {
         val query = GraphQLQueryRequest(
             FredGraphQLQuery(),
-            FredProjectionRoot()
+            projection(::FredProjectionRoot)
                 .waldo().select {
                     waldo()
                 }
@@ -179,7 +179,7 @@ class BeeFetchedTest {
     fun `query plural nullable ids internal type dataloader (xyzzy)`() {
         val query = GraphQLQueryRequest(
             XyzzyGraphQLQuery(),
-            XyzzyProjectionRoot()
+            projection(::XyzzyProjectionRoot)
                 .waldos().select {
                     waldo()
                 }
@@ -199,7 +199,7 @@ class BeeFetchedTest {
     fun `query plural ids internal type dataloader (plugh)`() {
         val query = GraphQLQueryRequest(
             PlughGraphQLQuery(),
-            PlughProjectionRoot()
+            projection(::PlughProjectionRoot)
                 .waldos().select {
                     waldo()
                 }
@@ -219,7 +219,7 @@ class BeeFetchedTest {
     fun `query not generated dataloader (garply)`() {
         val query = GraphQLQueryRequest(
             GarplyGraphQLQuery(),
-            GarplyProjectionRoot()
+            projection(::GarplyProjectionRoot)
                 .waldo().select {
                     waldo()
                 }
@@ -241,7 +241,7 @@ class BeeFetchedTest {
     fun `query unsafe singular id dataloader (alpha)`() {
         val query = GraphQLQueryRequest(
             AlphaGraphQLQuery(),
-            AlphaProjectionRoot()
+            projection(::AlphaProjectionRoot)
                 .zuluId()
                 .zulu().select {
                     zulu()
@@ -262,7 +262,7 @@ class BeeFetchedTest {
     fun `query unsafe plural ids dataloader (bravo)`() {
         val query = GraphQLQueryRequest(
             BravoGraphQLQuery(),
-            BravoProjectionRoot()
+            projection(::BravoProjectionRoot)
                 .zuluIds()
                 .zulus().select {
                     zulu()
@@ -283,7 +283,7 @@ class BeeFetchedTest {
     fun `query unsafe singular nullable id dataloader (charlie)`() {
         val query = GraphQLQueryRequest(
             CharlieGraphQLQuery(),
-            CharlieProjectionRoot()
+            projection(::CharlieProjectionRoot)
                 .zuluId()
                 .zulu().select {
                     zulu()
@@ -304,7 +304,7 @@ class BeeFetchedTest {
     fun `query unsafe plural nullable ids dataloader (delta)`() {
         val query = GraphQLQueryRequest(
             DeltaGraphQLQuery(),
-            DeltaProjectionRoot()
+            projection(::DeltaProjectionRoot)
                 .zuluIds()
                 .zulus().select {
                     zulu()
@@ -325,7 +325,7 @@ class BeeFetchedTest {
     fun `query unsafe singular unrelated id dataloader (echo)`() {
         val query = GraphQLQueryRequest(
             EchoGraphQLQuery(),
-            EchoProjectionRoot()
+            projection(::EchoProjectionRoot)
                 .echoToZuluId()
                 .zulu().select {
                     zulu()
@@ -346,7 +346,7 @@ class BeeFetchedTest {
     fun `query unsafe singular id internal type dataloader (foxtrot)`() {
         val query = GraphQLQueryRequest(
             FoxtrotGraphQLQuery(),
-            FoxtrotProjectionRoot()
+            projection(::FoxtrotProjectionRoot)
                 .zulu().select {
                     zulu()
                 }
@@ -366,7 +366,7 @@ class BeeFetchedTest {
     fun `query unsafe singular nullable id internal type dataloader (golf)`() {
         val query = GraphQLQueryRequest(
             GolfGraphQLQuery(),
-            GolfProjectionRoot()
+            projection(::GolfProjectionRoot)
                 .zulu().select {
                     zulu()
                 }
@@ -386,7 +386,7 @@ class BeeFetchedTest {
     fun `query unsafe plural ids internal type dataloader (hotel)`() {
         val query = GraphQLQueryRequest(
             HotelGraphQLQuery(),
-            HotelProjectionRoot()
+            projection(::HotelProjectionRoot)
                 .zulus().select {
                     zulu()
                 }
@@ -406,7 +406,7 @@ class BeeFetchedTest {
     fun `query unsafe plural nullable ids internal type dataloader (india)`() {
         val query = GraphQLQueryRequest(
             IndiaGraphQLQuery(),
-            IndiaProjectionRoot()
+            projection(::IndiaProjectionRoot)
                 .zulus().select {
                     zulu()
                 }
@@ -426,7 +426,7 @@ class BeeFetchedTest {
     fun `query unsafe not generated dataloader (juliet)`() {
         val query = GraphQLQueryRequest(
             JulietGraphQLQuery(),
-            JulietProjectionRoot()
+            projection(::JulietProjectionRoot)
                 .zulu().select {
                     zulu()
                 }
@@ -443,6 +443,12 @@ class BeeFetchedTest {
 }
 
 inline fun <P, reified N : BaseSubProjectionNode<P, *>> N.select(selection: N.() -> Unit): P {
-    selection()
+    this.selection()
     return this.parent()
+}
+
+// Workaround as Kotlin does not support Java diamond operator
+// https://netflix.github.io/dgs/generating-code-from-schema/#client-api-v2
+inline fun <reified R : BaseSubProjectionNode<Nothing, Nothing>> projection(constructor: ()->R): R {
+    return constructor()
 }

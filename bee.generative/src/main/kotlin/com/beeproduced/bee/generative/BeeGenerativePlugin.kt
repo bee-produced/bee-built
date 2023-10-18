@@ -27,7 +27,7 @@ open class BeeGenerativePluginExtension {
 }
 
 open class BeeDependencies(private val dependencies: DependencyHandler) {
-    operator fun invoke(dependencyNotation: String): Pair<Dependency?, Dependency> {
+    operator fun invoke(dependencyNotation: String): Pair<Dependency?, Dependency?> {
         val main = dependencies.add("implementation", dependencyNotation)
         val processor = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
             val capabilityNotation = if (version != null) {

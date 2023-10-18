@@ -7,6 +7,8 @@ import org.springframework.core.env.Environment
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector
 
 /**
  *
@@ -18,12 +20,13 @@ import org.springframework.security.web.SecurityFilterChain
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val env: Environment
+    private val env: Environment,
 ) {
 
     @Throws(Exception::class)
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+    fun filterChain(http: HttpSecurity, introspector: HandlerMappingIntrospector): SecurityFilterChain {
+        val mvcMatcherBuilder = MvcRequestMatcher.Builder(introspector)
         // Disable csrf
         // See: https://github.com/graphql-java-kickstart/graphql-spring-boot/issues/184
         http
@@ -34,13 +37,13 @@ class SecurityConfig(
             .authorizeHttpRequests { authorize ->
                 var auth = authorize
                     .requestMatchers(
-                        "/graphql",
-                        "/graphiql",
-                        "/schema.json",
-                        "/subscriptions",
-                        "/actuator/**",
-                        "/graphiql/**",
-                        "/h2-console"
+                        mvcMatcherBuilder.pattern("/graphql"),
+                        mvcMatcherBuilder.pattern("/graphiql"),
+                        mvcMatcherBuilder.pattern("/schema.json"),
+                        mvcMatcherBuilder.pattern("/subscriptions"),
+                        mvcMatcherBuilder.pattern("/actuator/**"),
+                        mvcMatcherBuilder.pattern("/graphiql/**"),
+                        mvcMatcherBuilder.pattern("/h2-console")
                     )
                     .permitAll()
                 if (env.activeProfiles.contains("dev")) {

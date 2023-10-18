@@ -1,18 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-/*
-The Library Loader plugin currently has an IDEA bug that causes it to not recognize the "libs" variable.
-Until https://youtrack.jetbrains.com/issue/KTIJ-19369 is fixed the suppress annotation is required.
- */
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.kotlin.jvm)
     java
     `java-gradle-plugin`
     `kotlin-dsl`
-    // TODO: Fix versioning?
-    // https://youtrack.jetbrains.com/issue/KT-54238
-    id("org.jetbrains.kotlin.plugin.sam.with.receiver") version("1.8.0")
 }
 
 group = "com.beeproduced"
