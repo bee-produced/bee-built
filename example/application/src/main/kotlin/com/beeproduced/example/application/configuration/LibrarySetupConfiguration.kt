@@ -1,8 +1,0 @@
-package com.beeproduced.example.application.configuration
-
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.EnableAspectJAutoProxy
-
-@EnableAspectJAutoProxy
-@Configuration
-class LibrarySetupConfiguration

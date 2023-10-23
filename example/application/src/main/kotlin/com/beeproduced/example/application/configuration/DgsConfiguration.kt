@@ -1,28 +1,16 @@
 package com.beeproduced.example.application.configuration
 
-import com.beeproduced.result.dgs.DgsErrorHandlingConfiguration
 import com.netflix.graphql.dgs.DgsScalar
 import graphql.language.StringValue
 import graphql.schema.Coercing
 import graphql.schema.CoercingParseLiteralException
 import graphql.schema.CoercingParseValueException
 import graphql.schema.CoercingSerializeException
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.EnableAspectJAutoProxy
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-/**
- *
- *
- * @author Kacper Urbaniec
- * @version 2022-10-10
- */
-@Configuration
-@EnableAspectJAutoProxy
-class DgsConfiguration : DgsErrorHandlingConfiguration()
 
 /**
  * Based on: https://netflix.github.io/dgs/scalars/

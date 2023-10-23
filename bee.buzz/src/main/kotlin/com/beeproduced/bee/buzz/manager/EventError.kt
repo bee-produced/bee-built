@@ -1,7 +1,7 @@
 package com.beeproduced.bee.buzz.manager
 
-import com.beeproduced.result.errors.InternalAppError
-import com.beeproduced.result.errors.ResultError
+import com.beeproduced.bee.functional.result.errors.InternalAppError
+import com.beeproduced.bee.functional.result.errors.ResultError
 
 /**
  *

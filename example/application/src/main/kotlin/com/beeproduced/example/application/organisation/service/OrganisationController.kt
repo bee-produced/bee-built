@@ -2,7 +2,7 @@ package com.beeproduced.example.application.organisation.service
 
 import com.beeproduced.bee.persistent.dgs.selection.toDataSelection
 import com.beeproduced.bee.buzz.manager.EventManager
-import com.beeproduced.result.extensions.dgs.getDataFetcher
+import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.getDataFetcher
 import com.beeproduced.service.organisation.events.GetAllCompanies
 import com.beeproduced.service.organisation.events.GetAllPersons
 import com.beeproduced.utils.logFor

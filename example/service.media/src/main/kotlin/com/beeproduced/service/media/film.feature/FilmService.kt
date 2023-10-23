@@ -3,10 +3,10 @@ package com.beeproduced.service.media.film.feature
 import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationResult
 import com.beeproduced.bee.persistent.selection.DataSelection
 import com.beeproduced.bee.buzz.manager.EventManager
-import com.beeproduced.result.AppResult
-import com.beeproduced.result.errors.BadRequestError
-import com.beeproduced.result.extensions.errors.andThenOnSuccess
-import com.beeproduced.result.jpa.transactional.TransactionalResult
+import com.beeproduced.bee.functional.result.AppResult
+import com.beeproduced.bee.functional.result.errors.BadRequestError
+import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.andThenOnSuccess
+import com.beeproduced.bee.functional.persistent.transactional.TransactionalResult
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.FilmId
 import com.beeproduced.service.media.entities.input.CreateFilmInput

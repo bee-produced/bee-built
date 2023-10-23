@@ -6,7 +6,7 @@ import com.beeproduced.bee.buzz.Request
 import com.beeproduced.bee.buzz.RequestHandler
 import com.beeproduced.bee.buzz.manager.exceptions.NotificationHandlerNotFound
 import com.beeproduced.bee.buzz.manager.exceptions.RequestHandlerNotFound
-import com.beeproduced.result.errors.AppError
+import com.beeproduced.bee.functional.result.errors.AppError
 import com.github.michaelbull.result.Result
 import org.slf4j.LoggerFactory
 import org.springframework.util.LinkedMultiValueMap
