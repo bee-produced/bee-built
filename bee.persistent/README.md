@@ -1,9 +1,10 @@
 <div align="center">
-  <h1><code>lib.data</code></h1>
+  <h1><code>bee.persistent</code></h1>
   <p>
      <strong>Easier data handling for GraphQL + JPA</strong>
   </p>
 </div>
+
 
 ## 💡 Motivation
 
@@ -11,7 +12,7 @@
 * *Idiomatic*: Focus on idiomatic Kotlin (e.g. allow data classes)
 * *Functional*: Prefer immutable records & minimize side effects
 
-But this comes at a cost by design: `lib.data`'s JPA flavour is more a sophisticated database mapping utility than a fully fletched ORM.
+But this comes at a cost by design: `bee.persistent`'s JPA flavour is more a sophisticated database mapping utility than a fully fletched ORM.
 
 > Each approach has its advantages and disadvantages; it is therefore not surprising that Object-Relational Mapping is referred to as the [Vietnam of computer science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/). There is probably no universally good solution, only compromises.
 
@@ -19,13 +20,13 @@ But this comes at a cost by design: `lib.data`'s JPA flavour is more a sophistic
 
 ### Define Entities
 
-If one has worked with JPA, the following will be familiar. `lib.data` is a JPA superset which ironically limits functionality by design.
+If one has worked with JPA, the following will be familiar. `bee.persistent` is a JPA superset which ironically limits functionality by design.
 
-> No JPA experience? Start with some [fundamentals](https://www.baeldung.com/jpa-entities) before continuing  your `lib.data` journey!
+> No JPA experience? Start with some [fundamentals](https://www.baeldung.com/jpa-entities) before continuing  your `bee.persistent` journey!
 
-In contrast to JPA one can use and is even encouraged to use data classes for entities. Immutability is not a problem for `lib.data` as all changes to entities are flushed at any step or [even directly mapped to database circumventing the persistence context](https://thorben-janssen.com/criteria-updatedelete-easy-way-to/).
+In contrast to JPA one can use and is even encouraged to use data classes for entities. Immutability is not a problem for `bee.persistent` as all changes to entities are flushed at any step or [even directly mapped to database circumventing the persistence context](https://thorben-janssen.com/criteria-updatedelete-easy-way-to/).
 
-However, there are some important gotchas that can be tolerated in JPA but not in `lib.data`:
+However, there are some important gotchas that can be tolerated in JPA but not in `bee.persistent`:
 
 * Use `Set<T>` instead of `List<T>` for collections
 
@@ -60,13 +61,13 @@ However, there are some important gotchas that can be tolerated in JPA but not i
 
   > ⚠️ Inheritance support is not verified / tested yet. 
 
-Also, all entities must implement the `DataEntity<E>` interface to be compatible with `lib.data`.
+Also, all entities must implement the `DataEntity<E>` interface to be compatible with `bee.persistent`.
 
 > 🪧 This requirement may be lifted in the future.
 
 In view of this, a simple one-to-many association with a composite key can be modelled as follows.
 
-> 🪧 The code is taken from the examples in the folder `lib.data` - `test`.
+> 🪧 The code is taken from the examples in the folder `bee.persistent` - `test`.
 
 ```kotlin
 data class WorkId(
@@ -139,7 +140,7 @@ data class WorkCollection(
 
 ### Create Repositories
 
-`lib.data` uses custom repositories for data access and not standard ones like Spring Data's `CrudRepository`. 
+`bee.persistent` uses custom repositories for data access and not standard ones like Spring Data's `CrudRepository`. 
 
 But no worries, they are quite comparable and easy to define. One major  difference might be that JPA's entity manager has to be passed  explicitly. This was introduced to easily implement support for multiple data sources with independent entity managers. Apart from that, one  only has to specify the entity type and its id type as generic  parameters.
 
@@ -157,11 +158,11 @@ class WorkCollectionRepository(
 
 > ⚠️ Favour `@Component` over the `@Repository` annotation as the latter one can introduce unexpected side effects on non Spring Data repositories.
 
-> ⚠️ Each entity in `lib.data` requires a repository even when it is not explicitly used. Without it, the internal metamodel of `lib.data` will be incomplete,  which may lead to unexpected exceptions when the entity is referenced by another, for example by a relationship.
+> ⚠️ Each entity in `bee.persistent` requires a repository even when it is not explicitly used. Without it, the internal metamodel of `bee.persistent` will be incomplete,  which may lead to unexpected exceptions when the entity is referenced by another, for example by a relationship.
 
 ### Create Simple Queries
 
-`lib.data`'s repository API is quite comparable to Spring Data's [`CrudRepository`](https://docs.spring.io/spring-data/data-commons/docs/current/api/org/springframework/data/repository/CrudRepository.html). A notable difference, however, is that there is no universal `save`  method for persisting and updating; `lib.data` explicitly provides a  `persist` method for entering new entities and an `update` method for  the operation of the same name.
+`bee.persistent`'s repository API is quite comparable to Spring Data's [`CrudRepository`](https://docs.spring.io/spring-data/data-commons/docs/current/api/org/springframework/data/repository/CrudRepository.html). A notable difference, however, is that there is no universal `save`  method for persisting and updating; `bee.persistent` explicitly provides a  `persist` method for entering new entities and an `update` method for  the operation of the same name.
 
 ```kotlin
 var collectionId: Long = -1
@@ -191,7 +192,7 @@ assertEquals("Update!", workUpdate.txt)
 
 #### Fun with Selections or: Query within the Query
 
-In JPA, relation properties marked with `FetchType.LAZY` are returned as proxies. When accessing a field or method of such a proxy, a database query is executed to retrieve the data for that entity. Since `lib.data` strives to  minimise side effects, no proxies are returned in such cases, but a  `null` value is returned.
+In JPA, relation properties marked with `FetchType.LAZY` are returned as proxies. When accessing a field or method of such a proxy, a database query is executed to retrieve the data for that entity. Since `bee.persistent` strives to  minimise side effects, no proxies are returned in such cases, but a  `null` value is returned.
 
 ```kotlin
 var collectionId: Long = -1
@@ -206,11 +207,11 @@ val collection = collectionRepo.selectById(collectionId)
 println(collection.works)
 ```
 
-To load a lazy relation in `lib.data`, it must be explicitly mentioned  in a *data selection*. Each select method takes an additional optional  parameter of the `DataSelection` interface, which is a graph listing all the relations to be eagerly loaded for the query.
+To load a lazy relation in `bee.persistent`, it must be explicitly mentioned  in a *data selection*. Each select method takes an additional optional  parameter of the `DataSelection` interface, which is a graph listing all the relations to be eagerly loaded for the query.
 
-> 🪧 `lib.data` internally uses the [Jakarta Persistence Entity Graph](https://docs.jboss.org/hibernate/orm/6.1/userguide/html_single/Hibernate_User_Guide.html#fetching-strategies-dynamic-fetching-entity-graph), specifically a load graph, in combination  with the Criteria API to achieve this functionality. Each data selection is converted into a load graph and passed as a query hint.
+> 🪧 `bee.persistent` internally uses the [Jakarta Persistence Entity Graph](https://docs.jboss.org/hibernate/orm/6.1/userguide/html_single/Hibernate_User_Guide.html#fetching-strategies-dynamic-fetching-entity-graph), specifically a load graph, in combination  with the Criteria API to achieve this functionality. Each data selection is converted into a load graph and passed as a query hint.
 
-On default, all select methods default to `EmptySelection` which loads no relations. `lib.data` also features following `DataSelection` implementations:
+On default, all select methods default to `EmptySelection` which loads no relations. `bee.persistent` also features following `DataSelection` implementations:
 
 * `SimpleSelection`: Graph of nested sets where relations to be loaded are marked with their property name
 
@@ -242,7 +243,7 @@ println(collection.works)
 
 Most JPA implementations such as Hibernate provide Automatic Dirty checking whereby changes to a managed entity are automatically saved to the database when the session is flushed or the transaction is committed. 
 
-In `lib.data`, all entities are automatically detached after persistence. One reason for this is that the Criteria API bypasses the persistence context for update or delete operations, leaving managed entities in an inconsistent state. Also, queries to the Criteria API can reuse the entity cache, which can result in missing relationships that were explicitly marked in the load graph converted from a data selection. In summary, this means that in `lib.data` every entity is free of side effects; every operation must be performed explicitly. This should not be an obstacle, as `lib.data` recommends, in the spirit of immutable design, to perform operations with updated copies of an existing entities.
+In `bee.persistent`, all entities are automatically detached after persistence. One reason for this is that the Criteria API bypasses the persistence context for update or delete operations, leaving managed entities in an inconsistent state. Also, queries to the Criteria API can reuse the entity cache, which can result in missing relationships that were explicitly marked in the load graph converted from a data selection. In summary, this means that in `bee.persistent` every entity is free of side effects; every operation must be performed explicitly. This should not be an obstacle, as `bee.persistent` recommends, in the spirit of immutable design, to perform operations with updated copies of an existing entities.
 
 When working with [kotlin result](https://github.com/michaelbull/kotlin-result) for error handling, one can use `@TransactionalResult` on methods that return `Result<V, E>` to implicitly wrap method execution in a database transaction. This should be familiar if one has already used [`@Transactionl` from Spring Data](https://www.baeldung.com/transaction-configuration-with-jpa-and-spring); in fact, the `@TransactionalResult` API is based heavily on its Spring counterpart.
 
@@ -258,7 +259,7 @@ However, there is a difference in how exceptions are handled. `@Transactional` o
 
 ### Model `m:n` Relations
 
-In `lib.data` relations should be modelled explicitly therefore it is not advised to propagate (cascade) operations to related entities. In JPA one can persist an entity with included relation entities in one step, in `lib.data` each relation is inserted on its own via its own repository.
+In `bee.persistent` relations should be modelled explicitly therefore it is not advised to propagate (cascade) operations to related entities. In JPA one can persist an entity with included relation entities in one step, in `bee.persistent` each relation is inserted on its own via its own repository.
 
 ```kotlin
 @Entity
@@ -331,7 +332,7 @@ assertEquals(barId, foo1.bars?.first()?.id)
 
 ### Advanced Queries
 
-In the previous examples, only simple, predefined operations were shown. It has also been mentioned that `lib.data` is built on top of the Criteria API, but no Criteria Queries have been shown so far.
+In the previous examples, only simple, predefined operations were shown. It has also been mentioned that `bee.persistent` is built on top of the Criteria API, but no Criteria Queries have been shown so far.
 
 Repository operations that provide extensibility of Criteria Queries contain a parameter `dsl` that represents a lambda. User-defined queries can be inserted into these lambdas.
 
@@ -443,7 +444,7 @@ A skip over can be of type `SkipOverOnce` & `SkipOverAll`. Prefer the latter one
 
 ### About `@OneToOne`, `@ManyToOne` and `FetchType.LAZY`
 
-With `lib.data` pre Hibernate 6.X lazy loading for single entities was working as expected. But since migrating to Hibernate 6.X, it seems that this feature is not supported and/or working as intended.
+With `bee.persistent` pre Hibernate 6.X lazy loading for single entities was working as expected. But since migrating to Hibernate 6.X, it seems that this feature is not supported and/or working as intended.
 
 The [Hibernate 6.1 documentation](https://docs.jboss.org/hibernate/orm/6.1/userguide/html_single/Hibernate_User_Guide.html#fetching-strategies) specifically notes to mark all associations lazy and to use dynamic fetching strategies for eagerness.
 

@@ -23,10 +23,10 @@ Extend DGS:
 
 Some changes are currently being made:
 
-* `lib.data`      
+* `bee.persistent`      
   Easier data handling for GraphQL + JPA, [documentation](./lib.data/README.md)
-* `lib.result`      
-  Functional kotlin bindings, integration with DGS & more      
-* `lib.events`       
+* `bee.functional`      
+  Functional kotlin bindings, integration with DGS, `bee.persistent` & more      
+* `bee.buzz`       
   Simple event manager based on the mediator pattern, based on C#'s [MediatR library](https://github.com/jbogard/MediatR)
 
