@@ -3,6 +3,8 @@ package com.beeproduced.bee.persistent.dgs.selection
 import com.beeproduced.bee.persistent.selection.DataSelection
 import com.beeproduced.bee.persistent.selection.FieldNodeDefinition
 import com.beeproduced.bee.persistent.selection.SimpleSelection
+import com.beeproduced.bee.persistent.selection.SimpleSelection.Companion.substringBeforeOrNull
+import graphql.schema.DataFetchingEnvironment
 import graphql.schema.DataFetchingFieldSelectionSet
 import graphql.schema.SelectedField
 
@@ -20,8 +22,14 @@ fun DataFetchingFieldSelectionSet.toDataSelection(): DataSelection {
     return SimpleSelection(fields)
 }
 
+fun DataFetchingEnvironment.toDataSelection(): DataSelection {
+    return selectionSet.toDataSelection()
+}
+
 private fun toDataSelection(node: SelectedField): FieldNodeDefinition {
+
     val field = node.qualifiedName
+    val fieldType = node.fullyQualifiedName.substringBeforeOrNull(".")
     val immediateFields = node.selectionSet.immediateFields
 
     val nodeFields = if (immediateFields.isNullOrEmpty()) null
@@ -29,6 +37,6 @@ private fun toDataSelection(node: SelectedField): FieldNodeDefinition {
         immediateFields.mapTo(HashSet()) { toDataSelection(it) }
     }
 
-    return SimpleSelection.FieldNode(field, nodeFields)
+    return SimpleSelection.TypedFiledNode(field, fieldType, nodeFields)
 
 }

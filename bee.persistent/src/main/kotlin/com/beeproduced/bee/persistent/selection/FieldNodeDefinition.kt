@@ -8,5 +8,6 @@ package com.beeproduced.bee.persistent.selection
  */
 interface FieldNodeDefinition {
     val field: String
+    val type: String?
     val fields: Set<FieldNodeDefinition>?
 }

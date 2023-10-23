@@ -36,6 +36,11 @@ class SimpleSelection internal constructor(
             val osFieldGlobPattern = removeLeadingSlash(fieldGlobPattern)
             return FileSystems.getDefault().getPathMatcher("glob:$osFieldGlobPattern")
         }
+
+        fun String.substringBeforeOrNull(delimiter: String): String? {
+            val index = indexOf(delimiter)
+            return if (index == -1) null else substring(0, index)
+        }
     }
 
     constructor(fields: Set<FieldNodeDefinition>, skips: Collection<SkipOver> = emptyList()) : this(
@@ -85,10 +90,19 @@ class SimpleSelection internal constructor(
     data class FieldNode(
         override val field: String,
         override val fields: Set<FieldNodeDefinition>? = null
+    ) : FieldNodeDefinition {
+        override val type: String? = null
+    }
+
+    data class TypedFiledNode(
+        override val field: String,
+        override val type: String?,
+        override val fields: Set<FieldNodeDefinition>? = null
     ) : FieldNodeDefinition
 
     private data class MutableFieldNode(
         override val field: String,
+        override val type: String?,
         override var fields: MutableSet<MutableFieldNode>? = null
     ) : FieldNodeDefinition
 
@@ -141,7 +155,7 @@ class SimpleSelection internal constructor(
 
         for (node in immediateFields) {
             val mutableNode = if (!immediateFieldsTmp.contains(node.field)) {
-                val mutableNode = MutableFieldNode(node.field)
+                val mutableNode = MutableFieldNode(node.field, node.type)
                 immediateFieldsTmp[node.field] = mutableNode
                 fieldsTmp[node.field] = mutableNode
                 fieldGlobPathsTmp.add(mutableNode.field)
@@ -180,7 +194,7 @@ class SimpleSelection internal constructor(
         val mutableFieldNode = if (fieldsTmp.contains(path)) {
             fieldsTmp.getValue(path)
         } else {
-            val currentNode = MutableFieldNode(node.field)
+            val currentNode = MutableFieldNode(node.field, node.type)
             fieldsTmp[path] = currentNode
             currentNode
         } as MutableFieldNode

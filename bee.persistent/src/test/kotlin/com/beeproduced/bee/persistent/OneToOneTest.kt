@@ -6,7 +6,7 @@ import com.beeproduced.bee.persistent.selection.SimpleSelection
 import com.beeproduced.bee.persistent.selection.SimpleSelection.FieldNode
 import com.beeproduced.bee.persistent.config.DummyApplication
 import com.beeproduced.bee.persistent.config.PersistenceConfiguration
-import com.beeproduced.lib.data.one.to.many.*
+import com.beeproduced.bee.persistent.one.to.many.*
 import com.beeproduced.bee.persistent.one.to.one.Branch
 import com.beeproduced.bee.persistent.one.to.one.BranchRepository
 import com.beeproduced.bee.persistent.one.to.one.Root
