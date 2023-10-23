@@ -183,6 +183,19 @@ class SimpleSelection internal constructor(
         )
     }
 
+    override fun typeSelect(typeName: String): DataSelection? {
+        if (typeName.isEmpty()) return null
+
+        val start = mutableSetOf<FieldNodeDefinition>()
+        for ((_, node) in fields) {
+            if (node.type != null && node.type == typeName)
+                start.add(node)
+        }
+
+        return if (start.isEmpty()) null
+        else SimpleSelection(start, skipOvers.remainingSkips())
+    }
+
     private fun merge(
         node: FieldNodeDefinition,
         parent: MutableFieldNode,

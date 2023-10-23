@@ -19,4 +19,6 @@ class FullNonRecursiveSelection(skips: Collection<SkipOver> = emptyList()) : Dat
     override fun merge(selections: Collection<SimpleSelection>): DataSelection {
         return this
     }
+
+    override fun typeSelect(typeName: String): DataSelection? = this
 }

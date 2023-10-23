@@ -19,4 +19,12 @@ interface DataSelection {
     fun merge(vararg selections: SimpleSelection): DataSelection
 
     fun merge(selections: Collection<SimpleSelection>): DataSelection
+
+    fun typeSelect(typeName: String): DataSelection?
+}
+
+inline fun <reified C> DataSelection.typeSelect(): DataSelection? {
+    val typeName = C::class.simpleName ?:
+        throw Exception("Given class has no name")
+    return typeSelect(typeName)
 }

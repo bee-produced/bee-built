@@ -2,7 +2,7 @@ package com.beeproduced.example.application.organisation.service
 
 import com.beeproduced.bee.fetched.annotations.BeeFetched
 import com.beeproduced.bee.fetched.annotations.FetcherIgnore
-import com.beeproduced.bee.persistent.dgs.selection.toDataSelection
+import com.beeproduced.bee.persistent.extensions.graphql.schema.toDataSelection
 import com.beeproduced.bee.persistent.selection.EmptySelection
 import com.beeproduced.bee.buzz.manager.EventManager
 import com.beeproduced.service.organisation.events.GetCompaniesByIds

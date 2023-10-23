@@ -21,4 +21,6 @@ class EmptySelection : DataSelection {
         val selection = SimpleSelection(setOf())
         return selection.merge(selections)
     }
+
+    override fun typeSelect(typeName: String): DataSelection? = null
 }

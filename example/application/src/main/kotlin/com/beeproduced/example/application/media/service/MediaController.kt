@@ -1,6 +1,6 @@
 package com.beeproduced.example.application.media.service
 
-import com.beeproduced.bee.persistent.dgs.selection.toDataSelection
+import com.beeproduced.bee.persistent.extensions.graphql.schema.toDataSelection
 import com.beeproduced.example.application.graphql.dto.AddFilm
 import com.beeproduced.example.application.graphql.dto.EditFilm
 import com.beeproduced.example.application.graphql.dto.Foo
