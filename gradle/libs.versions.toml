@@ -1,5 +1,5 @@
 [versions]
-bee-built = "0.2.0-SNAPSHOT"
+bee-built = "0.3.0-SNAPSHOT"
 springboot-base = "3.1.4"
 springboot-dependencymanagement = "1.1.3"
 kotlin-base = "1.9.10"
