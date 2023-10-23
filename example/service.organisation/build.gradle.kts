@@ -25,10 +25,10 @@ dependencyManagement {
 dependencies {
     implementation(project(":service.organisation.events"))
     implementation(project(":utils"))
-    implementation("com.beeproduced:events")
-    implementation("com.beeproduced:data")
-    implementation("com.beeproduced:data") {
-        capabilities { requireCapability("com.beeproduced:data-dgs") }
+    implementation("com.beeproduced:bee.buzz")
+    implementation("com.beeproduced:bee.persistent")
+    implementation("com.beeproduced:bee.persistent") {
+        capabilities { requireCapability("com.beeproduced:bee.persistent-dgs") }
     }
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)

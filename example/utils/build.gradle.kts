@@ -18,9 +18,9 @@ repositories {
 }
 
 dependencies {
-    api("com.beeproduced:result")
-    api("com.beeproduced:result") {
-        capabilities { requireCapability("com.beeproduced:result-jpa") }
+    api("com.beeproduced:bee.functional")
+    api("com.beeproduced:bee.functional") {
+        capabilities { requireCapability("com.beeproduced:bee.functional-persistant") }
     }
     api(libs.michael.result)
     implementation(libs.kotlin.stdlib)

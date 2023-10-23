@@ -1,4 +1,4 @@
-rootProject.name = "data"
+rootProject.name = "bee.persistent"
 
 dependencyResolutionManagement {
     versionCatalogs {

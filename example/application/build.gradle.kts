@@ -62,16 +62,16 @@ dependencies {
     implementation(project(":service.organisation.events"))
     implementation(project(":utils"))
     // in-house libraries
-    implementation("com.beeproduced:events")
-    implementation("com.beeproduced:events") {
-        capabilities { requireCapability("com.beeproduced:events-simple") }
+    implementation("com.beeproduced:bee.buzz")
+    implementation("com.beeproduced:bee.buzz") {
+        capabilities { requireCapability("com.beeproduced:bee.buzz-simple") }
     }
-    implementation("com.beeproduced:result") {
-        capabilities { requireCapability("com.beeproduced:result-dgs") }
+    implementation("com.beeproduced:bee.functional") {
+        capabilities { requireCapability("com.beeproduced:bee.functional-dgs") }
     }
-    implementation("com.beeproduced:data")
-    implementation("com.beeproduced:data") {
-        capabilities { requireCapability("com.beeproduced:data-dgs") }
+    implementation("com.beeproduced:bee.persistent")
+    implementation("com.beeproduced:bee.persistent") {
+        capabilities { requireCapability("com.beeproduced:bee.persistent-dgs") }
     }
     beeGenerative("com.beeproduced:bee.fetched")
     // external dependencies

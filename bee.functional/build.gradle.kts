@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -10,6 +11,11 @@ group = "com.beeproduced"
 version = libs.versions.bee.built.get()
 java.sourceCompatibility = JavaVersion.VERSION_17
 java.targetCompatibility = JavaVersion.VERSION_17
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
 
 repositories {
     mavenCentral()
@@ -43,13 +49,13 @@ sourceSets {
     //         configurations["dgsTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
     //     }
     // }
-    create("jpa") {
+    create("persistant") {
         java {
-            srcDir("src/jpa/kotlin")
+            srcDir("src/persistant/kotlin")
             compileClasspath += main.get().output
             runtimeClasspath += main.get().output
-            configurations["jpaImplementation"].extendsFrom(configurations.implementation.get())
-            configurations["jpaRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+            configurations["persistantImplementation"].extendsFrom(configurations.implementation.get())
+            configurations["persistantRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
         }
     }
 }
@@ -58,8 +64,8 @@ java {
     registerFeature("dgs") {
         usingSourceSet(sourceSets["dgs"])
     }
-    registerFeature("jpa") {
-        usingSourceSet(sourceSets["jpa"])
+    registerFeature("persistant") {
+        usingSourceSet(sourceSets["persistant"])
     }
 }
 
@@ -73,7 +79,7 @@ dependencies {
     "dgsImplementation"(platform(libs.dgs.platform))
     "dgsImplementation"(libs.dgs.spring.starter)
     "dgsImplementation"(libs.spring.boot.starter.aop)
-    "jpaImplementation"(libs.spring.boot.starter.data.jpa)
+    "persistantImplementation"(libs.spring.boot.starter.data.jpa)
 }
 
 tasks.withType<Test> {

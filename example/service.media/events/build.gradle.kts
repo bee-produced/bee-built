@@ -15,6 +15,6 @@ repositories {
 
 dependencies {
     implementation(libs.kotlin.stdlib)
-    implementation("com.beeproduced:events")
+    implementation("com.beeproduced:bee.buzz")
     api(project(":service.media.entities"))
 }

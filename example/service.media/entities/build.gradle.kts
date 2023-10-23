@@ -21,9 +21,9 @@ dependencies {
     implementation(project(":utils"))
     api(libs.jakarta.persistence.api)
     api(libs.hibernate.core)
-    api("com.beeproduced:data")
-    api("com.beeproduced:data") {
-        capabilities { requireCapability("com.beeproduced:data-jpa") }
+    api("com.beeproduced:bee.persistent")
+    api("com.beeproduced:bee.persistent") {
+        capabilities { requireCapability("com.beeproduced:bee.persistent-jpa") }
     }
 }
 

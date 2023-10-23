@@ -8,9 +8,9 @@ dependencyResolutionManagement {
 
 includeBuild("../../bee.generative")
 includeBuild("../../bee.fetched")
-includeBuild("../../lib.data")
-includeBuild("../../lib.result")
-includeBuild("../../lib.events")
+includeBuild("../../bee.persistent")
+includeBuild("../../bee.functional")
+includeBuild("../../bee.buzz")
 
 // Services
 include(":service.media")
