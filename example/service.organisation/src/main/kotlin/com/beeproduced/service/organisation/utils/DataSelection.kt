@@ -1,7 +1,7 @@
 package com.beeproduced.service.organisation.utils
 
-import com.beeproduced.data.selection.DataSelection
-import com.beeproduced.data.selection.SkipOverAll
+import com.beeproduced.bee.persistent.selection.DataSelection
+import com.beeproduced.bee.persistent.selection.SkipOverAll
 import com.beeproduced.service.organisation.entities.Company
 import com.beeproduced.service.organisation.entities.CompanyMember
 import com.beeproduced.service.organisation.entities.Person

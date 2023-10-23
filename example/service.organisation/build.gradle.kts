@@ -1,8 +1,4 @@
-/*
-The Library Loader plugin currently has an IDEA bug that causes it to not recognize the "libs" variable.
-Until https://youtrack.jetbrains.com/issue/KTIJ-19369 is fixed the suppress annotation is required.
- */
-@Suppress("DSL_SCOPE_VIOLATION")
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
@@ -29,10 +25,10 @@ dependencyManagement {
 dependencies {
     implementation(project(":service.organisation.events"))
     implementation(project(":utils"))
-    implementation("com.beeproduced:events")
-    implementation("com.beeproduced:data")
-    implementation("com.beeproduced:data") {
-        capabilities { requireCapability("com.beeproduced:data-dgs") }
+    implementation("com.beeproduced:bee.buzz")
+    implementation("com.beeproduced:bee.persistent")
+    implementation("com.beeproduced:bee.persistent") {
+        capabilities { requireCapability("com.beeproduced:bee.persistent-dgs") }
     }
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)

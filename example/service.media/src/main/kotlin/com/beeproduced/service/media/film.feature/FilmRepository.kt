@@ -1,11 +1,11 @@
 package com.beeproduced.service.media.film.feature
 
-import com.beeproduced.data.jpa.repository.BaseDataRepository
-import com.beeproduced.data.jpa.repository.extensions.Cursor
-import com.beeproduced.data.jpa.repository.extensions.Pagination
-import com.beeproduced.data.jpa.repository.extensions.PaginationException
-import com.beeproduced.data.jpa.repository.extensions.PaginationResult
-import com.beeproduced.data.selection.DataSelection
+import com.beeproduced.bee.persistent.jpa.repository.BaseDataRepository
+import com.beeproduced.bee.persistent.jpa.repository.extensions.Cursor
+import com.beeproduced.bee.persistent.jpa.repository.extensions.Pagination
+import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationException
+import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationResult
+import com.beeproduced.bee.persistent.selection.DataSelection
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.FilmId
 import com.linecorp.kotlinjdsl.query.spec.expression.ColumnSpec

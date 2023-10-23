@@ -1,8 +1,8 @@
 package com.beeproduced.service.organisation.company.feature
 
-import com.beeproduced.lib.events.manager.EventManager
-import com.beeproduced.lib.events.requestHandler
-import com.beeproduced.result.AppResult
+import com.beeproduced.bee.buzz.manager.EventManager
+import com.beeproduced.bee.buzz.requestHandler
+import com.beeproduced.bee.functional.result.AppResult
 import com.beeproduced.service.organisation.entities.Company
 import com.beeproduced.service.organisation.events.CompaniesExist
 import com.beeproduced.service.organisation.events.CreateCompany

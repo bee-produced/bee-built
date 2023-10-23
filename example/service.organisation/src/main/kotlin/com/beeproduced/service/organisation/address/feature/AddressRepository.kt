@@ -1,6 +1,6 @@
 package com.beeproduced.service.organisation.address.feature
 
-import com.beeproduced.data.jpa.repository.BaseDataRepository
+import com.beeproduced.bee.persistent.jpa.repository.BaseDataRepository
 import com.beeproduced.service.organisation.entities.Address
 import com.beeproduced.service.organisation.entities.AddressId
 import jakarta.persistence.EntityManager

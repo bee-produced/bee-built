@@ -1,11 +1,11 @@
 package com.beeproduced.service.organisation.company.feature
 
-import com.beeproduced.data.selection.DataSelection
-import com.beeproduced.data.selection.EmptySelection
-import com.beeproduced.result.AppResult
-import com.beeproduced.result.errors.BadRequestError
-import com.beeproduced.result.extensions.functional.andThenToPair
-import com.beeproduced.result.jpa.transactional.TransactionalResult
+import com.beeproduced.bee.persistent.selection.DataSelection
+import com.beeproduced.bee.persistent.selection.EmptySelection
+import com.beeproduced.bee.functional.result.AppResult
+import com.beeproduced.bee.functional.result.errors.BadRequestError
+import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.andThenToPair
+import com.beeproduced.bee.functional.persistent.transactional.TransactionalResult
 import com.beeproduced.service.organisation.address.feature.AddressService
 import com.beeproduced.service.organisation.entities.*
 import com.beeproduced.service.organisation.entities.input.CreateAddressInput

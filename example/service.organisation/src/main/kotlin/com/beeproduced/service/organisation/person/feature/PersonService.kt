@@ -1,9 +1,9 @@
 package com.beeproduced.service.organisation.person.feature
 
-import com.beeproduced.data.selection.DataSelection
-import com.beeproduced.result.AppResult
-import com.beeproduced.result.errors.BadRequestError
-import com.beeproduced.result.jpa.transactional.TransactionalResult
+import com.beeproduced.bee.persistent.selection.DataSelection
+import com.beeproduced.bee.functional.result.AppResult
+import com.beeproduced.bee.functional.result.errors.BadRequestError
+import com.beeproduced.bee.functional.persistent.transactional.TransactionalResult
 import com.beeproduced.service.organisation.address.feature.AddressService
 import com.beeproduced.service.organisation.entities.Address
 import com.beeproduced.service.organisation.entities.Person

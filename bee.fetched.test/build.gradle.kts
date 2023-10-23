@@ -1,10 +1,5 @@
 import com.netflix.graphql.dgs.codegen.gradle.GenerateJavaTask
 
-/*
-The Library Loader plugin currently has an IDEA bug that causes it to not recognize the "libs" variable.
-Until https://youtrack.jetbrains.com/issue/KTIJ-19369 is fixed the suppress annotation is required.
- */
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
@@ -12,14 +7,15 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependencymanagement)
     alias(libs.plugins.kotlin.jpa)
+    // ksp plugin must be placed before kapt
+    // https://github.com/google/ksp/issues/1445#issuecomment-1763422067
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.dgs.codegen)
     alias(libs.plugins.kotlin.allopen)
     alias(libs.plugins.kotlin.noarg)
     java
-    alias(libs.plugins.ksp)
     id("bee.generative")
-
 }
 
 allprojects {
@@ -60,16 +56,16 @@ repositories {
 
 dependencies {
     // in-house libraries
-    implementation("com.beeproduced:events")
-    implementation("com.beeproduced:events") {
-        capabilities { requireCapability("com.beeproduced:events-simple") }
+    implementation("com.beeproduced:bee.buzz")
+    implementation("com.beeproduced:bee.buzz") {
+        capabilities { requireCapability("com.beeproduced:bee.buzz-simple") }
     }
-    implementation("com.beeproduced:result") {
-        capabilities { requireCapability("com.beeproduced:result-dgs") }
+    implementation("com.beeproduced:bee.functional") {
+        capabilities { requireCapability("com.beeproduced:bee.functional-dgs") }
     }
-    implementation("com.beeproduced:data")
-    implementation("com.beeproduced:data") {
-        capabilities { requireCapability("com.beeproduced:data-dgs") }
+    implementation("com.beeproduced:bee.persistent")
+    implementation("com.beeproduced:bee.persistent") {
+        capabilities { requireCapability("com.beeproduced:bee.persistent-dgs") }
     }
     beeGenerative("com.beeproduced:bee.fetched")
     // external dependencies

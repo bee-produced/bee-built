@@ -1,7 +1,7 @@
 package com.beeproduced.service.organisation.address.feature
 
-import com.beeproduced.result.AppResult
-import com.beeproduced.result.jpa.transactional.TransactionalResult
+import com.beeproduced.bee.functional.result.AppResult
+import com.beeproduced.bee.functional.persistent.transactional.TransactionalResult
 import com.beeproduced.service.organisation.entities.Address
 import com.beeproduced.service.organisation.entities.input.CreateAddressInput
 import com.beeproduced.utils.logFor

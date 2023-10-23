@@ -1,6 +1,6 @@
 package com.beeproduced.service.media.entities
 
-import com.beeproduced.data.jpa.entity.DataEntity
+import com.beeproduced.bee.persistent.jpa.entity.DataEntity
 import com.beeproduced.service.organisation.entities.CompanyId
 import com.beeproduced.service.organisation.entities.PersonId
 import com.beeproduced.utils.UUIDSetConverter

@@ -1,6 +1,6 @@
 package com.beeproduced.service.organisation.person.feature
 
-import com.beeproduced.data.jpa.repository.BaseDataRepository
+import com.beeproduced.bee.persistent.jpa.repository.BaseDataRepository
 import com.beeproduced.service.organisation.entities.Person
 import com.beeproduced.service.organisation.entities.PersonId
 import jakarta.persistence.EntityManager
