@@ -1,8 +1,8 @@
 package com.beeproduced.service.media.film.feature
 
 import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationResult
-import com.beeproduced.lib.events.manager.EventManager
-import com.beeproduced.lib.events.requestHandler
+import com.beeproduced.bee.buzz.manager.EventManager
+import com.beeproduced.bee.buzz.requestHandler
 import com.beeproduced.result.AppResult
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.events.CreateFilm

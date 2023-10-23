@@ -5,7 +5,7 @@ import com.beeproduced.example.application.graphql.dto.AddFilm
 import com.beeproduced.example.application.graphql.dto.EditFilm
 import com.beeproduced.example.application.graphql.dto.Foo
 import com.beeproduced.example.application.organisation.service.setContext
-import com.beeproduced.lib.events.manager.EventManager
+import com.beeproduced.bee.buzz.manager.EventManager
 import com.beeproduced.result.extensions.dgs.getDataFetcher
 import com.beeproduced.service.media.events.CreateFilm
 import com.beeproduced.service.media.events.GetRecentlyAddedFilms

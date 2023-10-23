@@ -1,4 +1,4 @@
-package com.beeproduced.lib.events.manager
+package com.beeproduced.bee.buzz.manager
 
 /**
  *

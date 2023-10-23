@@ -1,4 +1,4 @@
-package com.beeproduced.lib.events.manager
+package com.beeproduced.bee.buzz.manager
 
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit

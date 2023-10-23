@@ -1,4 +1,4 @@
-package com.beeproduced.lib.events.manager.exceptions
+package com.beeproduced.bee.buzz.manager.exceptions
 
 /**
  *

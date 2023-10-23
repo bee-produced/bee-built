@@ -1,7 +1,7 @@
 package com.beeproduced.service.organisation.events
 
 import com.beeproduced.bee.persistent.selection.DataSelection
-import com.beeproduced.lib.events.Request
+import com.beeproduced.bee.buzz.Request
 import com.beeproduced.service.organisation.entities.Company
 import com.beeproduced.service.organisation.entities.CompanyId
 import com.beeproduced.service.organisation.entities.Person

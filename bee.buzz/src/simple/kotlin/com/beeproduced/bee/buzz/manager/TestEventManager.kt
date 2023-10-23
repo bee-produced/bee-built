@@ -1,6 +1,6 @@
-package com.beeproduced.lib.events.manager
+package com.beeproduced.bee.buzz.manager
 
-import com.beeproduced.lib.events.Request
+import com.beeproduced.bee.buzz.Request
 import com.beeproduced.result.errors.AppError
 import com.github.michaelbull.result.Result
 

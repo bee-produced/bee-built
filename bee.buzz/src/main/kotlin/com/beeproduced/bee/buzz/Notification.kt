@@ -1,4 +1,4 @@
-package com.beeproduced.lib.events
+package com.beeproduced.bee.buzz
 
 /**
  * Inspired by https://github.com/jbogard/MediatR/wiki.

@@ -1,4 +1,4 @@
-package com.beeproduced.lib.events
+package com.beeproduced.bee.buzz
 
 import com.beeproduced.result.errors.AppError
 import com.github.michaelbull.result.Result
