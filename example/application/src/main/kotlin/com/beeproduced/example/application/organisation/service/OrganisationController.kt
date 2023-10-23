@@ -1,6 +1,6 @@
 package com.beeproduced.example.application.organisation.service
 
-import com.beeproduced.data.dgs.selection.toDataSelection
+import com.beeproduced.bee.persistent.dgs.selection.toDataSelection
 import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.result.extensions.dgs.getDataFetcher
 import com.beeproduced.service.organisation.events.GetAllCompanies

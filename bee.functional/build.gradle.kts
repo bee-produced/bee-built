@@ -49,13 +49,13 @@ sourceSets {
     //         configurations["dgsTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
     //     }
     // }
-    create("persistant") {
+    create("persistent") {
         java {
-            srcDir("src/persistant/kotlin")
+            srcDir("src/persistent/kotlin")
             compileClasspath += main.get().output
             runtimeClasspath += main.get().output
-            configurations["persistantImplementation"].extendsFrom(configurations.implementation.get())
-            configurations["persistantRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+            configurations["persistentImplementation"].extendsFrom(configurations.implementation.get())
+            configurations["persistentRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
         }
     }
 }
@@ -64,8 +64,8 @@ java {
     registerFeature("dgs") {
         usingSourceSet(sourceSets["dgs"])
     }
-    registerFeature("persistant") {
-        usingSourceSet(sourceSets["persistant"])
+    registerFeature("persistent") {
+        usingSourceSet(sourceSets["persistent"])
     }
 }
 
@@ -79,7 +79,7 @@ dependencies {
     "dgsImplementation"(platform(libs.dgs.platform))
     "dgsImplementation"(libs.dgs.spring.starter)
     "dgsImplementation"(libs.spring.boot.starter.aop)
-    "persistantImplementation"(libs.spring.boot.starter.data.jpa)
+    "persistentImplementation"(libs.spring.boot.starter.data.jpa)
 }
 
 tasks.withType<Test> {

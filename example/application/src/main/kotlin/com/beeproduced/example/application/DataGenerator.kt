@@ -1,6 +1,6 @@
 package com.beeproduced.example.application
 
-import com.beeproduced.data.selection.SimpleSelection
+import com.beeproduced.bee.persistent.selection.SimpleSelection
 import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.result.AppResult
 import com.beeproduced.service.media.entities.Film

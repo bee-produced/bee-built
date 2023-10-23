@@ -1,7 +1,7 @@
 package com.beeproduced.service.organisation.company.feature
 
-import com.beeproduced.data.selection.DataSelection
-import com.beeproduced.data.selection.EmptySelection
+import com.beeproduced.bee.persistent.selection.DataSelection
+import com.beeproduced.bee.persistent.selection.EmptySelection
 import com.beeproduced.result.AppResult
 import com.beeproduced.result.errors.BadRequestError
 import com.beeproduced.result.extensions.functional.andThenToPair

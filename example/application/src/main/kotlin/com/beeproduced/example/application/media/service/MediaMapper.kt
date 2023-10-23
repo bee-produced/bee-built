@@ -1,6 +1,6 @@
 package com.beeproduced.example.application.media.service
 
-import com.beeproduced.data.jpa.repository.extensions.PaginationResult
+import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationResult
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.input.CreateFilmInput
 import com.beeproduced.service.media.entities.input.FilmPagination

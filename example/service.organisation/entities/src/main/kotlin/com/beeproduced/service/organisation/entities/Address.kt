@@ -1,6 +1,6 @@
 package com.beeproduced.service.organisation.entities
 
-import com.beeproduced.data.jpa.entity.DataEntity
+import com.beeproduced.bee.persistent.jpa.entity.DataEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue

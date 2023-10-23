@@ -1,6 +1,6 @@
 package com.beeproduced.service.media.film.feature
 
-import com.beeproduced.data.jpa.repository.extensions.PaginationResult
+import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationResult
 import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.lib.events.requestHandler
 import com.beeproduced.result.AppResult

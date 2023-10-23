@@ -1,7 +1,7 @@
 package com.beeproduced.service.media.events
 
-import com.beeproduced.data.jpa.repository.extensions.PaginationResult
-import com.beeproduced.data.selection.DataSelection
+import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationResult
+import com.beeproduced.bee.persistent.selection.DataSelection
 import com.beeproduced.lib.events.Request
 import com.beeproduced.service.media.entities.Film
 import com.beeproduced.service.media.entities.input.CreateFilmInput

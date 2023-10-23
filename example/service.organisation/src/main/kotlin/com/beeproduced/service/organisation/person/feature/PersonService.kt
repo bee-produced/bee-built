@@ -1,6 +1,6 @@
 package com.beeproduced.service.organisation.person.feature
 
-import com.beeproduced.data.selection.DataSelection
+import com.beeproduced.bee.persistent.selection.DataSelection
 import com.beeproduced.result.AppResult
 import com.beeproduced.result.errors.BadRequestError
 import com.beeproduced.result.jpa.transactional.TransactionalResult

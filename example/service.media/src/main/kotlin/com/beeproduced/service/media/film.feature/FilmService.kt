@@ -1,7 +1,7 @@
 package com.beeproduced.service.media.film.feature
 
-import com.beeproduced.data.jpa.repository.extensions.PaginationResult
-import com.beeproduced.data.selection.DataSelection
+import com.beeproduced.bee.persistent.jpa.repository.extensions.PaginationResult
+import com.beeproduced.bee.persistent.selection.DataSelection
 import com.beeproduced.lib.events.manager.EventManager
 import com.beeproduced.result.AppResult
 import com.beeproduced.result.errors.BadRequestError

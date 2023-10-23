@@ -1,6 +1,6 @@
 package com.beeproduced.service.organisation.company.feature
 
-import com.beeproduced.data.jpa.repository.BaseDataRepository
+import com.beeproduced.bee.persistent.jpa.repository.BaseDataRepository
 import com.beeproduced.service.organisation.entities.Company
 import com.beeproduced.service.organisation.entities.CompanyId
 import com.beeproduced.service.organisation.entities.CompanyMember

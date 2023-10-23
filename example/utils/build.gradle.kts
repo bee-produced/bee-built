@@ -20,7 +20,7 @@ repositories {
 dependencies {
     api("com.beeproduced:bee.functional")
     api("com.beeproduced:bee.functional") {
-        capabilities { requireCapability("com.beeproduced:bee.functional-persistant") }
+        capabilities { requireCapability("com.beeproduced:bee.functional-persistent") }
     }
     api(libs.michael.result)
     implementation(libs.kotlin.stdlib)
