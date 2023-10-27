@@ -13,7 +13,7 @@ plugins {
 
 group = "com.beeproduced"
 version = libs.versions.bee.built.get()
-description = "Functional kotlin bindings, integration with DGS, `bee.persistent` & more"
+description = "Functional kotlin bindings, integration with DGS, `bee.persistent` & more."
 java.sourceCompatibility = JavaVersion.VERSION_17
 java.targetCompatibility = JavaVersion.VERSION_17
 tasks.withType<KotlinCompile>().configureEach {
