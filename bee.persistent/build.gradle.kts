@@ -1,10 +1,14 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jreleaser.model.Active
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.jpa)
     alias(libs.plugins.kotlin.spring)
     java
+    id("maven-publish")
+    id("org.jreleaser").version("1.8.0")
+    id("signing")
     // id("org.hibernate.orm") version "6.1.7.Final"
 }
 
@@ -44,11 +48,17 @@ sourceSets {
 }
 
 java {
+    withSourcesJar()
+    withJavadocJar()
     registerFeature("dgs") {
         usingSourceSet(sourceSets["dgs"])
+        withSourcesJar()
+        withJavadocJar()
     }
     registerFeature("jpa") {
         usingSourceSet(sourceSets["jpa"])
+        withSourcesJar()
+        withJavadocJar()
     }
 }
 
@@ -113,9 +123,67 @@ allOpen {
     annotation("javax.persistence.Entity")
 }
 
-// hibernate {
-//     enhancement {
-//         enableLazyInitialization(true)
-//         enableExtendedEnhancement(true)
-//     }
-// }
+// Based on https://www.tschuehly.de/posts/guide-kotlin-gradle-publish-to-maven-central/#51-generate-javadocs-and-sources-jars
+publishing {
+    publications {
+        create<MavenPublication>("Maven") {
+            from(components["java"])
+            description = "A collection of modular libraries tailor-made for Kotlin enthusiasts."
+        }
+        withType<MavenPublication> {
+            pom {
+                packaging = "jar"
+                name.set(project.name)
+                description.set("A collection of modular libraries tailor-made for Kotlin enthusiasts.")
+                url.set("https://github.com/bee-produced/bee-built")
+                licenses {
+                    license {
+                        name.set("MIT license")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("kurbaniec")
+                        name.set("Kacper Urbaniec")
+                        email.set("kacper.urbaniec@beeproduced.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git@github.com:bee-produced/bee-built.git")
+                    developerConnection.set("scm:git:ssh:git@github.com:bee-produced/bee-built.git")
+                    url.set("https://github.com/bee-produced/bee-built")
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url = layout.buildDirectory.dir("staging-deploy").get().asFile.toURI()
+        }
+    }
+}
+
+jreleaser {
+    project {
+        copyright.set("bee produced")
+    }
+    gitRootSearch.set(true)
+    signing {
+        active.set(Active.ALWAYS)
+        armored.set(true)
+    }
+    deploy {
+        maven {
+            nexus2 {
+                create("maven-central") {
+                    active.set(Active.ALWAYS)
+                    url.set("https://s01.oss.sonatype.org/service/local")
+                    closeRepository.set(false)
+                    releaseRepository.set(false)
+                    stagingRepositories.add("build/staging-deploy")
+                }
+            }
+        }
+    }
+}
