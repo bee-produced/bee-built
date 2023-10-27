@@ -86,3 +86,4 @@ spring-dependencymanagement = { id = "io.spring.dependency-management", version.
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-base" }
 dgs-codegen = { id = "com.netflix.dgs.codegen", version.ref = "dgs-codegen" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-base"}
+jreleaser = { id = "org.jreleaser", version = "1.8.0" }

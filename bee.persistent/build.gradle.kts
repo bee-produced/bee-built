@@ -5,15 +5,15 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.jpa)
     alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.jreleaser)
+    `maven-publish`
+    signing
     java
-    id("maven-publish")
-    id("org.jreleaser").version("1.8.0")
-    id("signing")
-    // id("org.hibernate.orm") version "6.1.7.Final"
 }
 
 group = "com.beeproduced"
 version = libs.versions.bee.built.get()
+description = "Easier data handling for GraphQL + JPA"
 java.sourceCompatibility = JavaVersion.VERSION_17
 java.targetCompatibility = JavaVersion.VERSION_17
 tasks.withType<KotlinCompile>().configureEach {
@@ -128,13 +128,13 @@ publishing {
     publications {
         create<MavenPublication>("Maven") {
             from(components["java"])
-            description = "A collection of modular libraries tailor-made for Kotlin enthusiasts."
+            description = project.description
         }
         withType<MavenPublication> {
             pom {
                 packaging = "jar"
                 name.set(project.name)
-                description.set("A collection of modular libraries tailor-made for Kotlin enthusiasts.")
+                description.set(project.description)
                 url.set("https://github.com/bee-produced/bee-built")
                 licenses {
                     license {

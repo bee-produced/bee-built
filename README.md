@@ -24,7 +24,7 @@ Extend DGS:
 Some changes are currently being made:
 
 * `bee.persistent`      
-  Easier data handling for GraphQL + JPA, [documentation](./lib.data/README.md)
+  Easier data handling for GraphQL + JPA, [documentation](./bee.persistent/README.md)
 * `bee.functional`      
   Functional kotlin bindings, integration with DGS, `bee.persistent` & more      
 * `bee.buzz`       
