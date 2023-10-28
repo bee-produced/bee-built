@@ -102,26 +102,31 @@ jobs:
         run: ./gradlew build
 
       - name: Publish bee.persistent
+        continue-on-error: true
         working-directory: ./bee.persistent
         run: |
           ./gradlew publish
           ./gradlew jreleaserDeploy
       - name: Publish bee.functional
+        continue-on-error: true
         working-directory: ./bee.functional
         run: |
           ./gradlew publish
           ./gradlew jreleaserDeploy
       - name: Publish bee.buzz
+        continue-on-error: true
         working-directory: ./bee.buzz
         run: |
           ./gradlew publish
           ./gradlew jreleaserDeploy
       - name: Publish bee.generative
+        continue-on-error: true
         working-directory: ./bee.generative
         run: |
           ./gradlew publish
           ./gradlew jreleaserDeploy
       - name: Publish bee.fetched
+        continue-on-error: true
         working-directory: ./bee.fetched
         run: |
           ./gradlew publish
