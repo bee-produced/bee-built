@@ -15,26 +15,26 @@ jobs:
           distribution: 'adopt'
       - name: Make gradlew executable
         run: |
-          chmod +x ./bee.persistent/.gradlew
-          chmod +x ./bee.functional/.gradlew
-          chmod +x ./bee.buzz/.gradlew
-          chmod +x ./bee.generative/.gradlew
-          chmod +x ./bee.fetched/.gradlew
-          chmod +x ./bee.fetched.test/.gradlew
-          chmod +x ./example/application/.gradlew
+          chmod +x ./bee.persistent/gradlew
+          chmod +x ./bee.functional/gradlew
+          chmod +x ./bee.buzz/gradlew
+          chmod +x ./bee.generative/gradlew
+          chmod +x ./bee.fetched/gradlew
+          chmod +x ./bee.fetched.test/gradlew
+          chmod +x ./example/application/gradlew
       - name: Build & Test bee.persistent
-        run: ./bee.persistent/.gradlew build
+        run: ./bee.persistent/gradlew build
       - name: Build & Test bee.functional
-        run: ./bee.functional/.gradlew build
+        run: ./bee.functional/gradlew build
       - name: Build & Test bee.buzz
-        run: ./bee.buzz/.gradlew build
+        run: ./bee.buzz/gradlew build
       - name: Build & Test bee.generative
-        run: ./bee.generative/.gradlew build
+        run: ./bee.generative/gradlew build
       - name: Build & Test bee.fetched
         run: |
-          ./bee.fetched/.gradlew build
-          ./bee.fetched.test/.gradlew build
+          ./bee.fetched/gradlew build
+          ./bee.fetched.test/gradlew build
       - name: Build & Test example application
-        run: ./example/application/.gradlew build
+        run: ./example/application/gradlew build
 
           
