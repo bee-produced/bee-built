@@ -29,6 +29,7 @@ open class BeeGenerativePluginExtension {
 open class BeeDependencies(private val dependencies: DependencyHandler) {
     operator fun invoke(dependencyNotation: String): Pair<Dependency?, Dependency?> {
         val main = dependencies.add("implementation", dependencyNotation)
+        // TODO: add main also to ksp?
         val processor = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
             val capabilityNotation = if (version != null) {
                 "$group:$name-processor:$version"
@@ -43,6 +44,10 @@ open class BeeDependencies(private val dependencies: DependencyHandler) {
 
 class BeeGenerativePlugin : Plugin<Project>{
     override fun apply(project: Project) {
+        // TODO: This is bad
+        // Makes projects also require this type of gradle file!
+        // Hardcode and sed in pipeline...
+
         // Get version https://discuss.gradle.org/t/version-catalog-access-from-plugin/43629/4
         val version = project.rootProject
             .extensions

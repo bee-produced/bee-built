@@ -15,13 +15,29 @@ In addition, these types of data fetchers can be quite easily overlooked during 
 
 This code generation library attempts to solve this problem by automatically generating such nested data fetches from DGS DTOs and data loader definitions. `bee.fetched` is based on `ksp` for lightweight, idiomatic code generation.
 
-Note that this library builds upon [DGS](https://netflix.github.io/dgs/) and is not intended for use with only `graphql-java`.
+Note that this library builds upon [DGS](https://netflix.github.io/dgs/) and is not intended for use with only `graphql-java`.
 
 ## 🚀 Quickstart
 
 ### 🛠️ Configuration
 
 The following shows the easiest way to incorporate `bee.fetched` into a project.
+
+`settings.gradle.kts`
+
+```kotlin
+pluginManagement {
+    resolutionStrategy {
+        eachPlugin {
+            when (requested.id.id) {
+                "bee.generative" -> useModule("com.beeproduced:bee.generative:<BEE_BUILT_VERSION>")
+            }
+        }
+    }
+}
+```
+
+> ⚠️ As `bee.generative` is currently not published to the gradle plugin portal, the publication on maven central has no [plugin marker](https://docs.gradle.org/current/userguide/plugins.html#sec:plugin_markers) and thus requires this [workaround](https://github.com/GoogleCloudPlatform/app-gradle-plugin/issues/397#issuecomment-1484070866).
 
 `build.gradle.kts`:
 
@@ -32,7 +48,7 @@ plugins {
 }
 
 dependencies {
-    beeGenerative("com.beeproduced:bee.fetched")
+    beeGenerative("com.beeproduced:bee.fetched:<BEE_BUILT_VERSION>")
 }
 
 // DGS codegen
@@ -107,9 +123,9 @@ class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo> {
 }
 ```
 
-> ⚠️ Please do not forget to annotate the data loader with `@BeeFetched` if one wants to utilise code generation.
+> ⚠️ Please do not forget to annotate the data loader with `@BeeFetched` if one wants to utilise code generation.
 
-> 🪧 The `@BeeFetched` annotation will be explained in the following step by step.
+> 🪧 The `@BeeFetched` annotation will be explained in the following step by step.
 
 With the help of `bee.fetched` all of the corresponding nested data fetchers including their data loader invocations can be automatically generated.
 
@@ -119,9 +135,9 @@ In the following schema `waldo` and `waldos` are the fields that should be loade
 
 A simple approach is used:
 
-* Entities like `waldo` => Search for `waldoId`
+* Entities like `waldo` => Search for `waldoId`
 * Collections like `waldos` => Search for `waldoIds` or `waldosIds`
-* Not modelled but possible: A collection called `waldo` => Search for `waldoIds` or `waldosIds`
+* Not modelled but possible: A collection called `waldo` => Search for `waldoIds` or `waldosIds`
 
 ```crystal
 type Foo {
@@ -215,7 +231,7 @@ type Corge {
 }
 ```
 
-To do so, one must provide a `FetcherMapping` via `@BeeFetched` that maps `Corge`'s `waldo` field to the id `corgeToWaldoId`.
+To do so, one must provide a `FetcherMapping` via `@BeeFetched` that maps `Corge`'s `waldo` field to the id `corgeToWaldoId`.
 
 ```kotlin
 @BeeFetched(
@@ -290,7 +306,7 @@ In these cases, one must provide a `FetcherInternalType` via `@BeeFetched` that 
 class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo>
 ```
 
-> 🪧 If `Grault` would have another field `waldo2: Waldo` the library would use the `Grault` DTO and not the `TestController.MyGrault` internal type as it is only configured for `DgsConstants.GRAULT.Waldo`. Leaving `DgsConstants.GRAULT.Waldo` empty or adding an additional `FetcherInternalType` for `DgsConstants.GRAULT.Waldo2` would result in usage of the internal type.
+> 🪧 If `Grault` would have another field `waldo2: Waldo` the library would use the `Grault` DTO and not the `TestController.MyGrault` internal type as it is only configured for `DgsConstants.GRAULT.Waldo`. Leaving `DgsConstants.GRAULT.Waldo` empty or adding an additional `FetcherInternalType` for `DgsConstants.GRAULT.Waldo2` would result in usage of the internal type.
 
 This results in following generated code.
 
@@ -377,7 +393,7 @@ class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo>
 
 #### Safety first - Do not load what is already present
 
-By default, `bee.fetched` generates nested data fetcher with an early return when data is already present for the requested field. This feature is called `safeMode` and can be illustrated as follows.
+By default, `bee.fetched` generates nested data fetcher with an early return when data is already present for the requested field. This feature is called `safeMode` and can be illustrated as follows.
 
 ```kotlin
 @DgsData(
@@ -438,4 +454,4 @@ class WaldoDataLoader : MappedBatchLoaderWithContext<String, Waldo>
 
 ## 🧪 Example & Tests
 
-An example on which this documentation is based on can be found under `bee.fetched.test` in the root project. The tests for this library reside also in this example project.
+An example on which this documentation is based on can be found under `bee.fetched.test` in the root project. The tests for this library reside also in this example project.
