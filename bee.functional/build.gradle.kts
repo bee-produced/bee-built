@@ -181,7 +181,7 @@ jreleaser {
 // See: https://github.com/spring-gradle-plugins/dependency-management-plugin/issues/257#issuecomment-895790557
 tasks.withType<GenerateMavenPom>().all {
     doLast {
-        val file = File("${layout.buildDirectory.get().asFile.toURI()}/publications/Maven/pom-default.xml")
+        val file = file("${layout.buildDirectory.get().asFile.toURI()}/publications/Maven/pom-default.xml")
         var text = file.readText()
         val regex = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)".toRegex()
         val matcher = regex.find(text)
