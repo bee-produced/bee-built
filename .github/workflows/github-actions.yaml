@@ -23,18 +23,25 @@ jobs:
           chmod +x ./bee.fetched.test/gradlew
           chmod +x ./example/application/gradlew
       - name: Build & Test bee.persistent
-        run: ./bee.persistent/gradlew build
+        working-directory: ./bee.persistent
+        run: ./gradlew build
       - name: Build & Test bee.functional
-        run: ./bee.functional/gradlew build
+        working-directory: ./bee.functional
+        run: ./gradlew build
       - name: Build & Test bee.buzz
-        run: ./bee.buzz/gradlew build
+        working-directory: ./bee.buzz
+        run: ./gradlew build
       - name: Build & Test bee.generative
-        run: ./bee.generative/gradlew build
+        working-directory: ./bee.generative
+        run: ./gradlew build
       - name: Build & Test bee.fetched
         run: |
-          ./bee.fetched/gradlew build
-          ./bee.fetched.test/gradlew build
+          cd ./bee.fetched/
+          ./gradlew build
+          cd ../bee.fetched.test/
+          ./gradlew build
       - name: Build & Test example application
-        run: ./example/application/gradlew build
+        working-directory: ./example/application
+        run: ./gradlew build
 
           
