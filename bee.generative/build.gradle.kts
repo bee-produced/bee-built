@@ -57,6 +57,19 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+val generateResources by tasks.registering {
+    val propFile = file("${layout.buildDirectory.get().asFile.toURI()}/generated/bee.generative.properties")
+    outputs.file(propFile)
+    doLast {
+        propFile.parentFile.mkdirs()
+        propFile.writeText("version=${project.version}")
+    }
+}
+
+tasks.named<Copy>("processResources") {
+    from(generateResources)
+}
+
 // Based on https://www.tschuehly.de/posts/guide-kotlin-gradle-publish-to-maven-central/#51-generate-javadocs-and-sources-jars
 publishing {
     publications {
@@ -126,7 +139,7 @@ jreleaser {
 // https://docs.gradle.org/current/userguide/plugins.html#sec:plugin_markers
 tasks.register("removePluginMetadata") {
     doLast {
-        val dirToRemove = file("${buildDir}/staging-deploy/bee")
+        val dirToRemove = file("${layout.buildDirectory.get().asFile.toURI()}/staging-deploy/bee")
         dirToRemove.deleteRecursively()
     }
 }

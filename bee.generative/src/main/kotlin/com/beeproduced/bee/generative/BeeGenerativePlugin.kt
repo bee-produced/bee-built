@@ -5,11 +5,10 @@ import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.gradle.kotlin.dsl.closureOf
-import org.gradle.kotlin.dsl.getByType
+import java.util.Properties
 
 /**
  *
@@ -27,10 +26,10 @@ open class BeeGenerativePluginExtension {
 }
 
 open class BeeDependencies(private val dependencies: DependencyHandler) {
-    operator fun invoke(dependencyNotation: String): Pair<Dependency?, Dependency?> {
+    operator fun invoke(dependencyNotation: String): Triple<Dependency?, Dependency?, Dependency?> {
         val main = dependencies.add("implementation", dependencyNotation)
-        // TODO: add main also to ksp?
-        val processor = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
+        val processorMain = dependencies.add("ksp", dependencyNotation)
+        val processorCapability = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
             val capabilityNotation = if (version != null) {
                 "$group:$name-processor:$version"
             } else "$group:$name-processor"
@@ -38,27 +37,21 @@ open class BeeDependencies(private val dependencies: DependencyHandler) {
                 requireCapability(capabilityNotation)
             }
         })
-        return Pair(main, processor)
+        return Triple(main, processorMain, processorCapability)
     }
 }
 
 class BeeGenerativePlugin : Plugin<Project>{
     override fun apply(project: Project) {
-        // TODO: This is bad
-        // Makes projects also require this type of gradle file!
-        // Hardcode and sed in pipeline...
+        // Get version https://discuss.gradle.org/t/how-can-a-custom-gradle-plugin-determine-its-own-version/36761/3
+        val props = Properties()
+        val propStream = javaClass.classLoader.getResourceAsStream("bee.generative.properties")
+        propStream?.use { props.load(it) }
+        val version = props.getProperty("version")
 
-        // Get version https://discuss.gradle.org/t/version-catalog-access-from-plugin/43629/4
-        val version = project.rootProject
-            .extensions
-            .getByType<VersionCatalogsExtension>()
-            .named("libs")
-            .findVersion("bee-built")
-            .get()
-            .displayName
         // Adds bee generative to ksp context
         project.dependencies.add("ksp", "com.beeproduced:bee.generative:$version")
-        // Allows importing bee generative features easily via `bee´ in dependencies block
+        // Allows importing bee generative features easily via `beeGenerative´ in dependencies block
         project.dependencies.extensions.add(
             "beeGenerative", BeeDependencies(project.dependencies)
         )
