@@ -112,6 +112,9 @@ dependencies {
     if (System.getProperty("os.arch") == "aarch64" && System.getProperty("os.name") == "Mac OS X") {
         runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.76.Final:osx-aarch_64")
     }
+
+    implementation("net.bytebuddy:byte-buddy:1.14.9")
+    implementation("net.bytebuddy:byte-buddy-agent:1.14.9")
 }
 
 tasks.withType<Test> {

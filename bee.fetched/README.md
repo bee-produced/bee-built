@@ -37,7 +37,7 @@ pluginManagement {
 }
 ```
 
-> ⚠️ As `bee.generative` is currently not published to the gradle plugin portal, the publication on maven central has no [plugin marker](https://docs.gradle.org/current/userguide/plugins.html#sec:plugin_markers) and thus requires this [workaround](https://github.com/GoogleCloudPlatform/app-gradle-plugin/issues/397#issuecomment-1484070866).
+> ⚠️ As `bee.generative` is currently not published to the gradle plugin portal, the publication on maven central has no [plugin marker](https://docs.gradle.org/current/userguide/plugins.html#sec:plugin_markers) and thus requires this [workaround](https://github.com/GoogleCloudPlatform/app-gradle-plugin/issues/397#issuecomment-1484070866).
 
 `build.gradle.kts`:
 
