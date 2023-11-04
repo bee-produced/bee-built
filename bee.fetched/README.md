@@ -44,7 +44,7 @@ pluginManagement {
 ```kotlin
 plugins {
     id("bee.generative")
-    id("com.google.devtools.ksp") version "1.8.0-1.0.9"
+    id("com.google.devtools.ksp") version "1.9.10-1.0.13"
 }
 
 dependencies {
