@@ -1,7 +1,7 @@
 package com.beeproduced.bee.functional.application.service
 
-import com.beeproduced.bee.fetched.graphql.DgsConstants
-import com.beeproduced.bee.fetched.graphql.dto.*
+import com.beeproduced.bee.functional.graphql.DgsConstants
+import com.beeproduced.bee.functional.graphql.dto.*
 import com.beeproduced.bee.functional.result.AppResult
 import com.beeproduced.bee.functional.result.errors.BadRequestError
 import com.beeproduced.bee.functional.result.errors.InternalAppError

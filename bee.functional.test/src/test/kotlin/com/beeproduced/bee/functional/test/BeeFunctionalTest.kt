@@ -1,6 +1,6 @@
 package com.beeproduced.bee.functional.test
 
-import com.beeproduced.bee.fetched.graphql.client.*
+import com.beeproduced.bee.functional.graphql.client.*
 import com.beeproduced.example.application.Application
 import com.netflix.graphql.dgs.DgsQueryExecutor
 import com.netflix.graphql.dgs.client.codegen.BaseSubProjectionNode
