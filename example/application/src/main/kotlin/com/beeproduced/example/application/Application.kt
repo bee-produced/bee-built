@@ -63,7 +63,7 @@ fun main(args: Array<String>) {
     }
 
 
-    ByteBuddyAgent.install()
+    /* ByteBuddyAgent.install()
     val foo = Foo()
     println(foo.m())
 
@@ -73,11 +73,13 @@ fun main(args: Array<String>) {
         .make()
         .load(Foo::class.java.classLoader, ClassReloadingStrategy.fromInstalledAgent())
 
-    println(foo.m())
+    println(foo.m()) */
 
 
     // See https://bytebuddy.net/#/tutorial
     // Chapter Delegating a method call
+    // Since Java 9, an agent installation is also possible at runtime without a JDK-installation
+    /* ByteBuddyAgent.install()
     ByteBuddy()
         .redefine(DataFetcherFactories::class.java)
         .method(named("wrapDataFetcher"))
@@ -86,7 +88,7 @@ fun main(args: Array<String>) {
         .load(
             DataFetcherFactories::class.java.classLoader,
             ClassReloadingStrategy.fromInstalledAgent()
-        )
+        ) */
 
 
     val application = SpringApplication(Application::class.java)

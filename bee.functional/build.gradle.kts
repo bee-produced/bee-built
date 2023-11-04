@@ -90,6 +90,8 @@ dependencies {
     "dgsImplementation"(platform(libs.dgs.platform))
     "dgsImplementation"(libs.dgs.spring.starter)
     "dgsImplementation"(libs.spring.boot.starter.aop)
+    "dgsImplementation"(libs.bytebuddy)
+    "dgsImplementation"(libs.bytebuddy.agent)
     "persistentImplementation"(libs.spring.boot.starter.data.jpa)
 }
 

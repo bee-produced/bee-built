@@ -1,0 +1,1 @@
+org.springframework.boot.SpringApplicationRunListener=com.beeproduced.bee.functional.dgs.result.fetcher.implementation.bytebuddy.ResultFetcherByteBuddyListener

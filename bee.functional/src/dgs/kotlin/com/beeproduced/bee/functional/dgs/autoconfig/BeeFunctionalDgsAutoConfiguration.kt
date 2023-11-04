@@ -1,6 +1,6 @@
 package com.beeproduced.bee.functional.dgs.autoconfig
 
-import com.beeproduced.bee.functional.dgs.config.DgsErrorHandlingConfiguration
+import com.beeproduced.bee.functional.dgs.result.fetcher.implementation.aspect.ResultFetcherAspectConfiguration
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 
@@ -12,4 +12,4 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy
  */
 @Configuration
 @EnableAspectJAutoProxy
-open class BeeFunctionalDgsAutoConfiguration : DgsErrorHandlingConfiguration()
+open class BeeFunctionalDgsAutoConfiguration : ResultFetcherAspectConfiguration()

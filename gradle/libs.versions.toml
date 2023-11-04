@@ -24,6 +24,7 @@ datafaker = "1.14.0"
 jakarta-mail-api = "2.0.1"
 jakarta-mail = "2.0.1"
 ksp-base = "1.9.10-1.0.13"
+bytebuddy = "1.14.9"
 
 [libraries]
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "springboot-base" }
@@ -72,6 +73,8 @@ jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.1
 ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-base" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp-base" }
 kotlin-poet = { group = "com.squareup", name = "kotlinpoet-ksp", version = "1.14.2"}
+bytebuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "bytebuddy" }
+bytebuddy-agent = { group = "net.bytebuddy", name = "byte-buddy-agent", version.ref = "bytebuddy" }
 
 [plugins]
 kotlinter = { id = "org.jmailen.kotlinter", version = "3.13.0" }
