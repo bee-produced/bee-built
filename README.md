@@ -26,7 +26,7 @@ Some changes are currently being made:
 * `bee.persistent`      
   Easier data handling for GraphQL + JPA, [documentation](./bee.persistent/README.md)
 * `bee.functional`      
-  Functional kotlin bindings, integration with DGS, `bee.persistent` & more      
+  Functional Kotlin bindings, integration with DGS, `bee.persistent` & more,   [documentation](./bee.functional/README.md)    
 * `bee.buzz`       
   Simple event manager based on the mediator pattern, based on C#'s [MediatR library](https://github.com/jbogard/MediatR)
 

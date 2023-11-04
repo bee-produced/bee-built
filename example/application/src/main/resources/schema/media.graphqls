@@ -54,7 +54,7 @@ type Foo {
 # TODO remove later
 type Test {
     test: String!
-    foo: Foo!
+    foo: Foo
 }
 
 extend type Query {

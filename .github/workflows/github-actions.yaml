@@ -22,6 +22,7 @@ jobs:
         run: |
           chmod +x ./bee.persistent/gradlew
           chmod +x ./bee.functional/gradlew
+          chmod +x ./bee.functional.test/gradlew
           chmod +x ./bee.buzz/gradlew
           chmod +x ./bee.generative/gradlew
           chmod +x ./bee.fetched/gradlew
@@ -30,14 +31,17 @@ jobs:
       - name: Build & Test bee.persistent
         working-directory: ./bee.persistent
         run: ./gradlew build
-      - name: Build & Test bee.functional
-        working-directory: ./bee.functional
-        run: ./gradlew build
-      - name: Build & Test bee.buzz
-        working-directory: ./bee.buzz
-        run: ./gradlew build
       - name: Build & Test bee.generative
         working-directory: ./bee.generative
+        run: ./gradlew build
+      - name: Build & Test bee.functional
+        run: |
+          cd ./bee.functional/
+          ./gradlew build
+          cd ../bee.functional.test/
+          ./gradlew build
+      - name: Build & Test bee.buzz
+        working-directory: ./bee.buzz
         run: ./gradlew build
       - name: Build & Test bee.fetched
         run: |
@@ -74,6 +78,7 @@ jobs:
         run: |
           chmod +x ./bee.persistent/gradlew
           chmod +x ./bee.functional/gradlew
+          chmod +x ./bee.functional.test/gradlew
           chmod +x ./bee.buzz/gradlew
           chmod +x ./bee.generative/gradlew
           chmod +x ./bee.fetched/gradlew
@@ -82,14 +87,17 @@ jobs:
       - name: Build & Test bee.persistent
         working-directory: ./bee.persistent
         run: ./gradlew build
-      - name: Build & Test bee.functional
-        working-directory: ./bee.functional
-        run: ./gradlew build
-      - name: Build & Test bee.buzz
-        working-directory: ./bee.buzz
-        run: ./gradlew build
       - name: Build & Test bee.generative
         working-directory: ./bee.generative
+        run: ./gradlew build
+      - name: Build & Test bee.functional
+        run: |
+          cd ./bee.functional/
+          ./gradlew build
+          cd ../bee.functional.test/
+          ./gradlew build
+      - name: Build & Test bee.buzz
+        working-directory: ./bee.buzz
         run: ./gradlew build
       - name: Build & Test bee.fetched
         run: |

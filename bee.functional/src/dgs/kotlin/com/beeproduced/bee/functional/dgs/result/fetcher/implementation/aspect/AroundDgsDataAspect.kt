@@ -1,6 +1,6 @@
-package com.beeproduced.bee.functional.dgs.aspect
+package com.beeproduced.bee.functional.dgs.result.fetcher.implementation.aspect
 
-import com.beeproduced.bee.functional.dgs.fetcher.DataFetcherErrThrower
+import com.beeproduced.bee.functional.dgs.result.fetcher.helper.DataFetcherErrThrower
 import graphql.execution.DataFetcherResult
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around

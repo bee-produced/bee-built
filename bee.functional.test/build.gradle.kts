@@ -55,25 +55,12 @@ repositories {
 }
 
 dependencies {
-    // service modules & more
-    implementation(project(":service.media"))
-    implementation(project(":service.media.events"))
-    implementation(project(":service.organisation"))
-    implementation(project(":service.organisation.events"))
-    implementation(project(":utils"))
     // in-house libraries
-    implementation("com.beeproduced:bee.buzz")
-    implementation("com.beeproduced:bee.buzz") {
-        capabilities { requireCapability("com.beeproduced:bee.buzz-simple") }
-    }
+    implementation("com.beeproduced:bee.functional")
     implementation("com.beeproduced:bee.functional") {
         capabilities { requireCapability("com.beeproduced:bee.functional-dgs") }
     }
-    implementation("com.beeproduced:bee.persistent")
-    implementation("com.beeproduced:bee.persistent") {
-        capabilities { requireCapability("com.beeproduced:bee.persistent-dgs") }
-    }
-    beeGenerative("com.beeproduced:bee.fetched")
+
     // external dependencies
     implementation(libs.kotlin.stdlib)
     implementation(libs.spring.boot.starter.web)
@@ -112,9 +99,6 @@ dependencies {
     if (System.getProperty("os.arch") == "aarch64" && System.getProperty("os.name") == "Mac OS X") {
         runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.76.Final:osx-aarch_64")
     }
-
-    implementation("net.bytebuddy:byte-buddy:1.14.9")
-    implementation("net.bytebuddy:byte-buddy-agent:1.14.9")
 }
 
 tasks.withType<Test> {
@@ -126,18 +110,14 @@ tasks.withType<Test> {
 // See: https://stackoverflow.com/a/70954759/12347616
 tasks.withType<GenerateJavaTask> {
     notCompatibleWithConfigurationCache("Remove later")
-    packageName = "com.beeproduced.example.application.graphql"
+    packageName = "com.beeproduced.bee.functional.graphql"
     subPackageNameTypes = "dto"
     generateCustomAnnotations = true
+    generateClient = true
     typeMapping = mutableMapOf(
         "DateTime" to "java.time.Instant",
         "Upload" to "org.springframework.web.multipart.MultipartFile"
     )
-}
-
-beeGenerative {
-    arg("fetchedScanPackage", "com.beeproduced.example.application.graphql.dto")
-    arg("fetchedPackageName", "com.beeproduced.example.application.graphql.fetcher")
 }
 
 kapt {

@@ -1,9 +1,5 @@
-package com.beeproduced.bee.functional.dgs.config
+package com.beeproduced.bee.functional.dgs.result.fetcher.implementation.aspect
 
-import com.beeproduced.bee.functional.dgs.aspect.AroundDgsDataAspect
-import com.beeproduced.bee.functional.dgs.aspect.DefaultAroundDgsDataAspect
-import com.beeproduced.bee.functional.dgs.handler.AspectExceptionHandler
-import graphql.execution.DataFetcherExceptionHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.core.annotation.AnnotationUtils
@@ -15,7 +11,7 @@ import org.springframework.core.annotation.AnnotationUtils
  * @version 2022-10-10
  */
 @EnableAspectJAutoProxy
-abstract class DgsErrorHandlingConfiguration {
+abstract class ResultFetcherAspectConfiguration {
 
     init {
         // See: https://stackoverflow.com/a/9005796/12347616
@@ -26,12 +22,7 @@ abstract class DgsErrorHandlingConfiguration {
     }
 
     @Bean
-    open fun beeFunctionalDgsDataFetcherExceptionHandler(): DataFetcherExceptionHandler {
-        return AspectExceptionHandler()
-    }
-
-    @Bean
-    open fun beeFunctionalDgsAspect(): AroundDgsDataAspect {
+    open fun beeFunctionalResultFetcherAspect(): AroundDgsDataAspect {
         return DefaultAroundDgsDataAspect()
     }
 }

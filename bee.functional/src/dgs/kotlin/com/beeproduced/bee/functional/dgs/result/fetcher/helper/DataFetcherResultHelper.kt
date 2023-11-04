@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.beeproduced.bee.functional.dgs.fetcher
+package com.beeproduced.bee.functional.dgs.result.fetcher.helper
 
 import com.netflix.graphql.types.errors.TypedGraphQLError
 import graphql.execution.DataFetcherResult
@@ -12,7 +12,7 @@ import graphql.execution.DataFetcherResult
  * @version 2022-10-11
  */
 
-class DataFetcher {
+class DataFetcherResultHelper {
     companion object {
         fun <V> Ok(value: V): DataFetcherResult<V> {
             return DataFetcherResult

@@ -1,4 +1,4 @@
-package com.beeproduced.bee.functional.dgs.fetcher
+package com.beeproduced.bee.functional.dgs.result.fetcher.helper
 
 import com.netflix.graphql.types.errors.ErrorType
 import com.netflix.graphql.types.errors.TypedGraphQLError
