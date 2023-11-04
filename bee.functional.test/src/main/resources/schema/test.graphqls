@@ -1,0 +1,34 @@
+
+type Foo {
+    # Fully loaded
+    waldoId: ID!
+    waldo: Waldo
+}
+
+type Bar {
+    # Error on waldos
+    waldoIds: [ID!]!
+    waldos: [Waldo!]
+}
+
+type Qux {
+    # Error on Qux
+    waldoId: ID
+    waldo: Waldo
+}
+
+type Quux {
+    # Plural nullable id
+    waldoIds: [ID!]
+    waldos: [Waldo!]
+}
+
+type Waldo {
+    waldo: String!
+}
+
+extend type Query {
+    foo: Foo!
+    bar: Bar!
+    qux: Qux!
+}

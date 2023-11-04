@@ -23,8 +23,9 @@ class ResultFetcherByteBuddyListener : SpringApplicationRunListener {
             val byteBuddy = ByteBuddy()
             DataFetcherFactoriesRedefinition
                 .makeWrapDataFetcherFunctional(byteBuddy)
+            logger.info("Added support for result data fetchers")
         }.onFailure { e ->
-            logger.warn("Could not redefine functional data fetcher")
+            logger.warn("Could not redefine data fetcher")
             logger.warn(e.stackTraceToString())
             logger.warn("Fix or try aspect approach instead")
         }
