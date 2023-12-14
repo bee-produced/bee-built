@@ -45,6 +45,24 @@ sourceSets {
             configurations["jpaRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
         }
     }
+    create("blaze") {
+        java {
+            srcDir("src/blaze/kotlin")
+            compileClasspath += main.get().output
+            runtimeClasspath += main.get().output
+            configurations["blazeImplementation"].extendsFrom(configurations.implementation.get())
+            configurations["blazeRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+        }
+    }
+    create("blaze-processor") {
+        java {
+            srcDir("src/blaze-processor/kotlin")
+            compileClasspath += main.get().output
+            runtimeClasspath += main.get().output
+            configurations["blazeProcessorImplementation"].extendsFrom(configurations.implementation.get())
+            configurations["blazeProcessorRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+        }
+    }
 }
 
 java {
@@ -57,6 +75,16 @@ java {
     }
     registerFeature("jpa") {
         usingSourceSet(sourceSets["jpa"])
+        withSourcesJar()
+        withJavadocJar()
+    }
+    registerFeature("blaze") {
+        usingSourceSet(sourceSets["blaze"])
+        withSourcesJar()
+        withJavadocJar()
+    }
+    registerFeature("blazeProcessor") {
+        usingSourceSet(sourceSets["blaze-processor"])
         withSourcesJar()
         withJavadocJar()
     }
@@ -75,6 +103,10 @@ dependencies {
     "jpaImplementation"(libs.spring.boot.starter.data.jpa)
     "jpaImplementation"(libs.spring.boot.starter.web)
     "jpaApi"(libs.jdsl)
+
+
+    "blazeProcessorImplementation"("com.beeproduced:bee.generative:$version")
+    "blazeProcessorImplementation"(sourceSets["blaze"].output)
 
     // runtimeOnly("org.postgresql:postgresql")
 
