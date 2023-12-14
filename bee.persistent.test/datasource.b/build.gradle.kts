@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.spring.boot).apply(false)
     alias(libs.plugins.spring.dependencymanagement)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.allopen)
+    alias(libs.plugins.kotlin.noarg)
     id("bee.generative")
 }
 
@@ -61,4 +63,12 @@ tasks.withType<Test> {
 
 beeGenerative {
     arg("datasource", "b")
+}
+
+noArg {
+    annotations("jakarta.persistence.Entity", "jakarta.persistence.Embeddable")
+}
+
+allOpen {
+    annotations("jakarta.persistence.Entity")
 }
