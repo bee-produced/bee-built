@@ -46,8 +46,10 @@ data class ResolvedValue(
 interface AbstractProperty {
     val declaration: KSPropertyDeclaration
     val type: KSType
+    val nonCollectionType: KSType
     val annotations: List<ResolvedAnnotation>
     val simpleName: String get() = declaration.simpleName.asString()
+    val qualifiedName: String? get() = nonCollectionType.declaration.qualifiedName?.asString()
 }
 
 interface ValueClassProperty {
@@ -59,7 +61,9 @@ data class EntityProperty(
     override val declaration: KSPropertyDeclaration,
     override val type: KSType,
     override val annotations: List<ResolvedAnnotation>
-) : AbstractProperty
+) : AbstractProperty {
+    override val nonCollectionType: KSType = getNonNullableSingleRepresentation(type)
+}
 
 data class IdProperty(
     override val declaration: KSPropertyDeclaration,
@@ -69,9 +73,11 @@ data class IdProperty(
     val isGenerated: Boolean,
     val isEmbedded: Boolean,
 ) : AbstractProperty, ValueClassProperty {
+    override val nonCollectionType: KSType = getNonNullableSingleRepresentation(type)
+
     fun generatedDefaultValueLiteral(): String {
-        val typeName = declaration.simpleName.asString()
         if (type.isMarkedNullable) return "null"
+        val typeName = nonCollectionType.declaration.simpleName.asString()
         return when (typeName) {
             "Double" -> "-1.0"
             "Float" -> "-1.0F"
@@ -100,4 +106,26 @@ data class ColumnProperty(
     override val type: KSType,
     override val annotations: List<ResolvedAnnotation>,
     override val innerValue: ResolvedValue?,
-) : AbstractProperty, ValueClassProperty
+) : AbstractProperty, ValueClassProperty {
+    override val nonCollectionType: KSType = getNonNullableSingleRepresentation(type)
+}
+
+fun getNonNullableSingleRepresentation(type: KSType): KSType {
+    // Check if the type is a generic type with type arguments (like Set<T>)
+    if (type.arguments.isNotEmpty()) {
+        // Get the first type argument, e.g., T in Set<T>
+        val typeArgument = type.arguments.first().type
+
+        // Check if the type argument is non-null
+        return typeArgument?.resolve()?.let { typeArg ->
+            if (typeArg.isMarkedNullable) {
+                // If typeArg is nullable, get its non-nullable counterpart
+                typeArg.makeNotNullable()
+            } else {
+                // If typeArg is already non-nullable, return it as is
+                typeArg
+            }
+        } ?: type
+    }
+    return type
+}

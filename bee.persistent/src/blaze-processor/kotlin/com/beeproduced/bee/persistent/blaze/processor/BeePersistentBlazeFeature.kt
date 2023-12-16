@@ -6,6 +6,8 @@ import com.beeproduced.bee.generative.BeeGenerativeInput
 import com.beeproduced.bee.generative.Shared
 import com.beeproduced.bee.generative.processor.Options
 import com.beeproduced.bee.generative.util.resolveTypeAlias
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeConfig
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentViewCodegen
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATIONS_RELATION
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_EMBEDDED_ID
@@ -144,6 +146,16 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
                 throw IllegalArgumentException("Entity [${entityInfo.simpleName}] has no ID")
             }
         }
+
+        val config = BeePersistentBlazeConfig(
+            "com.beeproduced.persistent.generated",
+            2
+        )
+        val viewCodeGen = BeePersistentViewCodegen(
+            input.codeGenerator, input.dependencies, input.logger,
+            inheritedEntities.values.toList(), config
+        )
+        viewCodeGen.processEntities()
     }
 
     private fun resolveAnnotations(annotations: Sequence<KSAnnotation>): List<ResolvedAnnotation> {

@@ -9,6 +9,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.writeTo
 
 /**
@@ -27,6 +28,7 @@ class BeePersistentViewCodegen(
     private val packageName: String = "com.beeproduced.bee.persistent.generated"
     private val fileName: String = "GeneratedViews"
 
+    private val entitiesMap = entities.associateBy { it.qualifiedName!! }
 
     private val poetMap: PoetMap = mutableMapOf()
     private fun FunSpec.Builder.addNStatement(format: String)
@@ -36,15 +38,106 @@ class BeePersistentViewCodegen(
 
     }
 
-    private val viewCount: MutableMap<String, Int> = entities
+    private fun viewCount(): MutableMap<String, Int> = entities
         .map { it.qualifiedName!! }
         .associateWithTo(HashMap()) { 0 }
+
+    private fun MutableMap<String, Int>.viewCountReached(entity: EntityInfo): Boolean {
+        val count = this[entity.qualifiedName!!] ?: return true
+        return count >= config.depth
+    }
+
+    private fun MutableMap<String, Int>.incrementViewCount(entity: EntityInfo) {
+        val count = this[entity.qualifiedName!!] ?: config.depth
+        this[entity.qualifiedName!!] = count + 1
+    }
+
+    private fun MutableMap<String, Int>.viewName(entity: EntityInfo, parent: EntityInfo?): String {
+        val count = this[entity.qualifiedName!!] ?: config.depth
+        return "${entity.simpleName}__View__${parent?.simpleName ?: "Root"}__$count"
+    }
 
     fun processEntities() {
         FileSpec
             .builder(packageName, fileName)
+            .also {
+                entities.forEach { entity ->
+                    it.processEntity(entity, viewCount())
+                }
+                for ((info, props) in debugInfo) {
+                    logger.info(info)
+                    for (p in props) {
+                        logger.info("  $p")
+                    }
+                }
+            }
             .build()
             .writeTo(codeGenerator, dependencies)
     }
 
+
+    private val debugInfo = mutableMapOf<String, MutableSet<String>>()
+
+    private fun FileSpec.Builder.processEntity(
+        entity: EntityInfo, viewCount: ViewCount
+    ): String {
+        val viewName = viewCount.viewName(entity, null)
+
+        if (!debugInfo.containsKey(viewName)) {
+            debugInfo[viewName] = mutableSetOf()
+        }
+
+        //logger.info("View $viewName")
+        for (relation in entity.relations) {
+
+            // logger.info(relation.toString())
+            // logger.info("${relation.simpleName} X ${relation.qualifiedName}")
+
+            val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
+            val relationView = processEntity(relationEntity, viewCount.toMutableMap(), entity)
+            //logger.info("  View $viewName | ${relation.simpleName} => $relationView")
+
+            if (relationView != null)
+                debugInfo[viewName]?.add(relationView)
+        }
+
+        return viewName
+    }
+
+    private fun FileSpec.Builder.processEntity(
+        entity: EntityInfo, viewCount: ViewCount, root: EntityInfo
+    ): String? {
+        if (viewCount.viewCountReached(entity)) return null
+        viewCount.incrementViewCount(entity)
+        val viewName = viewCount.viewName(entity, root)
+
+        if (!debugInfo.containsKey(viewName)) {
+            debugInfo[viewName] = mutableSetOf()
+        }
+
+        //logger.info("View $viewName")
+        for (relation in entity.relations) {
+
+            // logger.info(relation.toString())
+            // logger.info("${relation.simpleName} X ${relation.qualifiedName}")
+
+            val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
+            val relationView = processEntity(relationEntity, viewCount.toMutableMap(), root)
+            //logger.info("  View $viewName | ${relation.simpleName} => $relationView")
+
+            if (relationView != null)
+                debugInfo[viewName]?.add(relationView)
+        }
+
+        return viewName
+    }
+
+    private fun TypeSpec.Builder.buildEntityView(entity: EntityInfo): TypeSpec.Builder {
+
+
+        return this
+    }
+
 }
+
+typealias ViewCount = MutableMap<String, Int>
