@@ -1,5 +1,7 @@
 package com.beeproduced.bee.persistent.blaze.processor.info
 
+import com.beeproduced.bee.generative.util.DummyKSPropertyDeclaration
+import com.beeproduced.bee.generative.util.DummyKSType
 import com.google.devtools.ksp.symbol.*
 
 /**
@@ -11,12 +13,18 @@ import com.google.devtools.ksp.symbol.*
 
 data class EntityInfo(
     val declaration: KSClassDeclaration,
+    val annotations: List<ResolvedAnnotation>,
     val properties: List<EntityProperty>,
     val id: IdProperty,
     val columns: List<ColumnProperty>,
     val lazyColumns: List<ColumnProperty>,
-    val relations: List<ColumnProperty>
-)
+    val relations: List<ColumnProperty>,
+    val superClass: String?,
+    val subClasses: Set<String>?
+) {
+    val simpleName: String get() = declaration.simpleName.asString()
+    val qualifiedName: String? get() = declaration.qualifiedName?.asString()
+}
 
 data class ResolvedAnnotation(
     val annotation: KSAnnotation,
@@ -73,6 +81,17 @@ data class IdProperty(
             "Char" -> "'\\u0000'"
             else -> "null"
         }
+    }
+
+    companion object {
+        val PLACEHOLDER = IdProperty(
+            declaration = DummyKSPropertyDeclaration(),
+            type = DummyKSType(),
+            annotations = emptyList(),
+            innerValue = null,
+            isGenerated = false,
+            isEmbedded = false
+        )
     }
 }
 

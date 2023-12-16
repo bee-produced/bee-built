@@ -11,7 +11,9 @@ import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTA
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_EMBEDDED_ID
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_GENERATED_VALUE
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_ID
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_INHERITANCE
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_TRANSIENT
+import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.symbol.*
 import jakarta.persistence.Entity
 
@@ -44,11 +46,11 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         val symbols = input.symbols
 
         val entityDeclarations = symbols.annotatedBy.getValue(Entity::class.qualifiedName!!)
-        for (entityDeclaration in entityDeclarations) {
-
+        val entitiesWithoutInheritanceInfo = entityDeclarations.map { entityDeclaration ->
             val entityName = entityDeclaration.simpleName.asString()
-            logger.info(entityDeclaration.simpleName.asString())
-            logger.info(entityDeclaration.packageName.asString())
+            val entityAnnotations = resolveAnnotations(entityDeclaration.annotations)
+            // logger.info(entityDeclaration.simpleName.asString())
+            // logger.info(entityDeclaration.packageName.asString())
 
             // Properties
             val propertyDeclarations = entityDeclaration
@@ -56,7 +58,9 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
                 .filter { it.hasBackingField }
                 .toList()
 
-            var idP: IdProperty? = null
+            // Placeholder is used for entities that inherit the id from
+            // their superclass
+            var idP: IdProperty = IdProperty.PLACEHOLDER
             val properties: MutableList<EntityProperty> = mutableListOf()
             val columns: MutableList<ColumnProperty> = mutableListOf()
             val lazyColumns: MutableList<ColumnProperty> = mutableListOf()
@@ -95,20 +99,50 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
                 columns.add(columnProperty)
             }
 
-            if (idP == null) {
-                throw IllegalArgumentException("Entity [$entityName] has no ID")
-            }
-
-            val entityInfo = EntityInfo(
-                entityDeclaration,
-                properties, idP, columns, lazyColumns, relations
+            EntityInfo(
+                entityDeclaration, entityAnnotations,
+                properties, idP, columns, lazyColumns, relations, null, null
             )
+        }
 
+        // Add inheritance info
+        val inheritedEntities: MutableMap<String, EntityInfo> = entitiesWithoutInheritanceInfo
+            .associateByTo(HashMap()) { it.qualifiedName!! }
+
+        for (entityInfo in entitiesWithoutInheritanceInfo) {
+            if (!entityInfo.annotations.hasAnnotation(ANNOTATION_INHERITANCE)) continue
+
+            // Store subclasses for superclass
+            val subClasses = entitiesWithoutInheritanceInfo.findSubclasses(entityInfo)
+            val subClassNames = subClasses.mapTo(HashSet()) { it.qualifiedName!! }
+            inheritedEntities[entityInfo.qualifiedName!!] = entityInfo
+                .copy(subClasses = subClassNames)
+
+            // Store superclass for subclass
+            // Also set inherited id
+            val superClassName = entityInfo.qualifiedName!!
+            for (subClass in subClasses) {
+                inheritedEntities[subClass.qualifiedName!!] = subClass
+                    .copy(id = entityInfo.id, superClass = superClassName)
+            }
+        }
+
+        // Debug
+        for (entityInfo in inheritedEntities.values) {
             // logger.info(entityInfo.toString())
+            logger.info(entityInfo.simpleName)
             logger.info(entityInfo.id.toString())
             logger.info(entityInfo.columns.toString())
             logger.info(entityInfo.relations.toString())
+            logger.info("${entityInfo.superClass} X ${entityInfo.subClasses}")
             logger.info("---")
+        }
+
+        // Validate
+        for (entityInfo in inheritedEntities.values) {
+            if (entityInfo.id === IdProperty.PLACEHOLDER) {
+                throw IllegalArgumentException("Entity [${entityInfo.simpleName}] has no ID")
+            }
         }
     }
 
@@ -142,5 +176,18 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         val innerDeclaration = innerType.declaration
         return ResolvedValue(innerDeclaration, innerType)
+    }
+
+    private fun List<EntityInfo>.findSubclasses(superEntity: EntityInfo): Set<EntityInfo> {
+        val subClasses = mutableSetOf<EntityInfo>()
+        for (entity in this) {
+            if (entity === superEntity) continue
+            for (superType in entity.declaration.getAllSuperTypes()) {
+                if (superType.declaration.qualifiedName?.asString() == superEntity.qualifiedName) {
+                    subClasses.add(entity)
+                }
+            }
+        }
+        return subClasses
     }
 }

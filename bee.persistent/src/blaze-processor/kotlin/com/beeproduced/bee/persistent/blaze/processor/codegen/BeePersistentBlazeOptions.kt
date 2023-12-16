@@ -8,4 +8,11 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
  */
 object BeePersistentBlazeOptions {
     const val scanPackage = "persistentScanPackage"
+    const val packageName = "persistentPackageName"
+    const val depth = "persistentDepth"
 }
+
+data class BeePersistentBlazeConfig(
+    val packageName: String,
+    val depth: Int,
+)

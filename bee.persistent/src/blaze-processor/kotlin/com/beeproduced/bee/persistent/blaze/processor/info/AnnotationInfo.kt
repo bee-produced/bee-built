@@ -16,6 +16,7 @@ object AnnotationInfo {
     const val ANNOTATION_ONE_TO_MANY = "jakarta.persistence.OneToMany"
     const val ANNOTATION_MANY_TO_ONE = "jakarta.persistence.ManyToOne"
     const val ANNOTATION_MANY_TO_MANY = "jakarta.persistence.ManyToMany"
+    const val ANNOTATION_INHERITANCE = "jakarta.persistence.Inheritance"
     val ANNOTATIONS_RELATION = setOf(
         ANNOTATION_ONE_TO_ONE,
         ANNOTATION_ONE_TO_MANY,
