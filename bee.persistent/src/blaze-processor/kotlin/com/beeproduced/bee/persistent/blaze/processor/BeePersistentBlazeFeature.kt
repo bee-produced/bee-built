@@ -6,10 +6,14 @@ import com.beeproduced.bee.generative.BeeGenerativeInput
 import com.beeproduced.bee.generative.Shared
 import com.beeproduced.bee.generative.processor.Options
 import com.beeproduced.bee.generative.util.resolveTypeAlias
-import com.google.devtools.ksp.processing.KSPLogger
+import com.beeproduced.bee.persistent.blaze.processor.info.*
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATIONS_RELATION
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_EMBEDDED_ID
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_GENERATED_VALUE
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_ID
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_TRANSIENT
 import com.google.devtools.ksp.symbol.*
 import jakarta.persistence.Entity
-import jakarta.persistence.Transient
 
 /**
  *
@@ -39,51 +43,104 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         val symbols = input.symbols
 
-        val types = symbols.annotatedBy.getValue(Entity::class.qualifiedName!!)
+        val entityDeclarations = symbols.annotatedBy.getValue(Entity::class.qualifiedName!!)
+        for (entityDeclaration in entityDeclarations) {
 
-        for (t in types) {
-            logger.info(t.simpleName.asString())
-            logger.info(t.packageName.asString())
+            val entityName = entityDeclaration.simpleName.asString()
+            logger.info(entityDeclaration.simpleName.asString())
+            logger.info(entityDeclaration.packageName.asString())
 
             // Properties
-            val properties = t.declarations
-                .filterIsInstance<KSPropertyDeclaration>()
-                .filter { it.annotations.none { isTransientAnnotation(it, logger)} }
+            val propertyDeclarations = entityDeclaration
+                .getAllProperties()
                 .filter { it.hasBackingField }
-            for (p in properties) {
-                val simpleName = p.simpleName.asString()
-                val typeName = p.type.resolve().resolveTypeAlias().declaration.qualifiedName?.asString()
-                val modifier = p.modifiers
-                val valueClass = if (isValueClass(p))
-                    getUnderlyingTypeOfValueClass(p)?.declaration?.qualifiedName?.asString()
-                else "not value class"
-                logger.info("  $simpleName, $typeName, $modifier, $valueClass")
+                .toList()
+
+            var idP: IdProperty? = null
+            val properties: MutableList<EntityProperty> = mutableListOf()
+            val columns: MutableList<ColumnProperty> = mutableListOf()
+            val lazyColumns: MutableList<ColumnProperty> = mutableListOf()
+            val relations: MutableList<ColumnProperty> = mutableListOf()
+
+            for (p in propertyDeclarations) {
+                val propertyName = p.simpleName.asString()
+                val annotations = resolveAnnotations(p.annotations)
+                val type = p.type.resolve().resolveTypeAlias()
+
+                val entityProperty = EntityProperty(p, type, annotations)
+                properties.add(entityProperty)
+
+                if (annotations.hasAnnotation(ANNOTATION_TRANSIENT)) continue
+
+                val innerValue = getInnerValue(type)
+                val hasId = annotations.hasAnnotation(ANNOTATION_ID)
+                val hasEmbeddedId = annotations.hasAnnotation(ANNOTATION_EMBEDDED_ID)
+                if (hasId || hasEmbeddedId) {
+                    val isGenerated = annotations.hasAnnotation(ANNOTATION_GENERATED_VALUE)
+                    idP = IdProperty(p, type, annotations, innerValue, isGenerated, hasEmbeddedId)
+                    continue
+                }
+
+                val columnProperty = ColumnProperty(p, type, annotations, innerValue)
+                val hasRelation = annotations.hasAnnotation(ANNOTATIONS_RELATION)
+                if (hasRelation) {
+                    if (!type.isMarkedNullable) {
+                        throw IllegalArgumentException("Relation [$propertyName] of [$entityName] must be marked nullable")
+                    }
+                    relations.add(columnProperty)
+                    continue
+                }
+
+                // TODO: LazyColumns
+                columns.add(columnProperty)
             }
 
+            if (idP == null) {
+                throw IllegalArgumentException("Entity [$entityName] has no ID")
+            }
+
+            val entityInfo = EntityInfo(
+                entityDeclaration,
+                properties, idP, columns, lazyColumns, relations
+            )
+
+            // logger.info(entityInfo.toString())
+            logger.info(entityInfo.id.toString())
+            logger.info(entityInfo.columns.toString())
+            logger.info(entityInfo.relations.toString())
             logger.info("---")
         }
     }
 
-    private fun isTransientAnnotation(annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        // Resolve the annotation to its KSClassDeclaration and compare it with Transient::class
-        val check = annotation.annotationType.resolve().declaration.qualifiedName?.asString()
-        val anno = Transient::class.qualifiedName
-        // logger.info("check $check")
-        // logger.info("anno $anno")
-        return check == anno
+    private fun resolveAnnotations(annotations: Sequence<KSAnnotation>): List<ResolvedAnnotation> {
+        return annotations.map { a ->
+            val type = a.annotationType.resolve().resolveTypeAlias()
+            val declaration = type.declaration
+            ResolvedAnnotation(a, declaration, type)
+        }.toList()
     }
 
-    fun isValueClass(property: KSPropertyDeclaration): Boolean {
-        val type = property.type.resolve().declaration
-        return type is KSClassDeclaration && type.annotations.any { it.shortName.asString() == "JvmInline" }
+    private fun List<ResolvedAnnotation>.hasAnnotation(annotation: String): Boolean {
+        return any { it.qualifiedName == annotation }
     }
 
-    fun getUnderlyingTypeOfValueClass(property: KSPropertyDeclaration): KSType? {
-        val type = property.type.resolve().declaration
-        if (type is KSClassDeclaration && type.annotations.any { it.shortName.asString() == "JvmInline" }) {
-            // Assuming value classes have only one primary constructor property
-            return type.primaryConstructor?.parameters?.firstOrNull()?.type?.resolve()
-        }
-        return null
+    private fun List<ResolvedAnnotation>.hasAnnotation(annotations: Set<String>): Boolean {
+        return any { annotations.contains(it.qualifiedName) }
+    }
+
+    private fun getInnerValue(type: KSType): ResolvedValue? {
+        val declaration = type.declaration
+        if (
+            declaration !is KSClassDeclaration ||
+            !declaration.annotations.any { it.shortName.asString() == "JvmInline" }
+        ) return null
+
+        val innerType = declaration.primaryConstructor
+            ?.parameters?.firstOrNull()
+            ?.type?.resolve()?.resolveTypeAlias()
+            ?: return null
+
+        val innerDeclaration = innerType.declaration
+        return ResolvedValue(innerDeclaration, innerType)
     }
 }
