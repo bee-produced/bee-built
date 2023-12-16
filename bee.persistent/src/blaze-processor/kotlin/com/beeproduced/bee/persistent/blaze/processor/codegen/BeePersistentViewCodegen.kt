@@ -78,30 +78,92 @@ class BeePersistentViewCodegen(
 
     private val debugInfo = mutableMapOf<String, MutableSet<String>>()
 
+    // private fun FileSpec.Builder.processEntity(
+    //     entity: EntityInfo, viewCount: ViewCount
+    // ): String {
+    //     val viewName = viewCount.viewName(entity, null)
+    //
+    //     if (!debugInfo.containsKey(viewName)) {
+    //         debugInfo[viewName] = mutableSetOf()
+    //     }
+    //
+    //     //logger.info("View $viewName")
+    //     for (relation in entity.relations) {
+    //
+    //         // logger.info(relation.toString())
+    //         // logger.info("${relation.simpleName} X ${relation.qualifiedName}")
+    //
+    //         val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
+    //         val relationView = processEntity(relationEntity, viewCount, entity)
+    //         //logger.info("  View $viewName | ${relation.simpleName} => $relationView")
+    //
+    //         if (relationView != null)
+    //             debugInfo[viewName]?.add(relationView)
+    //     }
+    //
+    //     return viewName
+    // }
+
     private fun FileSpec.Builder.processEntity(
         entity: EntityInfo, viewCount: ViewCount
-    ): String {
+    ) {
         val viewName = viewCount.viewName(entity, null)
 
         if (!debugInfo.containsKey(viewName)) {
             debugInfo[viewName] = mutableSetOf()
         }
 
-        //logger.info("View $viewName")
+        val relationEntities = mutableListOf<ProcessE>()
         for (relation in entity.relations) {
-
-            // logger.info(relation.toString())
-            // logger.info("${relation.simpleName} X ${relation.qualifiedName}")
-
             val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-            val relationView = processEntity(relationEntity, viewCount.toMutableMap(), entity)
-            //logger.info("  View $viewName | ${relation.simpleName} => $relationView")
+            relationEntities.add(ProcessE(relationEntity, entity, viewName))
+        }
+        processEntities(relationEntities, viewCount, entity)
+    }
 
-            if (relationView != null)
-                debugInfo[viewName]?.add(relationView)
+    data class ProcessE(
+        val entity: EntityInfo,
+        val parent: EntityInfo,
+        val parentViewName: String
+    )
+
+    // TODO: Rewrite this more performant and better readable
+
+    private fun FileSpec.Builder.processEntities(
+        entities: List<ProcessE>, viewCount: ViewCount, root: EntityInfo
+    ) {
+        val entities = entities.filterNot { (entity, parent) ->
+            viewCount.viewCountReached(entity)
+        }
+        if (entities.isEmpty()) return
+
+
+        val uniqueEntities = entities.map { it.entity }.toSet()
+        for (entity in uniqueEntities) {
+            viewCount.incrementViewCount(entity)
         }
 
-        return viewName
+        for ((entity, parent, name) in entities) {
+            if (!debugInfo.containsKey(name)) {
+                debugInfo[name] = mutableSetOf()
+            }
+            val entityViewName = viewCount.viewName(entity, root)
+            debugInfo[name]?.add(entityViewName)
+        }
+
+        val newEntities = entities.map { (entity, parent) ->
+            val viewName = viewCount.viewName(entity, root)
+            val relationEntities = mutableListOf<ProcessE>()
+            for (relation in entity.relations) {
+                val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
+                relationEntities.add(ProcessE(relationEntity, entity, viewName))
+            }
+            relationEntities
+        }.flatten()
+
+        // TODO: Clear duplicates...
+
+        processEntities(newEntities, viewCount, root)
     }
 
     private fun FileSpec.Builder.processEntity(
