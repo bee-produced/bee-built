@@ -180,8 +180,29 @@ class BeePersistentViewCodegen(
         }
 
         dfs(root, viewName(root, root), mutableSetOf(root.qualifiedName!!))
-        logger.info("Extend")
-        logger.info(extend.map { it.name }.toString())
+
+        if (extend.isNotEmpty()) {
+            for (i in 1..depth) {
+                logger.info("Extend")
+                logger.info(extend.map { it.name }.toString())
+                val extendRound = extend.toList()
+                extend.clear()
+                for (info in extendRound) {
+                    if (i < depth) {
+                        for (relation in info.entityRelations) {
+                            val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
+                            val c = count.getOrDefault(relation.qualifiedName!!, 1)
+                            val viewName = viewName(relationEntity, root, c)
+                            count[relation.qualifiedName!!] = c + 1
+                            info.relations[relation.simpleName] = viewName
+                            extend.add(EntityViewInfo(viewName, relationEntity))
+                        }
+                    }
+                    result[info.name] = info
+                }
+            }
+        }
+
         return result
     }
 
