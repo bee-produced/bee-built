@@ -104,7 +104,10 @@ dependencies {
     "jpaImplementation"(libs.spring.boot.starter.web)
     "jpaApi"(libs.jdsl)
 
-
+    "blazeRuntimeOnly"(libs.blaze.core.impl.jakarta)
+    "blazeImplementation"(libs.blaze.integration.hibernate)
+    "blazeImplementation"(libs.blaze.entity.view.api.jakarta)
+    "blazeImplementation"(libs.blaze.entity.view.impl.jakarta)
     "blazeProcessorImplementation"("com.beeproduced:bee.generative:$version")
     "blazeProcessorImplementation"(sourceSets["blaze"].output)
 
