@@ -2,13 +2,13 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.addNStatementBuilder
+import com.beeproduced.bee.generative.util.toPoetClassName
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.writeTo
 
 /**
@@ -60,6 +60,11 @@ class BeePersistentViewCodegen(
         FileSpec
             .builder(packageName, fileName)
             .also {
+                it.addAnnotation(
+                    AnnotationSpec.builder(ClassName("", "Suppress"))
+                        .addMember("%S", "ClassName")
+                        .build()
+                )
                 entities.forEach { entity ->
                     it.processEntity(entity, viewCount())
                 }
@@ -119,7 +124,6 @@ class BeePersistentViewCodegen(
         // }
         // processEntities(relationEntities, viewCount, entity)
 
-
         logger.info("Generating!")
         val result = proc(entity, config.depth)
         result.forEach { (key, value) ->
@@ -139,7 +143,7 @@ class BeePersistentViewCodegen(
         val qualifiedName get() = entity.qualifiedName!!
     }
 
-    fun viewName(entity: EntityInfo, root: EntityInfo, count: Int? = null): String {
+    private fun viewName(entity: EntityInfo, root: EntityInfo, count: Int? = null): String {
         return "${entity.simpleName}__View__${root.simpleName}__${count ?: "Core"}"
     }
 
@@ -203,86 +207,42 @@ class BeePersistentViewCodegen(
             }
         }
 
+        for (entityView in result.values) {
+            addType(TypeSpec.classBuilder(entityView.name)
+                .buildEntityView(entityView)
+                .build()
+            )
+        }
+
         return result
     }
 
 
+    private fun TypeSpec.Builder.buildEntityView(entity: EntityViewInfo): TypeSpec.Builder {
+        // TODO: Inheritance support
 
-    data class ProcessE(
-        val entity: EntityInfo,
-        val parent: EntityInfo,
-        val parentViewName: String
-    )
+        addModifiers(KModifier.ABSTRACT)
+        for (relation in entity.entityRelations) {
 
-    // TODO: Rewrite this more performant and better readable
+            val viewTypeStr = entity.relations[relation.simpleName] ?: continue
+            val viewType = ClassName(packageName, viewTypeStr)
+            val isCollection = relation.type.declaration.qualifiedName?.asString()?.startsWith(
+                "kotlin.collections."
+            ) ?: false
 
-    private fun FileSpec.Builder.processEntities(
-        entities: List<ProcessE>, viewCount: ViewCount, root: EntityInfo
-    ) {
-        val entities = entities.filterNot { (entity, parent) ->
-            viewCount.viewCountReached(entity)
+
+
+            val propType = if (isCollection) {
+                ClassName("kotlin.collections", "Collection")
+                    .parameterizedBy(viewType)
+            } else viewType
+
+            addProperty(
+                PropertySpec.builder(relation.simpleName, propType)
+                    .addModifiers(KModifier.ABSTRACT)
+                    .build()
+            )
         }
-        if (entities.isEmpty()) return
-
-
-        val uniqueEntities = entities.map { it.entity }.toSet()
-        for (entity in uniqueEntities) {
-            viewCount.incrementViewCount(entity)
-        }
-
-        for ((entity, parent, name) in entities) {
-            if (!debugInfo.containsKey(name)) {
-                debugInfo[name] = mutableSetOf()
-            }
-            val entityViewName = viewCount.viewName(entity, root)
-            debugInfo[name]?.add(entityViewName)
-        }
-
-        val newEntities = entities.map { (entity, parent) ->
-            val viewName = viewCount.viewName(entity, root)
-            val relationEntities = mutableListOf<ProcessE>()
-            for (relation in entity.relations) {
-                val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-                relationEntities.add(ProcessE(relationEntity, entity, viewName))
-            }
-            relationEntities
-        }.flatten()
-
-        // TODO: Clear duplicates...
-
-        processEntities(newEntities, viewCount, root)
-    }
-
-    private fun FileSpec.Builder.processEntity(
-        entity: EntityInfo, viewCount: ViewCount, root: EntityInfo
-    ): String? {
-        if (viewCount.viewCountReached(entity)) return null
-        viewCount.incrementViewCount(entity)
-        val viewName = viewCount.viewName(entity, root)
-
-        if (!debugInfo.containsKey(viewName)) {
-            debugInfo[viewName] = mutableSetOf()
-        }
-
-        //logger.info("View $viewName")
-        for (relation in entity.relations) {
-
-            // logger.info(relation.toString())
-            // logger.info("${relation.simpleName} X ${relation.qualifiedName}")
-
-            val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-            val relationView = processEntity(relationEntity, viewCount.toMutableMap(), root)
-            //logger.info("  View $viewName | ${relation.simpleName} => $relationView")
-
-            if (relationView != null)
-                debugInfo[viewName]?.add(relationView)
-        }
-
-        return viewName
-    }
-
-    private fun TypeSpec.Builder.buildEntityView(entity: EntityInfo): TypeSpec.Builder {
-
 
         return this
     }
