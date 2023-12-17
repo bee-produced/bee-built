@@ -52,10 +52,11 @@ interface AbstractProperty {
     val qualifiedName: String? get() = nonCollectionType.declaration.qualifiedName?.asString()
 }
 
-interface ValueClassProperty {
+interface ValueClassProperty : AbstractProperty {
     val innerValue: ResolvedValue?
     val isValueClass: Boolean get() = innerValue != null
 }
+
 
 data class EntityProperty(
     override val declaration: KSPropertyDeclaration,

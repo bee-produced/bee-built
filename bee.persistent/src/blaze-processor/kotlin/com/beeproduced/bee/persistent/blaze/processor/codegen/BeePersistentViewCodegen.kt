@@ -2,13 +2,14 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.addNStatementBuilder
-import com.beeproduced.bee.generative.util.toPoetClassName
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
+import com.beeproduced.bee.persistent.blaze.processor.info.ValueClassProperty
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 
 /**
@@ -37,36 +38,17 @@ class BeePersistentViewCodegen(
 
     }
 
-    private fun viewCount(): MutableMap<String, Int> = entities
-        .map { it.qualifiedName!! }
-        .associateWithTo(HashMap()) { 0 }
-
-    private fun MutableMap<String, Int>.viewCountReached(entity: EntityInfo): Boolean {
-        val count = this[entity.qualifiedName!!] ?: return true
-        return count >= config.depth
-    }
-
-    private fun MutableMap<String, Int>.incrementViewCount(entity: EntityInfo) {
-        val count = this[entity.qualifiedName!!] ?: config.depth
-        this[entity.qualifiedName!!] = count + 1
-    }
-
-    private fun MutableMap<String, Int>.viewName(entity: EntityInfo, parent: EntityInfo?): String {
-        val count = this[entity.qualifiedName!!] ?: config.depth
-        return "${entity.simpleName}__View__${parent?.simpleName ?: "Root"}__$count"
-    }
-
     fun processEntities() {
         FileSpec
             .builder(packageName, fileName)
             .also {
                 it.addAnnotation(
                     AnnotationSpec.builder(ClassName("", "Suppress"))
-                        .addMember("%S", "ClassName")
+                        .addMember("%S, %S", "ClassName", "RedundantVisibilityModifier")
                         .build()
                 )
                 entities.forEach { entity ->
-                    it.processEntity(entity, viewCount())
+                    it.processEntity(entity)
                 }
                 for ((info, props) in debugInfo) {
                     logger.info(info)
@@ -108,9 +90,7 @@ class BeePersistentViewCodegen(
     //     return viewName
     // }
 
-    private fun FileSpec.Builder.processEntity(
-        entity: EntityInfo, viewCount: ViewCount
-    ) {
+    private fun FileSpec.Builder.processEntity(entity: EntityInfo) {
         // val viewName = viewCount.viewName(entity, null)
         //
         // if (!debugInfo.containsKey(viewName)) {
@@ -218,19 +198,29 @@ class BeePersistentViewCodegen(
     }
 
 
-    private fun TypeSpec.Builder.buildEntityView(entity: EntityViewInfo): TypeSpec.Builder {
+    private fun TypeSpec.Builder.buildEntityView(info: EntityViewInfo): TypeSpec.Builder {
+        val entity = info.entity
         // TODO: Inheritance support
 
+        // TODO: Entity Annotations
         addModifiers(KModifier.ABSTRACT)
-        for (relation in entity.entityRelations) {
 
-            val viewTypeStr = entity.relations[relation.simpleName] ?: continue
+        // Id column
+        addProperty(buildProperty(entity.id))
+
+        // (Lazy) columns
+        for (column in entity.lazyColumns + entity.columns) {
+            addProperty(buildProperty(column))
+        }
+
+        // Relation mappings
+        for (relation in info.entityRelations) {
+
+            val viewTypeStr = info.relations[relation.simpleName] ?: continue
             val viewType = ClassName(packageName, viewTypeStr)
             val isCollection = relation.type.declaration.qualifiedName?.asString()?.startsWith(
                 "kotlin.collections."
             ) ?: false
-
-
 
             val propType = if (isCollection) {
                 ClassName("kotlin.collections", "Collection")
@@ -240,11 +230,22 @@ class BeePersistentViewCodegen(
             addProperty(
                 PropertySpec.builder(relation.simpleName, propType)
                     .addModifiers(KModifier.ABSTRACT)
+                    .mutable(true)
                     .build()
             )
         }
 
         return this
+    }
+
+    private fun buildProperty(property: ValueClassProperty): PropertySpec {
+        val propType = if (property.isValueClass) {
+            requireNotNull(property.innerValue).type
+        } else property.type
+        return PropertySpec.builder(property.simpleName, propType.toClassName())
+            .addModifiers(KModifier.ABSTRACT)
+            .mutable(true)
+            .build()
     }
 
 }
