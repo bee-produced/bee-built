@@ -3,6 +3,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.addNStatementBuilder
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
+import com.beeproduced.bee.persistent.blaze.processor.info.IdProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.ValueClassProperty
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -202,7 +203,12 @@ class BeePersistentViewCodegen(
         val entity = info.entity
         // TODO: Inheritance support
 
-        // TODO: Entity Annotations
+        // Entity view annotation
+        val entityViewAnnotation = AnnotationSpec
+            .builder(ClassName("com.blazebit.persistence.view", "EntityView"))
+            .addMember("%T::class", entity.declaration.toClassName())
+            .build()
+        addAnnotation(entityViewAnnotation)
         addModifiers(KModifier.ABSTRACT)
 
         // Id column
@@ -238,6 +244,10 @@ class BeePersistentViewCodegen(
         return this
     }
 
+    private val blazeIdMapping = AnnotationSpec.builder(ClassName("com.blazebit.persistence.view", "IdMapping"))
+        .useSiteTarget(AnnotationSpec.UseSiteTarget.GET)
+        .build()
+
     private fun buildProperty(property: ValueClassProperty): PropertySpec {
         val propType = if (property.isValueClass) {
             requireNotNull(property.innerValue).type
@@ -245,6 +255,10 @@ class BeePersistentViewCodegen(
         return PropertySpec.builder(property.simpleName, propType.toClassName())
             .addModifiers(KModifier.ABSTRACT)
             .mutable(true)
+            .also {
+                if (property !is IdProperty) return@also
+                it.addAnnotation(blazeIdMapping)
+            }
             .build()
     }
 
