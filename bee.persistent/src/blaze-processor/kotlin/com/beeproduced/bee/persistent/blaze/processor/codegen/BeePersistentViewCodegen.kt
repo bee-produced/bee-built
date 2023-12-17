@@ -6,7 +6,6 @@ import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeSpec
@@ -107,19 +106,86 @@ class BeePersistentViewCodegen(
     private fun FileSpec.Builder.processEntity(
         entity: EntityInfo, viewCount: ViewCount
     ) {
-        val viewName = viewCount.viewName(entity, null)
+        // val viewName = viewCount.viewName(entity, null)
+        //
+        // if (!debugInfo.containsKey(viewName)) {
+        //     debugInfo[viewName] = mutableSetOf()
+        // }
+        //
+        // val relationEntities = mutableListOf<ProcessE>()
+        // for (relation in entity.relations) {
+        //     val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
+        //     relationEntities.add(ProcessE(relationEntity, entity, viewName))
+        // }
+        // processEntities(relationEntities, viewCount, entity)
 
-        if (!debugInfo.containsKey(viewName)) {
-            debugInfo[viewName] = mutableSetOf()
-        }
 
-        val relationEntities = mutableListOf<ProcessE>()
-        for (relation in entity.relations) {
-            val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-            relationEntities.add(ProcessE(relationEntity, entity, viewName))
+        logger.info("Generating!")
+        val result = proc(entity, config.depth)
+        result.forEach { (key, value) ->
+            logger.info(key)
+            value.relations.forEach { r ->
+                logger.info("  $r")
+            }
         }
-        processEntities(relationEntities, viewCount, entity)
     }
+
+    data class EntityViewInfo(
+        val name: String,
+        val entity: EntityInfo,
+        val relations: MutableMap<String, String> = mutableMapOf()
+    ) {
+        val entityRelations get() = entity.relations
+        val qualifiedName get() = entity.qualifiedName!!
+    }
+
+    fun viewName(entity: EntityInfo, root: EntityInfo, count: Int? = null): String {
+        return "${entity.simpleName}__View__${root.simpleName}__${count ?: "Core"}"
+    }
+
+    private fun FileSpec.Builder.proc(
+        root: EntityInfo, depth: Int
+    ): Map<String, EntityViewInfo> {
+        // Key -> ViewName
+        val result = mutableMapOf<String, EntityViewInfo>()
+        // Key -> QualifiedName
+        val count = mutableMapOf<String, Int>()
+
+        val extend = mutableListOf<EntityViewInfo>()
+
+        // Visited -> QualifiedName
+        fun dfs(start: EntityInfo, startViewName: String, visited: MutableSet<String>) {
+            val info = EntityViewInfo(startViewName, start)
+            for (relation in info.entityRelations) {
+                val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
+                // Copy visited already here to multiple relations to same entity via same view
+                val nextVisited = visited.toMutableSet()
+
+                if (!nextVisited.contains(relationEntity.qualifiedName)) {
+                    nextVisited.add(relationEntity.qualifiedName!!)
+                    val c = count.getOrDefault(relation.qualifiedName!!, 1)
+                    count[relation.qualifiedName!!] = c + 1
+                    val viewName = viewName(relationEntity, root, c)
+                    info.relations[relation.simpleName] = viewName
+                    dfs(relationEntity, viewName, nextVisited)
+                } else if (depth > 0) {
+                    val c = count.getOrDefault(relation.qualifiedName!!, 1)
+                    val viewName = viewName(relationEntity, root, c)
+                    count[relation.qualifiedName!!] = c + 1
+                    info.relations[relation.simpleName] = viewName
+                    extend.add(EntityViewInfo(viewName, relationEntity))
+                }
+            }
+            result[startViewName] = info
+        }
+
+        dfs(root, viewName(root, root), mutableSetOf(root.qualifiedName!!))
+        logger.info("Extend")
+        logger.info(extend.map { it.name }.toString())
+        return result
+    }
+
+
 
     data class ProcessE(
         val entity: EntityInfo,
