@@ -10,6 +10,7 @@ object AnnotationInfo {
     const val ANNOTATION_TRANSIENT = "jakarta.persistence.Transient"
     const val ANNOTATION_ID = "jakarta.persistence.Id"
     const val ANNOTATION_EMBEDDED_ID = "jakarta.persistence.EmbeddedId"
+    const val ANNOTATION_EMBEDDED = "jakarta.persistence.Embedded"
     const val ANNOTATION_GENERATED_VALUE = "jakarta.persistence.GeneratedValue"
     const val ANNOTATION_JVM_INLINE = "kotlin.jvm.JvmInline"
     const val ANNOTATION_ONE_TO_ONE = "jakarta.persistence.OneToOne"
@@ -23,4 +24,5 @@ object AnnotationInfo {
         ANNOTATION_MANY_TO_ONE,
         ANNOTATION_MANY_TO_MANY
     )
+    const val ANNOTATION_LAZY_FIELD = "com.beeproduced.bee.persistent.blaze.annotations.LazyField"
 }

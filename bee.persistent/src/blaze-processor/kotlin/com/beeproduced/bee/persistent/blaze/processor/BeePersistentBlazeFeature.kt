@@ -10,10 +10,12 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlaze
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentViewCodegen
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATIONS_RELATION
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_EMBEDDED
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_EMBEDDED_ID
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_GENERATED_VALUE
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_ID
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_INHERITANCE
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_LAZY_FIELD
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_TRANSIENT
 import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.symbol.KSAnnotation
@@ -85,11 +87,14 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
                 val hasEmbeddedId = annotations.hasAnnotation(ANNOTATION_EMBEDDED_ID)
                 if (hasId || hasEmbeddedId) {
                     val isGenerated = annotations.hasAnnotation(ANNOTATION_GENERATED_VALUE)
-                    idP = IdProperty(p, type, annotations, innerValue, isGenerated, hasEmbeddedId)
+                    val embedded = if (hasEmbeddedId) getEmbeddedInfo(type) else null
+                    idP = IdProperty(p, type, annotations, innerValue, isGenerated, embedded)
                     continue
                 }
 
-                val columnProperty = ColumnProperty(p, type, annotations, innerValue)
+                val isEmbedded = annotations.hasAnnotation(ANNOTATION_EMBEDDED)
+                val embedded = if (isEmbedded) getEmbeddedInfo(type) else null
+                val columnProperty = ColumnProperty(p, type, annotations, innerValue, embedded)
                 val hasRelation = annotations.hasAnnotation(ANNOTATIONS_RELATION)
                 if (hasRelation) {
                     if (!type.isMarkedNullable) {
@@ -99,8 +104,8 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
                     continue
                 }
 
-                // TODO: LazyColumns
-                columns.add(columnProperty)
+                if (annotations.hasAnnotation(ANNOTATION_LAZY_FIELD)) lazyColumns.add(columnProperty)
+                else columns.add(columnProperty)
             }
 
             EntityInfo(
@@ -203,5 +208,27 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             }
         }
         return subClasses
+    }
+
+    private fun getEmbeddedInfo(eType: KSType): EmbeddedInfo {
+        val declaration = eType.declaration as KSClassDeclaration
+        val propertyDeclarations = declaration
+            .getAllProperties()
+            .filter { it.hasBackingField }
+            .toList()
+
+        val columns: MutableList<ColumnProperty> = mutableListOf()
+        val lazyColumns: MutableList<ColumnProperty> = mutableListOf()
+
+        for (p in propertyDeclarations) {
+            val annotations = resolveAnnotations(p.annotations)
+            val type = p.type.resolve().resolveTypeAlias()
+            val columnProperty = ColumnProperty(p, type, annotations, null, null)
+
+            if (annotations.hasAnnotation(ANNOTATION_LAZY_FIELD)) lazyColumns.add(columnProperty)
+            else columns.add(columnProperty)
+        }
+
+        return EmbeddedInfo(declaration, columns, lazyColumns)
     }
 }
