@@ -16,7 +16,9 @@ import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTA
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_INHERITANCE
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_TRANSIENT
 import com.google.devtools.ksp.getAllSuperTypes
-import com.google.devtools.ksp.symbol.*
+import com.google.devtools.ksp.symbol.KSAnnotation
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSType
 import jakarta.persistence.Entity
 
 /**

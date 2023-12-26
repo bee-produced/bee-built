@@ -26,6 +26,8 @@ data class EntityInfo(
     val qualifiedName: String? get() = declaration.qualifiedName?.asString()
 }
 
+
+
 data class ResolvedAnnotation(
     val annotation: KSAnnotation,
     val declaration: KSDeclaration,
@@ -56,6 +58,8 @@ interface ValueClassProperty : AbstractProperty {
     val innerValue: ResolvedValue?
     val isValueClass: Boolean get() = innerValue != null
 }
+
+
 
 
 data class EntityProperty(
