@@ -58,15 +58,17 @@ interface AbstractProperty {
     val qualifiedName: String? get() = nonCollectionType.declaration.qualifiedName?.asString()
 }
 
-interface ValueClassProperty : AbstractProperty {
+interface ValueClassProperty {
     val innerValue: ResolvedValue?
     val isValueClass: Boolean get() = innerValue != null
 }
 
-interface EmbeddedProperty : AbstractProperty {
+interface EmbeddedProperty {
     val embedded: EmbeddedInfo?
     val isEmbedded: Boolean get() = embedded != null
 }
+
+interface Property : AbstractProperty, ValueClassProperty, EmbeddedProperty
 
 data class EntityProperty(
     override val declaration: KSPropertyDeclaration,
@@ -83,7 +85,7 @@ data class IdProperty(
     override val innerValue: ResolvedValue?,
     val isGenerated: Boolean,
     override val embedded: EmbeddedInfo?
-) : AbstractProperty, ValueClassProperty, EmbeddedProperty {
+) : Property {
     override val nonCollectionType: KSType = getNonNullableSingleRepresentation(type)
 
     fun generatedDefaultValueLiteral(): String {
@@ -118,7 +120,7 @@ data class ColumnProperty(
     override val annotations: List<ResolvedAnnotation>,
     override val innerValue: ResolvedValue?,
     override val embedded: EmbeddedInfo?
-) : AbstractProperty, ValueClassProperty, EmbeddedProperty {
+) : Property {
     override val nonCollectionType: KSType = getNonNullableSingleRepresentation(type)
 }
 

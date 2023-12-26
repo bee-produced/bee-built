@@ -2,9 +2,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.addNStatementBuilder
-import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
-import com.beeproduced.bee.persistent.blaze.processor.info.IdProperty
-import com.beeproduced.bee.persistent.blaze.processor.info.ValueClassProperty
+import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -56,6 +54,12 @@ class BeePersistentViewCodegen(
                     for (p in props) {
                         logger.info("  $p")
                     }
+                }
+                generatedEmbedded.forEach { (name, info) ->
+                   it.addType(TypeSpec.classBuilder(name)
+                       .buildEmbeddedView(info)
+                       .build()
+                    )
                 }
             }
             .build()
@@ -266,11 +270,11 @@ class BeePersistentViewCodegen(
         }
 
         // Id column
-        addProperty(buildProperty(entity.id))
+        buildProperty(entity.id)
 
         // (Lazy) columns
         for (column in entity.lazyColumns + entity.columns) {
-            addProperty(buildProperty(column))
+            buildProperty(column)
         }
 
         // Relation mappings
@@ -316,7 +320,7 @@ class BeePersistentViewCodegen(
         // (Lazy) columns
         for (column in entity.lazyColumns + entity.columns) {
             if (superFields.contains(column.simpleName)) continue
-            addProperty(buildProperty(column))
+            buildProperty(column)
         }
 
         // Relation mappings
@@ -349,20 +353,43 @@ class BeePersistentViewCodegen(
         .useSiteTarget(AnnotationSpec.UseSiteTarget.GET)
         .build()
 
-    private fun buildProperty(property: ValueClassProperty): PropertySpec {
+    private fun TypeSpec.Builder.buildProperty(property: Property) {
         val propType = if (property.isValueClass) {
-            requireNotNull(property.innerValue).type
-        } else property.type
-        return PropertySpec.builder(property.simpleName, propType.toClassName())
+            requireNotNull(property.innerValue).type.toClassName()
+        } else if(property.isEmbedded) {
+            val embedded = property.embedded!!
+            val name = "${embedded.declaration.simpleName.asString()}__View"
+            generatedEmbedded[name] = embedded
+            ClassName(packageName, name)
+        } else property.type.toClassName()
+        addProperty(PropertySpec.builder(property.simpleName, propType)
             .addModifiers(KModifier.ABSTRACT)
             .mutable(true)
             .also {
                 if (property !is IdProperty) return@also
                 it.addAnnotation(blazeIdMapping)
             }
-            .build()
+            .build())
     }
 
+    private val generatedEmbedded: MutableMap<String, EmbeddedInfo> = mutableMapOf()
+
+    private fun TypeSpec.Builder.buildEmbeddedView(info: EmbeddedInfo): TypeSpec.Builder {
+        // Entity view annotation
+        val entityViewAnnotation = AnnotationSpec
+            .builder(ClassName("com.blazebit.persistence.view", "EntityView"))
+            .addMember("%T::class", info.declaration.toClassName())
+            .build()
+        addAnnotation(entityViewAnnotation)
+        addModifiers(KModifier.ABSTRACT)
+
+        // (Lazy) columns
+        for (column in info.lazyColumns + info.columns) {
+            buildProperty(column)
+        }
+
+        return this
+    }
 }
 
 typealias ViewCount = MutableMap<String, Int>
