@@ -5,9 +5,11 @@ import com.beeproduced.bee.generative.BeeGenerativeFeature
 import com.beeproduced.bee.generative.BeeGenerativeInput
 import com.beeproduced.bee.generative.Shared
 import com.beeproduced.bee.generative.processor.Options
+import com.beeproduced.bee.generative.util.getOption
 import com.beeproduced.bee.generative.util.resolveTypeAlias
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeConfig
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeOptions
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentViewCodegen
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATIONS_RELATION
@@ -157,7 +159,8 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         val config = BeePersistentBlazeConfig(
             "com.beeproduced.persistent.generated",
-            2
+            2,
+                input.options.getOption(BeePersistentBlazeOptions.viewPackageName)
         )
 
         // Process

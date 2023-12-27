@@ -25,7 +25,7 @@ class BeePersistentViewCodegen(
     private val entities: List<EntityInfo>,
     private val config: BeePersistentBlazeConfig
 ) {
-    private val packageName: String = "com.beeproduced.bee.persistent.generated"
+    private val packageName: String = config.viewPackageName
     private val fileName: String = "GeneratedViews"
 
     private val entitiesMap = entities.associateBy { it.qualifiedName!! }
