@@ -1,5 +1,7 @@
 package com.beeproduced.datasource.a
 
+import org.springframework.context.annotation.Configuration
+
 /*
 
 

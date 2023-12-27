@@ -108,6 +108,7 @@ dependencies {
     "blazeApi"(libs.blaze.integration.hibernate)
     "blazeApi"(libs.blaze.entity.view.api.jakarta)
     "blazeApi"(libs.blaze.entity.view.impl.jakarta)
+    "blazeApi"(libs.blaze.integration.spring)
     "blazeProcessorImplementation"("com.beeproduced:bee.generative:$version")
     "blazeProcessorImplementation"(sourceSets["blaze"].output)
 

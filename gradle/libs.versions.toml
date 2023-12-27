@@ -80,6 +80,7 @@ blaze-core-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-co
 blaze-integration-hibernate = { group = "com.blazebit", name = "blaze-persistence-integration-hibernate-6.2", version.ref = "blaze" }
 blaze-entity-view-api-jakarta = { group = "com.blazebit", name = "blaze-persistence-entity-view-api-jakarta", version.ref = "blaze" }
 blaze-entity-view-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-core-impl-jakarta", version.ref = "blaze" }
+blaze-integration-spring = { group = "com.blazebit", name = "blaze-persistence-integration-spring-data-3.1", version.ref = "blaze"}
 
 [plugins]
 kotlinter = { id = "org.jmailen.kotlinter", version = "3.13.0" }
