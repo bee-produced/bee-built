@@ -37,30 +37,45 @@ class BeePersistentViewCodegen(
 
     }
 
-    fun processEntities() {
+    fun processViews(views: ViewInfo) {
         FileSpec
             .builder(packageName, fileName)
-            .also {
-                it.addAnnotation(
+            .apply {
+                addAnnotation(
                     AnnotationSpec.builder(ClassName("", "Suppress"))
                         .addMember("%S, %S", "ClassName", "RedundantVisibilityModifier")
                         .build()
                 )
-                entities.forEach { entity ->
-                    it.processEntity(entity)
+                for (entityView in views.entityViews.values) {
+                    addType(TypeSpec.classBuilder(entityView.name)
+                        .run {
+                            if (entityView.superClassName != null) buildSubEntityView(entityView)
+                            else buildEntityView(entityView)
+                        }
+                        .build()
+                    )
                 }
-                for ((info, props) in debugInfo) {
-                    logger.info(info)
-                    for (p in props) {
-                        logger.info("  $p")
-                    }
-                }
-                generatedEmbedded.forEach { (name, info) ->
-                   it.addType(TypeSpec.classBuilder(name)
-                       .buildEmbeddedView(info)
+                for (embeddedView in views.embeddedViews.values) {
+                    addType(TypeSpec.classBuilder(embeddedView.name)
+                       .buildEmbeddedView(embeddedView.embedded)
                        .build()
                     )
                 }
+                // entities.forEach { entity ->
+                //     it.processEntity(entity)
+                // }
+                // for ((info, props) in debugInfo) {
+                //     logger.info(info)
+                //     for (p in props) {
+                //         logger.info("  $p")
+                //     }
+                // }
+                // generatedEmbedded.forEach { (name, info) ->
+                //    it.addType(TypeSpec.classBuilder(name)
+                //        .buildEmbeddedView(info)
+                //        .build()
+                //     )
+                // }
             }
             .build()
             .writeTo(codeGenerator, dependencies)
@@ -117,16 +132,6 @@ class BeePersistentViewCodegen(
                 logger.info("  $r")
             }
         }
-    }
-
-    data class EntityViewInfo(
-        val name: String,
-        val entity: EntityInfo,
-        val superClassName: String? = null,
-        val relations: MutableMap<String, String> = mutableMapOf()
-    ) {
-        val entityRelations get() = entity.relations
-        val qualifiedName get() = entity.qualifiedName!!
     }
 
     private fun viewName(entity: EntityInfo, root: EntityInfo, count: Int? = null): String {
@@ -374,6 +379,7 @@ class BeePersistentViewCodegen(
 
     private val generatedEmbedded: MutableMap<String, EmbeddedInfo> = mutableMapOf()
 
+    // TODO: Change to embeddedviewinfo
     private fun TypeSpec.Builder.buildEmbeddedView(info: EmbeddedInfo): TypeSpec.Builder {
         // Entity view annotation
         val entityViewAnnotation = AnnotationSpec

@@ -6,6 +6,7 @@ import com.beeproduced.bee.generative.BeeGenerativeInput
 import com.beeproduced.bee.generative.Shared
 import com.beeproduced.bee.generative.processor.Options
 import com.beeproduced.bee.generative.util.resolveTypeAlias
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeConfig
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentViewCodegen
 import com.beeproduced.bee.persistent.blaze.processor.info.*
@@ -158,11 +159,17 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             "com.beeproduced.persistent.generated",
             2
         )
+
+        // Process
+        val entities = inheritedEntities.values.toList()
+        val analyser = BeePersistentAnalyser(input.logger, config)
+        val views = analyser.processEntities(entities)
+
         val viewCodeGen = BeePersistentViewCodegen(
             input.codeGenerator, input.dependencies, input.logger,
             inheritedEntities.values.toList(), config
         )
-        viewCodeGen.processEntities()
+        viewCodeGen.processViews(views)
     }
 
     private fun resolveAnnotations(annotations: Sequence<KSAnnotation>): List<ResolvedAnnotation> {
