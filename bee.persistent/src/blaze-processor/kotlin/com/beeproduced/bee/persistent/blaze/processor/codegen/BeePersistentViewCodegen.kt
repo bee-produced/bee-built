@@ -2,6 +2,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.addNStatementBuilder
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -49,7 +50,8 @@ class BeePersistentViewCodegen(
                 for (entityView in views.entityViews.values) {
                     addType(TypeSpec.classBuilder(entityView.name)
                         .run {
-                            if (entityView.superClassName != null) buildSubEntityView(entityView)
+                            if (entityView.superClassName != null)
+                                buildSubEntityView(entityView)
                             else buildEntityView(entityView)
                         }
                         .build()
@@ -57,205 +59,14 @@ class BeePersistentViewCodegen(
                 }
                 for (embeddedView in views.embeddedViews.values) {
                     addType(TypeSpec.classBuilder(embeddedView.name)
-                       .buildEmbeddedView(embeddedView.embedded)
+                       .buildEmbeddedView(embeddedView)
                        .build()
                     )
                 }
-                // entities.forEach { entity ->
-                //     it.processEntity(entity)
-                // }
-                // for ((info, props) in debugInfo) {
-                //     logger.info(info)
-                //     for (p in props) {
-                //         logger.info("  $p")
-                //     }
-                // }
-                // generatedEmbedded.forEach { (name, info) ->
-                //    it.addType(TypeSpec.classBuilder(name)
-                //        .buildEmbeddedView(info)
-                //        .build()
-                //     )
-                // }
             }
             .build()
             .writeTo(codeGenerator, dependencies)
     }
-
-
-    private val debugInfo = mutableMapOf<String, MutableSet<String>>()
-
-    // private fun FileSpec.Builder.processEntity(
-    //     entity: EntityInfo, viewCount: ViewCount
-    // ): String {
-    //     val viewName = viewCount.viewName(entity, null)
-    //
-    //     if (!debugInfo.containsKey(viewName)) {
-    //         debugInfo[viewName] = mutableSetOf()
-    //     }
-    //
-    //     //logger.info("View $viewName")
-    //     for (relation in entity.relations) {
-    //
-    //         // logger.info(relation.toString())
-    //         // logger.info("${relation.simpleName} X ${relation.qualifiedName}")
-    //
-    //         val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-    //         val relationView = processEntity(relationEntity, viewCount, entity)
-    //         //logger.info("  View $viewName | ${relation.simpleName} => $relationView")
-    //
-    //         if (relationView != null)
-    //             debugInfo[viewName]?.add(relationView)
-    //     }
-    //
-    //     return viewName
-    // }
-
-    private fun FileSpec.Builder.processEntity(entity: EntityInfo) {
-        // val viewName = viewCount.viewName(entity, null)
-        //
-        // if (!debugInfo.containsKey(viewName)) {
-        //     debugInfo[viewName] = mutableSetOf()
-        // }
-        //
-        // val relationEntities = mutableListOf<ProcessE>()
-        // for (relation in entity.relations) {
-        //     val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-        //     relationEntities.add(ProcessE(relationEntity, entity, viewName))
-        // }
-        // processEntities(relationEntities, viewCount, entity)
-
-        logger.info("Generating!")
-        val result = processEntities(entity, config.depth)
-        result.forEach { (key, value) ->
-            logger.info(key)
-            value.relations.forEach { r ->
-                logger.info("  $r")
-            }
-        }
-    }
-
-    private fun viewName(entity: EntityInfo, root: EntityInfo, count: Int? = null): String {
-        return "${entity.simpleName}__View__${root.simpleName}__${count ?: "Core"}"
-    }
-
-    private fun FileSpec.Builder.processEntities(
-        root: EntityInfo, depth: Int
-    ): Map<String, EntityViewInfo> {
-        // Key -> ViewName
-        val result = mutableMapOf<String, EntityViewInfo>()
-        // Key -> QualifiedName
-        val count = mutableMapOf<String, Int>()
-
-        val extend = mutableListOf<EntityViewInfo>()
-
-        // Visited -> QualifiedName
-        fun dfs(start: EntityInfo, startViewName: String, visited: MutableSet<String>, isCore: Boolean = false) {
-            val info = EntityViewInfo(startViewName, start)
-            for (relation in info.entityRelations) {
-                val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-                // Copy visited already here to multiple relations to same entity via same view
-                val nextVisited = visited.toMutableSet()
-
-                if (!nextVisited.contains(relationEntity.qualifiedName)) {
-                    nextVisited.add(relationEntity.qualifiedName!!)
-                    val c = count.getOrDefault(relation.qualifiedName!!, 1)
-                    count[relation.qualifiedName!!] = c + 1
-                    val viewName = viewName(relationEntity, root, c)
-                    info.relations[relation.simpleName] = viewName
-                    dfs(relationEntity, viewName, nextVisited)
-                } else if (depth > 0) {
-                    val c = count.getOrDefault(relation.qualifiedName!!, 1)
-                    val viewName = viewName(relationEntity, root, c)
-                    count[relation.qualifiedName!!] = c + 1
-                    info.relations[relation.simpleName] = viewName
-                    extend.add(EntityViewInfo(viewName, relationEntity))
-                }
-            }
-
-            result[startViewName] = info
-            if (start.subClasses == null) return
-
-            // TODO: Streamline this...
-            for (subClass in start.subClasses) {
-                val subEntity = entitiesMap[subClass] ?: continue
-                val c = count.getOrDefault(subEntity.qualifiedName!!, 1)
-                val viewName = if (isCore) viewName(subEntity, root)
-                else viewName(subEntity, root, c)
-                count[subEntity.qualifiedName!!] = c + 1
-                val subInfo = EntityViewInfo(viewName, subEntity, startViewName)
-
-                for (relation in subInfo.entityRelations) {
-                    val cachedRelation = info.relations[relation.simpleName]
-                    if (cachedRelation != null) {
-                        subInfo.relations[relation.simpleName] = cachedRelation
-                        continue
-                    }
-
-                    val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-                    // Copy visited already here to multiple relations to same entity via same view
-                    val nextVisited = visited.toMutableSet()
-
-                    if (!nextVisited.contains(relationEntity.qualifiedName)) {
-                        nextVisited.add(relationEntity.qualifiedName!!)
-                        val c = count.getOrDefault(relation.qualifiedName!!, 1)
-                        count[relation.qualifiedName!!] = c + 1
-                        val viewName = viewName(relationEntity, root, c)
-                        subInfo.relations[relation.simpleName] = viewName
-                        dfs(relationEntity, viewName, nextVisited)
-                    } else if (depth > 0) {
-                        val c = count.getOrDefault(relation.qualifiedName!!, 1)
-                        val viewName = viewName(relationEntity, root, c)
-                        count[relation.qualifiedName!!] = c + 1
-                        subInfo.relations[relation.simpleName] = viewName
-                        extend.add(EntityViewInfo(viewName, relationEntity))
-                    }
-                    result[viewName] = subInfo
-                }
-            }
-
-            // TODO: What when extending superClass
-            // if (start.superClass == null) return
-        }
-
-        if (root.superClass != null)
-            return mutableMapOf()
-        dfs(root, viewName(root, root), mutableSetOf(root.qualifiedName!!), true)
-
-        if (extend.isNotEmpty()) {
-            for (i in 1..depth) {
-                logger.info("Extend")
-                logger.info(extend.map { it.name }.toString())
-                val extendRound = extend.toList()
-                extend.clear()
-                for (info in extendRound) {
-                    if (i < depth) {
-                        for (relation in info.entityRelations) {
-                            val relationEntity = entitiesMap[relation.qualifiedName!!] ?: continue
-                            val c = count.getOrDefault(relation.qualifiedName!!, 1)
-                            val viewName = viewName(relationEntity, root, c)
-                            count[relation.qualifiedName!!] = c + 1
-                            info.relations[relation.simpleName] = viewName
-                            extend.add(EntityViewInfo(viewName, relationEntity))
-                        }
-                    }
-                    result[info.name] = info
-                }
-            }
-        }
-
-        for (entityView in result.values) {
-            addType(TypeSpec.classBuilder(entityView.name)
-                .let {
-                    if (entityView.superClassName != null) it.buildSubEntityView(entityView)
-                    else it.buildEntityView(entityView)
-                }
-                .build()
-            )
-        }
-
-        return result
-    }
-
 
     private fun TypeSpec.Builder.buildEntityView(info: EntityViewInfo): TypeSpec.Builder {
         val entity = info.entity
@@ -363,8 +174,7 @@ class BeePersistentViewCodegen(
             requireNotNull(property.innerValue).type.toClassName()
         } else if(property.isEmbedded) {
             val embedded = property.embedded!!
-            val name = "${embedded.declaration.simpleName.asString()}__View"
-            generatedEmbedded[name] = embedded
+            val name = viewName(embedded)
             ClassName(packageName, name)
         } else property.type.toClassName()
         addProperty(PropertySpec.builder(property.simpleName, propType)
@@ -377,10 +187,9 @@ class BeePersistentViewCodegen(
             .build())
     }
 
-    private val generatedEmbedded: MutableMap<String, EmbeddedInfo> = mutableMapOf()
-
     // TODO: Change to embeddedviewinfo
-    private fun TypeSpec.Builder.buildEmbeddedView(info: EmbeddedInfo): TypeSpec.Builder {
+    private fun TypeSpec.Builder.buildEmbeddedView(view: EmbeddedViewInfo): TypeSpec.Builder {
+        val info = view.embedded
         // Entity view annotation
         val entityViewAnnotation = AnnotationSpec
             .builder(ClassName("com.blazebit.persistence.view", "EntityView"))
