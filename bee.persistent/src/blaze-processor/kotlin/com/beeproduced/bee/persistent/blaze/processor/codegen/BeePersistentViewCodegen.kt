@@ -187,7 +187,6 @@ class BeePersistentViewCodegen(
             .build())
     }
 
-    // TODO: Change to embeddedviewinfo
     private fun TypeSpec.Builder.buildEmbeddedView(view: EmbeddedViewInfo): TypeSpec.Builder {
         val info = view.embedded
         // Entity view annotation
