@@ -41,9 +41,6 @@ import javax.sql.DataSource
     criteriaBuilderFactoryRef = "aCBF",
     entitiyViewManagerRef = "aEVM"
 )
-// @EnableEntityViews(
-//     basePackages = ["com.beeproduced.datasource.a"],
-// )
 // TODO: Without this the backend crashes...
 @EnableJpaRepositories(
     basePackages = ["com.beeproduced.datasource.a"],
@@ -71,8 +68,6 @@ class DbConfigA(val env: Environment) {
         return em
     }
 
-    // TODO: @Primary Required for com.blazebit.persistence.integration.view.spring.impl.EntityViewConfigurationProducer
-    @Primary
     @Bean(name = ["aTM"])
     fun aTransactionManager(@Qualifier("aEM") aEntityManager: AbstractEntityManagerFactoryBean): PlatformTransactionManager {
         val transactionManager = JpaTransactionManager()
@@ -82,7 +77,7 @@ class DbConfigA(val env: Environment) {
 
     @Bean(name = ["aCBF"])
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    @org.springframework.context.annotation.Lazy(false)
+    @Lazy(false)
     fun aCriteriaBuilderFactory(
         @Qualifier("aEM") aEntityManager: EntityManagerFactory,
     ): CriteriaBuilderFactory {
@@ -92,7 +87,7 @@ class DbConfigA(val env: Environment) {
 
     @Bean(name = ["aEVM"])
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    @org.springframework.context.annotation.Lazy(false)
+    @Lazy(false)
     fun aEntityViewManager(
         @Qualifier("aCBF") cbf: CriteriaBuilderFactory,
         @Qualifier("aTM") transactionManager: PlatformTransactionManager,

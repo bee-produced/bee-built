@@ -3,14 +3,12 @@ package com.beeproduced.datasource.b
 import com.beeproduced.bee.persistent.blaze.annotations.EnableBeeRepositories
 import com.blazebit.persistence.Criteria
 import com.blazebit.persistence.CriteriaBuilderFactory
-import com.blazebit.persistence.integration.view.spring.EnableEntityViews
 import com.blazebit.persistence.integration.view.spring.impl.EntityViewComponentProvider
 import com.blazebit.persistence.integration.view.spring.impl.SpringTransactionSupport
 import com.blazebit.persistence.spi.CriteriaBuilderConfiguration
 import com.blazebit.persistence.view.EntityView
 import com.blazebit.persistence.view.EntityViewManager
 import com.blazebit.persistence.view.EntityViews
-import com.blazebit.persistence.view.spi.EntityViewConfiguration
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.config.ConfigurableBeanFactory
@@ -18,6 +16,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Lazy
 import org.springframework.context.annotation.Scope
 import org.springframework.core.env.Environment
 import org.springframework.core.io.ResourceLoader
@@ -37,9 +36,6 @@ import javax.sql.DataSource
     criteriaBuilderFactoryRef = "bCBF",
     entitiyViewManagerRef = "bEVM"
 )
-// @EnableEntityViews(
-//     basePackages = ["com.beeproduced.datasource.b"],
-// )
 @EnableJpaRepositories(
     basePackages = ["com.beeproduced.datasource.b"],
     entityManagerFactoryRef = "bEM",
@@ -75,7 +71,7 @@ class DbConfigB(val env: Environment) {
 
     @Bean(name = ["bCBF"])
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    @org.springframework.context.annotation.Lazy(false)
+    @Lazy(false)
     fun aCriteriaBuilderFactory(
         @Qualifier("bEM") bEntityManager: EntityManagerFactory
     ): CriteriaBuilderFactory {
@@ -85,8 +81,7 @@ class DbConfigB(val env: Environment) {
 
     @Bean(name = ["bEVM"])
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    @org.springframework.context.annotation.Lazy(false)
-    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
+    @Lazy(false)
     fun aEntityViewManager(
         @Qualifier("bCBF") cbf: CriteriaBuilderFactory,
         @Qualifier("bTM") transactionManager: PlatformTransactionManager,
