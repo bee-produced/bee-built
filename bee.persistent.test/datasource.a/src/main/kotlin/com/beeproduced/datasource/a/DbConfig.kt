@@ -39,7 +39,7 @@ import javax.sql.DataSource
     basePackages = ["com.beeproduced.datasource.a"],
     entityManagerFactoryRef = "aEM",
     criteriaBuilderFactoryRef = "aCBF",
-    entitiyViewManagerRef = "aEVM"
+    entityViewManagerRef = "aEVM"
 )
 // TODO: Without this the backend crashes...
 @EnableJpaRepositories(

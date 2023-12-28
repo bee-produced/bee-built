@@ -63,6 +63,7 @@ tasks.withType<Test> {
 
 beeGenerative {
     arg("persistentViewPackageName", "com.beeproduced.datasource.a")
+    arg("persistentRepositoryPackageName", "com.beeproduced.datasource.a")
 }
 
 noArg {

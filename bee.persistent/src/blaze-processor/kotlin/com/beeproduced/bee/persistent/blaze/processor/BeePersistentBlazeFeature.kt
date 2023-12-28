@@ -1,12 +1,11 @@
 package com.beeproduced.bee.persistent.blaze.processor
 
-import com.beeproduced.bee.generative.BeeGenerativeConfig
-import com.beeproduced.bee.generative.BeeGenerativeFeature
-import com.beeproduced.bee.generative.BeeGenerativeInput
-import com.beeproduced.bee.generative.Shared
+import com.beeproduced.bee.generative.*
 import com.beeproduced.bee.generative.processor.Options
 import com.beeproduced.bee.generative.util.getOption
 import com.beeproduced.bee.generative.util.resolveTypeAlias
+import com.beeproduced.bee.persistent.blaze.annotations.BeeRepository
+import com.beeproduced.bee.persistent.blaze.annotations.EnableBeeRepositories
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeConfig
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeOptions
@@ -21,6 +20,7 @@ import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTA
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_LAZY_FIELD
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_TRANSIENT
 import com.google.devtools.ksp.getAllSuperTypes
+import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -38,17 +38,20 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
     override fun multipleRoundProcessing(): Boolean = false
 
     override fun setup(options: Options, shared: Shared): BeeGenerativeConfig {
-
-        val name = options["datasource"] ?: "meh"
-        shared["datasource$name"] = "Hey"
         return BeeGenerativeConfig(
             packages = setOf(),
-            annotatedBy = setOf(Entity::class.qualifiedName!!),
+            annotatedBy = setOf(
+                Entity::class.qualifiedName!!,
+                BeeRepository::class.qualifiedName!!,
+                EnableBeeRepositories::class.qualifiedName!!
+            ),
         )
     }
 
+    private lateinit var logger: KSPLogger
+
     override fun process(input: BeeGenerativeInput) {
-        val logger = input.logger
+        logger = input.logger
         logger.info("Hey")
         logger.info(input.shared.keys.toString())
 
@@ -172,7 +175,10 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             input.codeGenerator, input.dependencies, input.logger,
             inheritedEntities.values.toList(), config
         )
+
         viewCodeGen.processViews(views)
+
+        getRepoInfo(symbols)
     }
 
     private fun resolveAnnotations(annotations: Sequence<KSAnnotation>): List<ResolvedAnnotation> {
@@ -240,5 +246,50 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         }
 
         return EmbeddedInfo(declaration, columns, lazyColumns)
+    }
+
+    private fun getRepoInfo(symbols: BeeGenerativeSymbols) {
+        val config = getRepoConfig(symbols)
+        logger.info("RepoConfig: $config")
+
+        // val repoDeclarations = symbols
+        //     .annotatedBy[BeeRepository::class.qualifiedName!!]
+        // if (repoDeclarations != null) {
+        //     for (repoDeclaration in repoDeclarations) {
+        //         getRepoInfo(repoDeclaration)
+        //     }
+        // }
+    }
+
+    private fun getRepoInfo(repoDeclaration: KSClassDeclaration, config: RepoConfig) {
+
+    }
+
+    private fun getRepoConfig(symbols: BeeGenerativeSymbols): RepoConfig? {
+        val configs = symbols
+            .annotatedBy[EnableBeeRepositories::class.qualifiedName!!]
+        if (configs != null && configs.count() > 1)
+            logger.warn("Multiple [EnableBeeRepositories] annotations found. Possible misconfiguration.")
+        val configClass = configs?.firstOrNull() ?: return null
+
+        val annotation = configClass.annotations.firstOrNull { a ->
+            val aType = a.annotationType.resolve()
+            val name = aType.declaration.qualifiedName?.asString()
+            name == EnableBeeRepositories::class.qualifiedName
+        } ?: return null
+
+        val props = mutableMapOf<String, Any>()
+        for (arg in annotation.arguments) {
+            val propName = arg.name?.asString() ?: ""
+            props[propName] = requireNotNull(arg.value)
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return RepoConfig(
+            basePackages = props["basePackages"] as ArrayList<String>,
+            entityManagerFactoryRef = props["entityManagerFactoryRef"] as String,
+            criteriaBuilderFactoryRef = props["criteriaBuilderFactoryRef"] as String,
+            entityViewManagerRef = props["entityViewManagerRef"] as String,
+        )
     }
 }

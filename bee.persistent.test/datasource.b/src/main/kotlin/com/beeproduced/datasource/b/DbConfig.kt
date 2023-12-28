@@ -34,7 +34,7 @@ import javax.sql.DataSource
     basePackages = ["com.beeproduced.datasource.b"],
     entityManagerFactoryRef = "bEM",
     criteriaBuilderFactoryRef = "bCBF",
-    entitiyViewManagerRef = "bEVM"
+    entityViewManagerRef = "bEVM"
 )
 @EnableJpaRepositories(
     basePackages = ["com.beeproduced.datasource.b"],

@@ -11,6 +11,7 @@ object BeePersistentBlazeOptions {
     const val packageName = "persistentPackageName"
     const val depth = "persistentDepth"
     const val viewPackageName = "persistentViewPackageName"
+    const val repositoryPackageName = "persistentRepositoryPackageName"
 }
 
 data class BeePersistentBlazeConfig(
