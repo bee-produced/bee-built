@@ -7,10 +7,7 @@ import com.beeproduced.bee.generative.util.resolveTypeAlias
 import com.beeproduced.bee.persistent.blaze.BeeBlazeRepository
 import com.beeproduced.bee.persistent.blaze.annotations.BeeRepository
 import com.beeproduced.bee.persistent.blaze.annotations.EnableBeeRepositories
-import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser
-import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeConfig
-import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlazeOptions
-import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentViewCodegen
+import com.beeproduced.bee.persistent.blaze.processor.codegen.*
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATIONS_RELATION
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_BEE_REPOSITORY
@@ -167,7 +164,8 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         val config = BeePersistentBlazeConfig(
             "com.beeproduced.persistent.generated",
             2,
-            input.options.getOption(BeePersistentBlazeOptions.viewPackageName)
+            input.options.getOption(BeePersistentBlazeOptions.viewPackageName),
+            input.options.getOption(BeePersistentBlazeOptions.repositoryPackageName)
         )
 
         // Process
@@ -182,9 +180,17 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         viewCodeGen.processViews(views)
 
+        val repoCodeGen = BeePersistentRepoCodegen(
+            input.codeGenerator,
+            input.dependencies,
+            input.logger,
+            inheritedEntities.values.toList(),
+            views,
+            config
+        )
         val repos = getRepoInfo(symbols)
         for (repo in repos) {
-            logger.info("Generate ${repo.entityType} with ${repo.config}")
+            repoCodeGen.processRepo(repo)
         }
     }
 
@@ -298,7 +304,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             config.basePackages.any { pack.startsWith(it) }
         ) config else null
 
-        return RepoInfo(entityType, idType, applyConfig)
+        return RepoInfo(repoDeclaration, entityType, idType, applyConfig)
     }
 
     private fun getRepoConfig(symbols: BeeGenerativeSymbols): RepoConfig? {

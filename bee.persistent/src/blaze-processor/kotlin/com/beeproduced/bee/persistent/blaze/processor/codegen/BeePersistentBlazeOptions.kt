@@ -18,4 +18,5 @@ data class BeePersistentBlazeConfig(
     val packageName: String,
     val depth: Int,
     val viewPackageName: String,
+    val repositoryPackageName: String,
 )
