@@ -4,6 +4,7 @@ import com.beeproduced.bee.generative.*
 import com.beeproduced.bee.generative.processor.Options
 import com.beeproduced.bee.generative.util.getOption
 import com.beeproduced.bee.generative.util.resolveTypeAlias
+import com.beeproduced.bee.persistent.blaze.BeeBlazeRepository
 import com.beeproduced.bee.persistent.blaze.annotations.BeeRepository
 import com.beeproduced.bee.persistent.blaze.annotations.EnableBeeRepositories
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser
@@ -12,8 +13,11 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBlaze
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentViewCodegen
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATIONS_RELATION
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_BEE_REPOSITORY
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_EMBEDDED
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_EMBEDDED_ID
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_ENABLE_BEE_REPOSITORIES
+import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_ENTITY
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_GENERATED_VALUE
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_ID
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_INHERITANCE
@@ -41,9 +45,9 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         return BeeGenerativeConfig(
             packages = setOf(),
             annotatedBy = setOf(
-                Entity::class.qualifiedName!!,
-                BeeRepository::class.qualifiedName!!,
-                EnableBeeRepositories::class.qualifiedName!!
+                ANNOTATION_ENTITY,
+                ANNOTATION_BEE_REPOSITORY,
+                ANNOTATION_ENABLE_BEE_REPOSITORIES
             ),
         )
     }
@@ -57,7 +61,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         val symbols = input.symbols
 
-        val entityDeclarations = symbols.annotatedBy.getValue(Entity::class.qualifiedName!!)
+        val entityDeclarations = symbols.annotatedBy.getValue(ANNOTATION_ENTITY)
         val entitiesWithoutInheritanceInfo = entityDeclarations.map { entityDeclaration ->
             val entityName = entityDeclaration.simpleName.asString()
             val entityAnnotations = resolveAnnotations(entityDeclaration.annotations)
@@ -163,7 +167,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         val config = BeePersistentBlazeConfig(
             "com.beeproduced.persistent.generated",
             2,
-                input.options.getOption(BeePersistentBlazeOptions.viewPackageName)
+            input.options.getOption(BeePersistentBlazeOptions.viewPackageName)
         )
 
         // Process
@@ -178,7 +182,10 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         viewCodeGen.processViews(views)
 
-        getRepoInfo(symbols)
+        val repos = getRepoInfo(symbols)
+        for (repo in repos) {
+            logger.info("Generate ${repo.entityType} with ${repo.config}")
+        }
     }
 
     private fun resolveAnnotations(annotations: Sequence<KSAnnotation>): List<ResolvedAnnotation> {
@@ -248,26 +255,55 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         return EmbeddedInfo(declaration, columns, lazyColumns)
     }
 
-    private fun getRepoInfo(symbols: BeeGenerativeSymbols) {
+    private fun getRepoInfo(symbols: BeeGenerativeSymbols): List<RepoInfo> {
         val config = getRepoConfig(symbols)
         logger.info("RepoConfig: $config")
 
-        // val repoDeclarations = symbols
-        //     .annotatedBy[BeeRepository::class.qualifiedName!!]
-        // if (repoDeclarations != null) {
-        //     for (repoDeclaration in repoDeclarations) {
-        //         getRepoInfo(repoDeclaration)
-        //     }
-        // }
+        val repoDeclarations = symbols
+            .annotatedBy[ANNOTATION_BEE_REPOSITORY]
+            ?: return emptyList()
+
+        return repoDeclarations.map { repoDeclaration ->
+            getRepoInfo(repoDeclaration, config)
+        }
     }
 
-    private fun getRepoInfo(repoDeclaration: KSClassDeclaration, config: RepoConfig) {
+    private val repoInterface = BeeBlazeRepository::class.qualifiedName!!
 
+    private fun getRepoInfo(
+        repoDeclaration: KSClassDeclaration,
+        config: RepoConfig?,
+    ): RepoInfo {
+        var ksType: KSType? = null
+        for (superT in repoDeclaration.superTypes) {
+            val full = superT.resolve()
+            if (full.declaration.qualifiedName?.asString() == repoInterface) {
+                ksType = full
+                break
+            }
+        }
+        if (ksType == null) {
+            val name = repoDeclaration.qualifiedName?.asString()
+            throw IllegalArgumentException("Repository [$name] does not implement [BeeBlazeRepository].")
+        }
+        val typeArguments = ksType.arguments
+
+        val entityType = requireNotNull(typeArguments[0].type).resolve().resolveTypeAlias()
+        val idType = requireNotNull(typeArguments[1].type).resolve().resolveTypeAlias()
+        logger.info("generics: entity $entityType, id $idType")
+
+        val pack = entityType.declaration.packageName.asString()
+        val applyConfig = if (
+            config != null &&
+            config.basePackages.any { pack.startsWith(it) }
+        ) config else null
+
+        return RepoInfo(entityType, idType, applyConfig)
     }
 
     private fun getRepoConfig(symbols: BeeGenerativeSymbols): RepoConfig? {
         val configs = symbols
-            .annotatedBy[EnableBeeRepositories::class.qualifiedName!!]
+            .annotatedBy[ANNOTATION_ENABLE_BEE_REPOSITORIES]
         if (configs != null && configs.count() > 1)
             logger.warn("Multiple [EnableBeeRepositories] annotations found. Possible misconfiguration.")
         val configClass = configs?.firstOrNull() ?: return null
@@ -275,7 +311,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         val annotation = configClass.annotations.firstOrNull { a ->
             val aType = a.annotationType.resolve()
             val name = aType.declaration.qualifiedName?.asString()
-            name == EnableBeeRepositories::class.qualifiedName
+            name == ANNOTATION_ENABLE_BEE_REPOSITORIES
         } ?: return null
 
         val props = mutableMapOf<String, Any>()

@@ -1,5 +1,7 @@
 package com.beeproduced.bee.persistent.blaze.processor.info
 
+import com.google.devtools.ksp.symbol.KSType
+
 /**
  *
  *
@@ -7,8 +9,10 @@ package com.beeproduced.bee.persistent.blaze.processor.info
  * @version 2023-12-28
  */
 
-class RepoInfo(
-
+data class RepoInfo(
+    val entityType: KSType,
+    val idType: KSType,
+    val config: RepoConfig?
 )
 
 data class RepoConfig(

@@ -25,4 +25,7 @@ object AnnotationInfo {
         ANNOTATION_MANY_TO_MANY
     )
     const val ANNOTATION_LAZY_FIELD = "com.beeproduced.bee.persistent.blaze.annotations.LazyField"
+    const val ANNOTATION_ENTITY = "jakarta.persistence.Entity"
+    const val ANNOTATION_BEE_REPOSITORY = "com.beeproduced.bee.persistent.blaze.annotations.BeeRepository"
+    const val ANNOTATION_ENABLE_BEE_REPOSITORIES = "com.beeproduced.bee.persistent.blaze.annotations.EnableBeeRepositories"
 }
