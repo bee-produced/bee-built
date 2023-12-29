@@ -15,6 +15,7 @@ data class EntityInfo(
     val declaration: KSClassDeclaration,
     val annotations: List<ResolvedAnnotation>,
     val properties: List<EntityProperty>,
+    val jpaProperties: List<EntityProperty>,
     val id: IdProperty,
     val columns: List<ColumnProperty>,
     val lazyColumns: List<ColumnProperty>,

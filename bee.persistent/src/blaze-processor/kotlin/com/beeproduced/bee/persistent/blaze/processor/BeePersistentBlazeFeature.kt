@@ -75,6 +75,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             // their superclass
             var idP: IdProperty = IdProperty.PLACEHOLDER
             val properties: MutableList<EntityProperty> = mutableListOf()
+            val jpaProperties: MutableList<EntityProperty> = mutableListOf()
             val columns: MutableList<ColumnProperty> = mutableListOf()
             val lazyColumns: MutableList<ColumnProperty> = mutableListOf()
             val relations: MutableList<ColumnProperty> = mutableListOf()
@@ -88,6 +89,8 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
                 properties.add(entityProperty)
 
                 if (annotations.hasAnnotation(ANNOTATION_TRANSIENT)) continue
+
+                jpaProperties.add(entityProperty)
 
                 val innerValue = getInnerValue(type)
                 val hasId = annotations.hasAnnotation(ANNOTATION_ID)
@@ -117,7 +120,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
             EntityInfo(
                 entityDeclaration, entityAnnotations,
-                properties, idP, columns, lazyColumns, relations, null, null
+                properties, jpaProperties, idP, columns, lazyColumns, relations, null, null
             )
         }
 
