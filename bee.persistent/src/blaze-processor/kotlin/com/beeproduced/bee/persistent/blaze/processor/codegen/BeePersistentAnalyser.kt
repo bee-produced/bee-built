@@ -15,7 +15,8 @@ data class EntityViewInfo(
     val name: String,
     val entity: EntityInfo,
     val superClassName: String? = null,
-    val relations: MutableMap<String, String> = mutableMapOf()
+    val relations: MutableMap<String, String> = mutableMapOf(),
+    val isExtended: Boolean = false
 ) {
     val entityRelations get() = entity.relations
     val qualifiedName get() = entity.qualifiedName!!
@@ -63,7 +64,7 @@ class BeePersistentAnalyser(
 
         // Visited -> QualifiedName
         fun dfs(start: EntityInfo, startViewName: String, visited: MutableSet<String>, isCore: Boolean = false) {
-            val info = EntityViewInfo(startViewName, start)
+            val info = EntityViewInfo(name = startViewName, entity = start)
 
             for (property in start.columns + start.lazyColumns + start.id) {
                 if (!property.isEmbedded) continue
@@ -90,7 +91,7 @@ class BeePersistentAnalyser(
                     val viewName = viewName(relationEntity, root, c)
                     count[relation.qualifiedName!!] = c + 1
                     info.relations[relation.simpleName] = viewName
-                    extend.add(EntityViewInfo(viewName, relationEntity))
+                    extend.add(EntityViewInfo(name = viewName, entity = relationEntity, isExtended = true))
                 }
             }
 
@@ -113,7 +114,7 @@ class BeePersistentAnalyser(
                 val viewName = if (isCore) viewName(subEntity, root)
                 else viewName(subEntity, root, c)
                 count[subEntity.qualifiedName!!] = c + 1
-                val subInfo = EntityViewInfo(viewName, subEntity, startViewName)
+                val subInfo = EntityViewInfo(name = viewName, entity = subEntity, superClassName = startViewName)
 
                 for (relation in subInfo.entityRelations) {
                     val cachedRelation = info.relations[relation.simpleName]
@@ -138,7 +139,7 @@ class BeePersistentAnalyser(
                         val viewName = viewName(relationEntity, root, c)
                         count[relation.qualifiedName!!] = c + 1
                         subInfo.relations[relation.simpleName] = viewName
-                        extend.add(EntityViewInfo(viewName, relationEntity))
+                        extend.add(EntityViewInfo(name = viewName, entity = relationEntity, isExtended = true))
                     }
                     result[viewName] = subInfo
                 }
@@ -166,7 +167,7 @@ class BeePersistentAnalyser(
                             val viewName = viewName(relationEntity, root, c)
                             count[relation.qualifiedName!!] = c + 1
                             info.relations[relation.simpleName] = viewName
-                            extend.add(EntityViewInfo(viewName, relationEntity))
+                            extend.add(EntityViewInfo(name = viewName, entity = relationEntity, isExtended = true))
                         }
                     }
                     result[info.name] = info

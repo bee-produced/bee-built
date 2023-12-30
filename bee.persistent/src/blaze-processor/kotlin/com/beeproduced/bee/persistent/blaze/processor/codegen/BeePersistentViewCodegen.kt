@@ -7,6 +7,7 @@ import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -51,8 +52,8 @@ class BeePersistentViewCodegen(
                     addType(TypeSpec.classBuilder(entityView.name)
                         .run {
                             if (entityView.superClassName != null)
-                                buildSubEntityView(entityView)
-                            else buildEntityView(entityView)
+                                buildSubEntityView(entityView, views)
+                            else buildEntityView(entityView, views)
                         }
                         .build()
                     )
@@ -68,7 +69,9 @@ class BeePersistentViewCodegen(
             .writeTo(codeGenerator, dependencies)
     }
 
-    private fun TypeSpec.Builder.buildEntityView(info: EntityViewInfo): TypeSpec.Builder {
+    // TODO: unify & streamline buildEntityView / buildSubEntityView
+
+    private fun TypeSpec.Builder.buildEntityView(info: EntityViewInfo, views: ViewInfo): TypeSpec.Builder {
         val entity = info.entity
 
         // Entity view annotation
@@ -110,6 +113,15 @@ class BeePersistentViewCodegen(
             addProperty(
                 PropertySpec.builder(relation.simpleName, propType)
                     .addModifiers(KModifier.ABSTRACT)
+                    .also {
+                        // Multiple m:n relations lead to incomplete entities when joined
+                        // After first m:n relation, every following of the same type will
+                        // be fetched by individual select statements
+                        val viewInfo = views.entityViews.getValue(viewTypeStr)
+                        if (viewInfo.isExtended && isCollection) {
+                            it.addAnnotation(blazeFetchMapping)
+                        }
+                    }
                     .mutable(true)
                     .build()
             )
@@ -118,7 +130,14 @@ class BeePersistentViewCodegen(
         return this
     }
 
-    private fun TypeSpec.Builder.buildSubEntityView(info: EntityViewInfo): TypeSpec.Builder {
+    private val fetchStrategySelect = ClassName("com.blazebit.persistence.view", "FetchStrategy")
+    private val blazeFetchMapping = AnnotationSpec.builder(ClassName("com.blazebit.persistence.view", "Mapping"))
+        .useSiteTarget(AnnotationSpec.UseSiteTarget.GET)
+        .addMember("fetch = %T.SELECT", fetchStrategySelect)
+        .build()
+
+
+    private fun TypeSpec.Builder.buildSubEntityView(info: EntityViewInfo, views: ViewInfo): TypeSpec.Builder {
         val entity = info.entity
         val superEntity = entitiesMap[info.entity.superClass!!]!!
 
@@ -154,9 +173,17 @@ class BeePersistentViewCodegen(
                     .parameterizedBy(viewType)
             } else viewType
 
+
+
             addProperty(
                 PropertySpec.builder(relation.simpleName, propType)
                     .addModifiers(KModifier.ABSTRACT)
+                    .also {
+                        val viewInfo = views.entityViews.getValue(viewTypeStr)
+                        if (viewInfo.isExtended && isCollection) {
+                            it.addAnnotation(blazeFetchMapping)
+                        }
+                    }
                     .mutable(true)
                     .build()
             )
