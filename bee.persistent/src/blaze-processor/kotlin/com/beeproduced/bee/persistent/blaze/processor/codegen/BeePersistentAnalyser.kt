@@ -180,11 +180,11 @@ class BeePersistentAnalyser(
 
     companion object {
         fun viewName(entity: EntityInfo, root: EntityInfo, count: Int? = null): String {
-            return "${entity.simpleName}__View__${root.simpleName}__${count ?: "Core"}"
+            return "${entity.uniqueName}__View__${root.uniqueName}__${count ?: "Core"}"
         }
 
         fun viewName(embedded: EmbeddedInfo): String {
-            return "${embedded.declaration.simpleName.asString()}__View"
+            return "${embedded.uniqueName}__View"
         }
     }
 

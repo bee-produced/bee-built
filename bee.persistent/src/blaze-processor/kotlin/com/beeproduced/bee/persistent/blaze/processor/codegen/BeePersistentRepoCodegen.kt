@@ -41,7 +41,7 @@ class BeePersistentRepoCodegen(
         repoInterface = repo.repoInterface
         view = findView(repo)
         entity = view.entity
-        className = "Generated${entity.simpleName}Repository"
+        className = "${entity.uniqueName}Repository"
         FileSpec
             .builder(packageName, className)
             .buildCreate()

@@ -28,7 +28,7 @@ class BeePersistentViewCodegen(
     private val packageName: String = config.viewPackageName
     private val fileName: String = "GeneratedViews"
 
-    private val entitiesMap = entities.associateBy { it.qualifiedName!! }
+    private val entitiesMap = entities.associateBy { it.qualifiedName }
 
     private val poetMap: PoetMap = mutableMapOf()
     private fun FunSpec.Builder.addNStatement(format: String)

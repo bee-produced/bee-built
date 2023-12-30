@@ -2,6 +2,7 @@ package com.beeproduced.bee.persistent.blaze.processor.info
 
 import com.beeproduced.bee.generative.util.DummyKSPropertyDeclaration
 import com.beeproduced.bee.generative.util.DummyKSType
+import com.beeproduced.bee.persistent.blaze.processor.utils.buildUniqueClassName
 import com.google.devtools.ksp.symbol.*
 
 /**
@@ -23,15 +24,20 @@ data class EntityInfo(
     val superClass: String?,
     val subClasses: Set<String>?
 ) {
-    val simpleName: String get() = declaration.simpleName.asString()
-    val qualifiedName: String? get() = declaration.qualifiedName?.asString()
+    val simpleName: String = declaration.simpleName.asString()
+    val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
+    val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
 }
 
 data class EmbeddedInfo(
     val declaration: KSClassDeclaration,
     val columns: List<ColumnProperty>,
     val lazyColumns: List<ColumnProperty>,
-)
+) {
+    val simpleName: String = declaration.simpleName.asString()
+    val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
+    val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
+}
 
 data class ResolvedAnnotation(
     val annotation: KSAnnotation,
