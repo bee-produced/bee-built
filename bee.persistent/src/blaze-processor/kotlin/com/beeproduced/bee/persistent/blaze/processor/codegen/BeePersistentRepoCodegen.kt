@@ -116,16 +116,20 @@ class BeePersistentRepoCodegen(
         }
 
         val fieldClassName = ClassName("java.lang.reflect", "Field")
-        for (reflectionProperty in reflectionProperties) {
-            val setterProp = PropertySpec
-                .builder(reflectionPropertyName(reflectionProperty), fieldClassName)
-                .addModifiers(KModifier.PRIVATE)
-                .initializer("%T::class.java.getDeclaredField(\"${reflectionProperty.simpleName}\").apply { isAccessible = true }", decClassName)
-                .build()
-            addProperty(setterProp)
+        val setterObjName = "${entity.uniqueName}Fields"
+        if (reflectionProperties.isNotEmpty()) {
+            val setterObj = TypeSpec.objectBuilder(setterObjName)
+            for (reflectionProperty in reflectionProperties) {
+                val setterProp = PropertySpec
+                    .builder(reflectionPropertyName(reflectionProperty), fieldClassName)
+                    .initializer("%T::class.java.getDeclaredField(\"${reflectionProperty.simpleName}\").apply { isAccessible = true }", decClassName)
+                    .build()
+                setterObj.addProperty(setterProp)
+            }
+            addType(setterObj.build())
         }
 
-        val create = FunSpec.builder("create")
+        val create = FunSpec.builder("create${entity.uniqueName}")
             .returns(decClassName)
             .addParameter("values", inputMap)
             .addStatement("val entity = %T(", decClassName)
@@ -159,7 +163,7 @@ class BeePersistentRepoCodegen(
                         }
                     }
                     val setterPropertyName = reflectionPropertyName(rP)
-                    addStatement("${setterPropertyName}.${setterName}(entity, values.getValue(\"${rP.simpleName}\") as %T)", rP.type.toTypeName())
+                    addStatement("${setterObjName}.${setterPropertyName}.${setterName}(entity, values.getValue(\"${rP.simpleName}\") as %T)", rP.type.toTypeName())
                 }
             }
             .addStatement("return entity")
@@ -167,5 +171,5 @@ class BeePersistentRepoCodegen(
         addFunction(create)
     }
 
-    private fun reflectionPropertyName(prop: EntityProperty) = "${prop.simpleName}Setter"
+    private fun reflectionPropertyName(prop: EntityProperty) = "${prop.simpleName}Field"
 }
