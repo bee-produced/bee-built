@@ -6,6 +6,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnaly
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._SELECTION_INFO_VAL
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
+import com.beeproduced.bee.persistent.blaze.processor.info.ColumnProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
@@ -223,36 +224,29 @@ class BeePersistentRepoCodegen(
     ): CodeBlock.Builder = apply {
         val entity = entityView.entity
 
-        for ((_, viewName) in entityView.relations) {
-            val relationView = views.entityViews.getValue(viewName)
-            traverseSelectionInfo(relationView)
+        val relationMapInput = entityView.relations.map {
+            (simpleName, viewName) -> Pair(simpleName, viewName)
         }
-        val relationSI = entityView.relations
-            .map { (p, v) -> "\"$p\" to ${v.lowercase()}" }
-            .joinToString(separator = ", ")
+        val relationSI = selectionInfoMappedValues(relationMapInput)
 
-        val (columns, embedded) = entity.columns.partition { !it.isEmbedded }
-        val columnSI = columns
-            .joinToString(separator = ", ") { "\"${it.simpleName}\"" }
-        for (embeddedProperty in embedded) {
-            val viewName = viewName(requireNotNull(embeddedProperty.embedded))
-            val embeddedView = views.entityViews.getValue(viewName)
-            traverseSelectionInfo(embeddedView)
+
+        val (columns, embedded) = entity.columns
+            .partition { !it.isEmbedded }
+        val columnSI = selectionInfoListValues(columns)
+        val embeddedMapInput = embedded.map {
+           val viewName = viewName(requireNotNull(it.embedded))
+           Pair(it.simpleName, viewName)
         }
-        val embeddedSI =
-            embedded.joinToString(separator = ", ") { p -> "\"${p.simpleName}\" to ${viewName(requireNotNull(p.embedded)).lowercase()}" }
+        val embeddedSI = selectionInfoMappedValues(embeddedMapInput)
 
-        val (lazyColumns, lazyEmbedded) = entity.lazyColumns.partition { !it.isEmbedded }
-        val lazyColumnSI = lazyColumns
-            .joinToString(separator = ", ") { "\"${it.simpleName}\"" }
-        for (embeddedProperty in lazyEmbedded) {
-            val viewName = viewName(requireNotNull(embeddedProperty.embedded))
-            val embeddedView = views.entityViews.getValue(viewName)
-            traverseSelectionInfo(embeddedView)
+        val (lazyColumns, lazyEmbedded) = entity.lazyColumns
+            .partition { !it.isEmbedded }
+        val lazyColumnSI = selectionInfoListValues(lazyColumns)
+        val lazyEmbeddedMapInput = lazyEmbedded.map {
+            val viewName = viewName(requireNotNull(it.embedded))
+            Pair(it.simpleName, viewName)
         }
-        val lazyEmbeddedSI =
-            lazyEmbedded.joinToString(separator = ", ") { p -> "\"${p.simpleName}\" to ${viewName(requireNotNull(p.embedded)).lowercase()}" }
-
+        val lazyEmbeddedSI = selectionInfoMappedValues(lazyEmbeddedMapInput)
 
         poetMap.addMapping(_SELECTION_INFO_VAL, entityView.name.lowercase())
         poetMap.addMapping(__SELECTION_INFO_NAME, entityView.name)
@@ -265,4 +259,19 @@ class BeePersistentRepoCodegen(
         addNamedStmt("    lazyEmbedded = mapOf($lazyEmbeddedSI)")
         addNamedStmt("  )")
     }
+
+    private fun CodeBlock.Builder.selectionInfoMappedValues(
+        simpleNameAndViewName: List<Pair<String, String>>
+    ): String {
+        for ((_, viewName) in simpleNameAndViewName) {
+            val view = views.entityViews.getValue(viewName)
+            traverseSelectionInfo(view)
+        }
+        return simpleNameAndViewName.joinToString(separator = ", ") {
+            (p, v) -> "\"$p\" to ${v.lowercase()}"
+        }
+    }
+
+    private fun selectionInfoListValues(columnProperties: List<ColumnProperty>) : String
+        = columnProperties.joinToString(separator = ", ") { "\"${it.simpleName}\"" }
 }
