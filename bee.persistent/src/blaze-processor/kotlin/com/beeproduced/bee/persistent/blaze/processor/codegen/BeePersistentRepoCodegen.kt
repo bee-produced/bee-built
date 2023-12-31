@@ -2,6 +2,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._SELECTION_INFO_VAL
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
@@ -215,13 +216,14 @@ class BeePersistentRepoCodegen(
         addType(companionObject)
     }
 
+    // TODO: Is ID column required for fetch?
+    // If so, add!
     private fun CodeBlock.Builder.traverseSelectionInfo(
         entityView: EntityViewInfo
     ): CodeBlock.Builder = apply {
         val entity = entityView.entity
 
-
-        for ((property, viewName) in entityView.relations) {
+        for ((_, viewName) in entityView.relations) {
             val relationView = views.entityViews.getValue(viewName)
             traverseSelectionInfo(relationView)
         }
@@ -229,15 +231,38 @@ class BeePersistentRepoCodegen(
             .map { (p, v) -> "\"$p\" to ${v.lowercase()}" }
             .joinToString(separator = ", ")
 
+        val (columns, embedded) = entity.columns.partition { !it.isEmbedded }
+        val columnSI = columns
+            .joinToString(separator = ", ") { "\"${it.simpleName}\"" }
+        for (embeddedProperty in embedded) {
+            val viewName = viewName(requireNotNull(embeddedProperty.embedded))
+            val embeddedView = views.entityViews.getValue(viewName)
+            traverseSelectionInfo(embeddedView)
+        }
+        val embeddedSI =
+            embedded.joinToString(separator = ", ") { p -> "\"${p.simpleName}\" to ${viewName(requireNotNull(p.embedded)).lowercase()}" }
+
+        val (lazyColumns, lazyEmbedded) = entity.lazyColumns.partition { !it.isEmbedded }
+        val lazyColumnSI = lazyColumns
+            .joinToString(separator = ", ") { "\"${it.simpleName}\"" }
+        for (embeddedProperty in lazyEmbedded) {
+            val viewName = viewName(requireNotNull(embeddedProperty.embedded))
+            val embeddedView = views.entityViews.getValue(viewName)
+            traverseSelectionInfo(embeddedView)
+        }
+        val lazyEmbeddedSI =
+            lazyEmbedded.joinToString(separator = ", ") { p -> "\"${p.simpleName}\" to ${viewName(requireNotNull(p.embedded)).lowercase()}" }
+
+
         poetMap.addMapping(_SELECTION_INFO_VAL, entityView.name.lowercase())
         poetMap.addMapping(__SELECTION_INFO_NAME, entityView.name)
         addNamedStmt("  val $_SELECTION_INFO_VAL = $SELECTION_INFO(")
         addNamedStmt("    view = $__SELECTION_INFO_NAME,")
         addNamedStmt("    relations = mapOf($relationSI),")
-        addNamedStmt("    columns = setOf(),")
-        addNamedStmt("    lazyColumns = setOf(),")
-        addNamedStmt("    embedded = mapOf(),")
-        addNamedStmt("    lazyEmbedded = mapOf()")
+        addNamedStmt("    columns = setOf($columnSI),")
+        addNamedStmt("    lazyColumns = setOf($lazyColumnSI),")
+        addNamedStmt("    embedded = mapOf($embeddedSI),")
+        addNamedStmt("    lazyEmbedded = mapOf($lazyEmbeddedSI)")
         addNamedStmt("  )")
     }
 }
