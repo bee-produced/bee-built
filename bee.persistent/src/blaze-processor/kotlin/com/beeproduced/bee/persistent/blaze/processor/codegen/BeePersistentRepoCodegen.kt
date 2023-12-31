@@ -219,6 +219,7 @@ class BeePersistentRepoCodegen(
 
     // TODO: Is ID column required for fetch?
     // If so, add!
+    // TODO: Map inheritance fields!
     private fun CodeBlock.Builder.traverseSelectionInfo(
         entityView: EntityViewInfo
     ): CodeBlock.Builder = apply {
