@@ -10,6 +10,7 @@ import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._PROP
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DATA_LOADER_NAME
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DTO_NAME
 import com.beeproduced.bee.generative.util.*
+import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -45,7 +46,7 @@ class BeeFetchedCodegen(
     private lateinit var typedInternals: Map<String, List<FetcherInternalTypeDefinition>>
     private lateinit var typedSafeModeOverrides: Map<String, List<FetcherSafeModeOverrideDefinition>>
 
-    private val poetMap: PoetMap = mutableMapOf()
+    private val poetMap: PoetMap = PoetMap()
     private fun FunSpec.Builder.addNStatement(format: String)
         = addNStatementBuilder(format, poetMap)
     @Suppress("ConstPropertyName")

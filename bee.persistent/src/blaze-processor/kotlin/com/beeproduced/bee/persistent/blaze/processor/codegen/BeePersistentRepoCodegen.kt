@@ -1,5 +1,10 @@
 package com.beeproduced.bee.persistent.blaze.processor.codegen
 
+import com.beeproduced.bee.generative.util.PoetMap
+import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._SELECTION_INFO_VAL
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
@@ -36,6 +41,24 @@ class BeePersistentRepoCodegen(
     private lateinit var view: EntityViewInfo
     private lateinit var entity: EntityInfo
 
+    private val poetMap: PoetMap = PoetMap()
+    private fun FunSpec.Builder.addNamedStmt(format: String)
+        = addNStatementBuilder(format, poetMap)
+    private fun CodeBlock.Builder.addNamedStmt(format: String)
+        = addNStatementBuilder(format, poetMap)
+
+    @Suppress("ConstPropertyName")
+    object PoetConstants {
+        const val _ID_PROPERTY = "%idProperty:L"
+        const val SELECTION_INFO = "%selectioninfo:T"
+        const val _SELECTION_INFO_VAL = "%selectioninfoval:L"
+        const val __SELECTION_INFO_NAME = "%selectioninfoname:S"
+    }
+
+    init {
+        poetMap.addMapping(SELECTION_INFO, ClassName("com.beeproduced.bee.persistent.blaze.meta", "SelectionInfo"))
+    }
+
     fun processRepo(repo: RepoInfo) {
         logger.info("processRepo($repo)")
         repoInterface = repo.repoInterface
@@ -55,6 +78,7 @@ class BeePersistentRepoCodegen(
             TypeSpec.classBuilder(className)
                 .addAnnotation(ClassName("org.springframework.stereotype", "Component"))
                 .addSuperinterface(repoInterface.toClassName())
+                .buildSelectionInfo()
                 .build()
         )
     }
@@ -172,4 +196,48 @@ class BeePersistentRepoCodegen(
     }
 
     private fun reflectionPropertyName(prop: EntityProperty) = "${prop.simpleName}Field"
+
+    private fun TypeSpec.Builder.buildSelectionInfo(): TypeSpec.Builder = apply {
+        val initializerBlock = CodeBlock.builder()
+        initializerBlock.addNamedStmt("run {")
+        initializerBlock.traverseSelectionInfo(view)
+        initializerBlock.addNamedStmt("  ${view.name.lowercase()}")
+        initializerBlock.addNamedStmt("}")
+
+        val selectionInfoProperty = PropertySpec
+            .builder("selectionInfo", poetMap.classMapping(SELECTION_INFO))
+            .initializer(initializerBlock.build())
+            .build()
+        val companionObject = TypeSpec
+            .companionObjectBuilder()
+            .addProperty(selectionInfoProperty)
+            .build()
+        addType(companionObject)
+    }
+
+    private fun CodeBlock.Builder.traverseSelectionInfo(
+        entityView: EntityViewInfo
+    ): CodeBlock.Builder = apply {
+        val entity = entityView.entity
+
+
+        for ((property, viewName) in entityView.relations) {
+            val relationView = views.entityViews.getValue(viewName)
+            traverseSelectionInfo(relationView)
+        }
+        val relationSI = entityView.relations
+            .map { (p, v) -> "\"$p\" to ${v.lowercase()}" }
+            .joinToString(separator = ", ")
+
+        poetMap.addMapping(_SELECTION_INFO_VAL, entityView.name.lowercase())
+        poetMap.addMapping(__SELECTION_INFO_NAME, entityView.name)
+        addNamedStmt("  val $_SELECTION_INFO_VAL = $SELECTION_INFO(")
+        addNamedStmt("    view = $__SELECTION_INFO_NAME,")
+        addNamedStmt("    relations = mapOf($relationSI),")
+        addNamedStmt("    columns = setOf(),")
+        addNamedStmt("    lazyColumns = setOf(),")
+        addNamedStmt("    embedded = mapOf(),")
+        addNamedStmt("    lazyEmbedded = mapOf()")
+        addNamedStmt("  )")
+    }
 }

@@ -1,13 +1,14 @@
 package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
-import com.beeproduced.bee.generative.util.addNStatementBuilder
+import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
-import com.beeproduced.bee.persistent.blaze.processor.info.*
+import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
+import com.beeproduced.bee.persistent.blaze.processor.info.IdProperty
+import com.beeproduced.bee.persistent.blaze.processor.info.Property
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -31,7 +32,7 @@ class BeePersistentViewCodegen(
 
     private val entitiesMap = entities.associateBy { it.qualifiedName }
 
-    private val poetMap: PoetMap = mutableMapOf()
+    private val poetMap: PoetMap = PoetMap()
     private fun FunSpec.Builder.addNStatement(format: String)
         = addNStatementBuilder(format, poetMap)
     @Suppress("ConstPropertyName")
