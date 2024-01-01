@@ -17,7 +17,7 @@ import java.util.*
 @Table(name = "songs")
 data class Song(
     @Id
-    @GeneratedValue
+    // @GeneratedValue // TODO: persist
     val id: UUID,
     val name: String,
     @Column(name = "interpret_id")
@@ -44,7 +44,7 @@ interface SongRepository : BeeBlazeRepository<Song, UUID>
 @Table(name = "persons")
 data class Person(
     @Id
-    @GeneratedValue
+    // @GeneratedValue // TODO: persist
     val id: UUID,
     val firstname: String,
     val lastname: String,
@@ -56,7 +56,7 @@ data class Person(
 @Table(name = "companies")
 data class Company(
     @Id
-    @GeneratedValue
+    // @GeneratedValue // TODO: persist
     val id: UUID,
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "company")
     val employees: Set<CompanyPerson>?

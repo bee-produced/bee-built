@@ -112,6 +112,10 @@ dependencies {
 
     implementation("net.bytebuddy:byte-buddy:1.14.9")
     implementation("net.bytebuddy:byte-buddy-agent:1.14.9")
+
+    testImplementation("com.beeproduced:bee.persistent") {
+        capabilities { requireCapability("com.beeproduced:bee.persistent-blaze") }
+    }
 }
 
 tasks.withType<Test> {
