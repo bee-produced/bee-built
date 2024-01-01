@@ -57,6 +57,7 @@ class BeePersistentTest(
     fun `full selection`() {
         addSong()
         transaction.executeWithoutResult {
+            // TODO: Bring back fullNonRecursiveSelection? Hmm...
             val selection = BeeSelection.create {
                 field("interpret") {
                     field("companies") {
@@ -73,12 +74,7 @@ class BeePersistentTest(
                         }
                         field("person") {
                             field("companies") {
-                                field("company") {
-                                    field("id")
-                                }
-                                field("person") {
-                                    field("id")
-                                }
+                                field("id")
                             }
                         }
                     }
@@ -87,12 +83,7 @@ class BeePersistentTest(
                     field("employees") {
                         field("company") {
                             field("employees") {
-                                field("company") {
-                                    field("id")
-                                }
-                                field("person") {
-                                    field("id")
-                                }
+                                field("id")
                             }
                         }
                         field("person") {
@@ -114,6 +105,179 @@ class BeePersistentTest(
             val song = songs.first()
             assertNotNull(song.interpret)
             assertNotNull(song.producer)
+            val interpret = song.interpret
+            assertNotNull(interpret.companies)
+            val interpretCompanies = interpret.companies.first()
+            assertNotNull(interpretCompanies.company)
+            val interpretCompaniesCompany = interpretCompanies.company
+            assertNotNull(interpretCompaniesCompany.employees)
+            val iCCE = interpretCompaniesCompany.employees.first()
+            assertNotNull(iCCE.company)
+            assertNotNull(iCCE.person)
+            val interpretCompaniesPerson = interpretCompanies.person
+            assertNotNull(interpretCompaniesPerson)
+            val iCPE = interpretCompaniesPerson.companies.first()
+            assertNotNull(iCPE)
+            val producer = song.producer
+            assertNotNull(producer)
+            val producerEmployees = producer.employees.first()
+            assertNotNull(producerEmployees)
+            val producerEmployeesCompany = producerEmployees.company
+            assertNotNull(producerEmployeesCompany)
+            val pECE = producerEmployeesCompany.employees.first()
+            assertNotNull(pECE)
+            val producerEmployeesPerson = producerEmployees.person
+            assertNotNull(producerEmployeesPerson)
+            val pEPC = producerEmployeesPerson.companies.first()
+            assertNotNull(pEPC)
+            val pEPCC = pEPC.company
+            assertNotNull(pEPCC)
+            val pEPCP = pEPC.person
+            assertNotNull(pEPCP)
+        }
+    }
+
+    @Test
+    fun `partial selection 1`() {
+        addSong()
+        transaction.executeWithoutResult {
+            // TODO: Bring back fullNonRecursiveSelection? Hmm...
+            val selection = BeeSelection.create {
+                field("interpret") {
+                    field("companies") {
+                        field("company") {
+                            field("employees") {
+                                field("company") {
+                                    // TODO: When no field is set, relation will not be loaded...
+                                    field("id")
+                                }
+                                field("person") {
+                                    field("id")
+                                }
+                            }
+                        }
+                        field("person") {
+                            field("companies") {
+                                field("id")
+                            }
+                        }
+                    }
+                }
+            }
+            val songs = songRepository.select(selection)
+                as List<ComBeeproducedDatasourceASong__View__ComBeeproducedDatasourceASong__Core>
+            assertTrue { songs.isNotEmpty() }
+            val song = songs.first()
+            assertNotNull(song.interpret)
+            assertNull(song.producer)
+            val interpret = song.interpret
+            assertNotNull(interpret.companies)
+            val interpretCompanies = interpret.companies.first()
+            assertNotNull(interpretCompanies.company)
+            val interpretCompaniesCompany = interpretCompanies.company
+            assertNotNull(interpretCompaniesCompany.employees)
+            val iCCE = interpretCompaniesCompany.employees.first()
+            assertNotNull(iCCE.company)
+            assertNotNull(iCCE.person)
+            val interpretCompaniesPerson = interpretCompanies.person
+            assertNotNull(interpretCompaniesPerson)
+            val iCPE = interpretCompaniesPerson.companies.first()
+            assertNotNull(iCPE)
+        }
+    }
+
+    @Test
+    fun `partial selection 2`() {
+        addSong()
+        transaction.executeWithoutResult {
+            // TODO: Bring back fullNonRecursiveSelection? Hmm...
+            val selection = BeeSelection.create {
+                field("producer") {
+                    field("employees") {
+                        field("company") {
+                            field("employees") {
+                                field("id")
+                            }
+                        }
+                        field("person") {
+                            field("companies") {
+                                field("company") {
+                                    field("id")
+                                }
+                                field("person") {
+                                    field("id")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            val songs = songRepository.select(selection)
+                as List<ComBeeproducedDatasourceASong__View__ComBeeproducedDatasourceASong__Core>
+            assertTrue { songs.isNotEmpty() }
+            val song = songs.first()
+            assertNull(song.interpret)
+            assertNotNull(song.producer)
+            val producer = song.producer
+            assertNotNull(producer)
+            val producerEmployees = producer.employees.first()
+            assertNotNull(producerEmployees)
+            val producerEmployeesCompany = producerEmployees.company
+            assertNotNull(producerEmployeesCompany)
+            val pECE = producerEmployeesCompany.employees.first()
+            assertNotNull(pECE)
+            val producerEmployeesPerson = producerEmployees.person
+            assertNotNull(producerEmployeesPerson)
+            val pEPC = producerEmployeesPerson.companies.first()
+            assertNotNull(pEPC)
+            val pEPCC = pEPC.company
+            assertNotNull(pEPCC)
+            val pEPCP = pEPC.person
+            assertNotNull(pEPCP)
+        }
+    }
+
+    @Test
+    fun `partial selection 3`() {
+        addSong()
+        transaction.executeWithoutResult {
+            // TODO: Bring back fullNonRecursiveSelection? Hmm...
+            val selection = BeeSelection.create {
+                field("interpret") {
+                    field("companies") {
+                        field("company") {
+                            field("id")
+                        }
+                        field("person") {
+                            field("companies") {
+                                field("id")
+                            }
+                        }
+                    }
+                }
+                field("producer") {
+                    field("id")
+                }
+            }
+            val songs = songRepository.select(selection)
+                as List<ComBeeproducedDatasourceASong__View__ComBeeproducedDatasourceASong__Core>
+            assertTrue { songs.isNotEmpty() }
+            val song = songs.first()
+            assertNotNull(song.interpret)
+            assertNotNull(song.producer)
+            val interpret = song.interpret
+            assertNotNull(interpret.companies)
+            val interpretCompanies = interpret.companies.first()
+            assertNotNull(interpretCompanies.company)
+            val interpretCompaniesCompany = interpretCompanies.company
+            assertTrue { interpretCompaniesCompany.employees.isNullOrEmpty() }
+            val interpretCompaniesPerson = interpretCompanies.person
+            assertNotNull(interpretCompaniesPerson)
+            val iCPE = interpretCompaniesPerson.companies.first()
+            assertNotNull(iCPE)
+            val producer = song.producer
+            assertNotNull(producer)
+            assertTrue { producer.employees.isNullOrEmpty() }
         }
     }
 
