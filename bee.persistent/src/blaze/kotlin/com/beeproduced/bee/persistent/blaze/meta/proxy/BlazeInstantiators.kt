@@ -10,5 +10,5 @@ package com.beeproduced.bee.persistent.blaze.meta.proxy
 typealias ViewName = String
 
 object BlazeInstantiators {
-    val tupleInstatiators: MutableMap<ViewName, TupleConstructorInstantiator> = mutableMapOf()
+    val tupleInstantiators: MutableMap<ViewName, TupleConstructorInstantiator> = mutableMapOf()
 }

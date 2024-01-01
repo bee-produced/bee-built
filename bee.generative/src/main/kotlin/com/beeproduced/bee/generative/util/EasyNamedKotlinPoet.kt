@@ -2,6 +2,7 @@ package com.beeproduced.bee.generative.util
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 
 /**
@@ -62,6 +63,10 @@ class PoetMap {
 
         fun CodeBlock.Builder.addNStatementBuilder(format: String, map: PoetMap): CodeBlock.Builder {
             return addNamed(format, map.args).addStatement("")
+        }
+
+        fun FileSpec.Builder.addNStatementBuilder(format: String, map: PoetMap): FileSpec.Builder {
+            return addStatement(format, map.args).addStatement("")
         }
     }
 }
