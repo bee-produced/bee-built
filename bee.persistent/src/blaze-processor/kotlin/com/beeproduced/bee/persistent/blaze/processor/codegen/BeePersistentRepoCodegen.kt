@@ -10,6 +10,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.CRITERIA_BUILDER_FACTORY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_MANAGER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_MANAGER
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_SETTING
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.QUALIFIER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.VIEW_CLAZZ
@@ -17,6 +18,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._EM_PROP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._EVM_PROP
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._FETCH_SELECTION_FN
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._SELECTION_INFO_VAL
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._VIEW_CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
@@ -80,6 +82,8 @@ class BeePersistentRepoCodegen(
         const val _EVM_PROP = "%entityviewmanagerprop:L"
         const val AUTOWIRED = "%autowired:T"
         const val QUALIFIER = "%qualifier:T"
+        const val _FETCH_SELECTION_FN = "%fetchselectionfn:M"
+        const val ENTITY_VIEW_SETTING = "%entityviewsetting:T"
     }
 
     init {
@@ -95,6 +99,8 @@ class BeePersistentRepoCodegen(
         poetMap.addMapping(_EVM_PROP, "evm")
         poetMap.addMapping(AUTOWIRED, ClassName("org.springframework.beans.factory.annotation", "Autowired"))
         poetMap.addMapping(QUALIFIER, ClassName("org.springframework.beans.factory.annotation", "Qualifier"))
+        poetMap.addMapping(_FETCH_SELECTION_FN, MemberName("com.beeproduced.bee.persistent.blaze.repository", "fetchSelection"))
+        poetMap.addMapping(ENTITY_VIEW_SETTING, ClassName("com.blazebit.persistence.view", "EntityViewSetting"))
     }
 
     fun processRepo(repo: RepoInfo) {
@@ -218,7 +224,11 @@ class BeePersistentRepoCodegen(
             .addParameter("selection", poetMap.classMapping(BEE_SELECTION))
             .returns(listOfEntity)
         selectFn.apply {
-            addNamedStmt("return emptyList()")
+            addNamedStmt("val setting = $ENTITY_VIEW_SETTING.create($_VIEW_CLAZZ_PROPERTY)")
+            addNamedStmt("  .apply { $_FETCH_SELECTION_FN(selectionInfo, selection) }")
+            addNamedStmt("val builder = $_CBF_PROP.create($_EM_PROP, $_CLAZZ_PROPERTY)")
+            addNamedStmt("val query = $_EVM_PROP.applySetting(setting, builder)")
+            addNamedStmt("return query.resultList")
         }
         addFunction(selectFn.build())
     }
