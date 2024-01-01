@@ -17,7 +17,6 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
-import org.w3c.dom.Entity
 
 /**
  *
@@ -196,6 +195,8 @@ class BeePersistentInstantiatorCodegen(
     private fun infoField(prop: EntityProperty): String
         = "${prop.simpleName}Field"
 
+
+    // TODO: Id column of superclass is present in columns of subclass!
     private fun EntityViewInfo.viewFields(): List<Property> {
         val id = entity.id
         val keys = relations.keys
