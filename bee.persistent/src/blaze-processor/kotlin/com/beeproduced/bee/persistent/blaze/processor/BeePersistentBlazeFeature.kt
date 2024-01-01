@@ -183,6 +183,14 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         viewCodeGen.processViews(views)
 
+        val instantiatorCodegen = BeePersistentInstantiatorCodegen(
+            input.codeGenerator,
+            input.dependencies,
+            input.logger,
+            config
+        )
+        instantiatorCodegen.processViews(views, entities)
+
         val repoCodeGen = BeePersistentRepoCodegen(
             input.codeGenerator,
             input.dependencies,
