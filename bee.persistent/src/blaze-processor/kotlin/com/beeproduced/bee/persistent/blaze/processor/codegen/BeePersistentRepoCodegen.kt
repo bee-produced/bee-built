@@ -2,15 +2,25 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
+import com.beeproduced.bee.generative.util.toPoetClassName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.AUTOWIRED
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.BEE_SELECTION
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.CLAZZ
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.CRITERIA_BUILDER_FACTORY
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_MANAGER
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_MANAGER
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.QUALIFIER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.VIEW_CLAZZ
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CBF_PROP
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CLAZZ_PROPERTY
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._EM_PROP
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._EVM_PROP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._SELECTION_INFO_VAL
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._VIEW_CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
-import com.beeproduced.bee.persistent.blaze.processor.info.ColumnProperty
-import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
-import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
-import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
+import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -43,6 +53,7 @@ class BeePersistentRepoCodegen(
     private lateinit var repoInterface: KSClassDeclaration
     private lateinit var view: EntityViewInfo
     private lateinit var entity: EntityInfo
+    private var repoConfig: RepoConfig? = null
 
     private val poetMap: PoetMap = PoetMap()
     private fun FunSpec.Builder.addNamedStmt(format: String)
@@ -52,16 +63,38 @@ class BeePersistentRepoCodegen(
 
     @Suppress("ConstPropertyName")
     object PoetConstants {
+        const val CLAZZ = "%clazz:T"
+        const val _CLAZZ_PROPERTY = "%clazzproperty:L"
+        const val VIEW_CLAZZ = "%viewclazz:T"
+        const val _VIEW_CLAZZ_PROPERTY = "%viewclazzproperty:L"
         const val _ID_PROPERTY = "%idProperty:L"
         const val BEE_SELECTION = "%beeselection:T"
         const val SELECTION_INFO = "%selectioninfo:T"
         const val _SELECTION_INFO_VAL = "%selectioninfoval:L"
         const val __SELECTION_INFO_NAME = "%selectioninfoname:S"
+        const val ENTITY_MANAGER = "%entitymanager:T"
+        const val _EM_PROP = "%entitymanagerprop:L"
+        const val CRITERIA_BUILDER_FACTORY = "%criteriabuilderfactory:T"
+        const val _CBF_PROP = "%criteriabuilderfactoryprop:L"
+        const val ENTITY_VIEW_MANAGER = "%entityviewmanager:T"
+        const val _EVM_PROP = "%entityviewmanagerprop:L"
+        const val AUTOWIRED = "%autowired:T"
+        const val QUALIFIER = "%qualifier:T"
     }
 
     init {
+        poetMap.addMapping(_CLAZZ_PROPERTY, "clazz")
+        poetMap.addMapping(_VIEW_CLAZZ_PROPERTY, "viewClazz")
         poetMap.addMapping(BEE_SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.selection", "BeeSelection"))
         poetMap.addMapping(SELECTION_INFO, ClassName("com.beeproduced.bee.persistent.blaze.meta", "SelectionInfo"))
+        poetMap.addMapping(ENTITY_MANAGER, ClassName("jakarta.persistence", "EntityManager"))
+        poetMap.addMapping(_EM_PROP, "em")
+        poetMap.addMapping(CRITERIA_BUILDER_FACTORY, ClassName("com.blazebit.persistence", "CriteriaBuilderFactory"))
+        poetMap.addMapping(_CBF_PROP, "cbf")
+        poetMap.addMapping(ENTITY_VIEW_MANAGER, ClassName("com.blazebit.persistence.view", "EntityViewManager"))
+        poetMap.addMapping(_EVM_PROP, "evm")
+        poetMap.addMapping(AUTOWIRED, ClassName("org.springframework.beans.factory.annotation", "Autowired"))
+        poetMap.addMapping(QUALIFIER, ClassName("org.springframework.beans.factory.annotation", "Qualifier"))
     }
 
     fun processRepo(repo: RepoInfo) {
@@ -69,7 +102,11 @@ class BeePersistentRepoCodegen(
         repoInterface = repo.repoInterface
         view = findView(repo)
         entity = view.entity
+        repoConfig = repo.config
         className = "${entity.uniqueName}Repository"
+        poetMap.addMapping(CLAZZ, entity.qualifiedName.toPoetClassName())
+        poetMap.addMapping(VIEW_CLAZZ, "${viewPackageName}.${view.name}".toPoetClassName())
+
         FileSpec
             .builder(packageName, className)
             .buildCreate()
@@ -81,12 +118,96 @@ class BeePersistentRepoCodegen(
     private fun FileSpec.Builder.buildRepo(): FileSpec.Builder = apply {
         addType(
             TypeSpec.classBuilder(className)
+                .addModifiers(KModifier.OPEN)
                 .addAnnotation(ClassName("org.springframework.stereotype", "Component"))
                 .addSuperinterface(repoInterface.toClassName())
+                .buildConstructor()
+                .addRepoProperties()
                 .buildSelect()
                 .buildSelectionInfo()
                 .build()
         )
+    }
+
+    private fun TypeSpec.Builder.buildConstructor(): TypeSpec.Builder = apply {
+        val emProp = PropertySpec.builder(
+            poetMap.literalMapping(_EM_PROP),
+            poetMap.classMapping(ENTITY_MANAGER)
+        )
+            .initializer(poetMap.literalMapping(_EM_PROP))
+            .addModifiers(KModifier.OVERRIDE)
+            .build()
+        val cbfProp = PropertySpec.builder(
+            poetMap.literalMapping(_CBF_PROP),
+            poetMap.classMapping(CRITERIA_BUILDER_FACTORY)
+        )
+            .initializer(poetMap.literalMapping(_CBF_PROP))
+            .addModifiers(KModifier.OVERRIDE)
+            .build()
+        val evmProp = PropertySpec.builder(
+            poetMap.literalMapping(_EVM_PROP),
+            poetMap.classMapping(ENTITY_VIEW_MANAGER)
+        )
+            .initializer(poetMap.literalMapping(_EVM_PROP))
+            .addModifiers(KModifier.OVERRIDE)
+            .build()
+        addProperties(listOf(emProp, cbfProp, evmProp))
+
+        val emParam = ParameterSpec.builder(
+            poetMap.literalMapping(_EM_PROP),
+            poetMap.classMapping(ENTITY_MANAGER)
+        ).apply {
+            val annotation = buildConstructorAnnotation { entityManagerFactoryRef }
+            addAnnotation(annotation)
+        }.build()
+        val cbfParam = ParameterSpec.builder(
+            poetMap.literalMapping(_CBF_PROP),
+            poetMap.classMapping(CRITERIA_BUILDER_FACTORY)
+        ).apply {
+            val annotation = buildConstructorAnnotation { criteriaBuilderFactoryRef }
+            addAnnotation(annotation)
+        }.build()
+        val evmParam = ParameterSpec.builder(
+            poetMap.literalMapping(_EVM_PROP),
+            poetMap.classMapping(ENTITY_VIEW_MANAGER)
+        ).apply {
+            val annotation = buildConstructorAnnotation { entityViewManagerRef }
+            addAnnotation(annotation)
+        }.build()
+        val constructorBuilder = FunSpec.constructorBuilder()
+        constructorBuilder.addParameters(listOf(emParam, cbfParam, evmParam))
+        primaryConstructor(constructorBuilder.build())
+    }
+
+    private fun buildConstructorAnnotation(selector: RepoConfig.()->String): AnnotationSpec {
+        if (repoConfig == null) return AnnotationSpec.builder(poetMap.classMapping(AUTOWIRED)).build()
+        val annotationValue = repoConfig!!.selector()
+        return AnnotationSpec.builder(poetMap.classMapping(QUALIFIER))
+            .addMember("\"$annotationValue\"")
+            .build()
+    }
+
+    private fun TypeSpec.Builder.addRepoProperties(): TypeSpec.Builder = apply {
+        val clazzProperty = PropertySpec
+            .builder(
+                poetMap.literalMapping(_CLAZZ_PROPERTY),
+                ClassName("java.lang", "Class")
+                    .parameterizedBy(poetMap.classMapping(CLAZZ))
+            )
+            .addModifiers(KModifier.PROTECTED)
+            .initializer("%T::class.java", poetMap.classMapping(CLAZZ))
+            .build()
+        val viewClazzProperty = PropertySpec
+            .builder(
+                poetMap.literalMapping(_VIEW_CLAZZ_PROPERTY),
+                ClassName("java.lang", "Class")
+                    .parameterizedBy(poetMap.classMapping(VIEW_CLAZZ))
+            )
+            .addModifiers(KModifier.PROTECTED)
+            .initializer("%T::class.java", poetMap.classMapping(VIEW_CLAZZ))
+            .build()
+
+        addProperties(listOf(clazzProperty, viewClazzProperty))
     }
 
     private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {
