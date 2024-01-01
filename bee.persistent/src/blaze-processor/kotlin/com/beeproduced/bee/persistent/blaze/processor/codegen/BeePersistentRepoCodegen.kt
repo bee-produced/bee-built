@@ -3,6 +3,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.BEE_SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._SELECTION_INFO_VAL
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
@@ -52,12 +53,14 @@ class BeePersistentRepoCodegen(
     @Suppress("ConstPropertyName")
     object PoetConstants {
         const val _ID_PROPERTY = "%idProperty:L"
+        const val BEE_SELECTION = "%beeselection:T"
         const val SELECTION_INFO = "%selectioninfo:T"
         const val _SELECTION_INFO_VAL = "%selectioninfoval:L"
         const val __SELECTION_INFO_NAME = "%selectioninfoname:S"
     }
 
     init {
+        poetMap.addMapping(BEE_SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.selection", "BeeSelection"))
         poetMap.addMapping(SELECTION_INFO, ClassName("com.beeproduced.bee.persistent.blaze.meta", "SelectionInfo"))
     }
 
@@ -80,9 +83,23 @@ class BeePersistentRepoCodegen(
             TypeSpec.classBuilder(className)
                 .addAnnotation(ClassName("org.springframework.stereotype", "Component"))
                 .addSuperinterface(repoInterface.toClassName())
+                .buildSelect()
                 .buildSelectionInfo()
                 .build()
         )
+    }
+
+    private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {
+        val listOfEntity = ClassName("kotlin.collections", "List")
+            .parameterizedBy(Any::class.asClassName())
+        val selectFn = FunSpec.builder("select")
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter("selection", poetMap.classMapping(BEE_SELECTION))
+            .returns(listOfEntity)
+        selectFn.apply {
+            addNamedStmt("return emptyList()")
+        }
+        addFunction(selectFn.build())
     }
 
     private fun findView(repo: RepoInfo): EntityViewInfo {
