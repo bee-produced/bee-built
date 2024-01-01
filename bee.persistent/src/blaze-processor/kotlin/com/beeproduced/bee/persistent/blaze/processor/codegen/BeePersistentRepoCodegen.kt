@@ -369,16 +369,17 @@ class BeePersistentRepoCodegen(
     // If so, add!
     // TODO: Map inheritance fields!
     private fun CodeBlock.Builder.traverseSelectionInfo(
-        entityView: EntityViewInfo
+        entityView: EntityViewInfo,
+        visitedEmbeddedViews: MutableSet<String> = mutableSetOf()
     ): CodeBlock.Builder = apply {
         val entity = entityView.entity
 
         val relationMapInput = entityView.relations.map {
             (simpleName, viewName) -> Pair(simpleName, viewName)
         }
-        val relationSI = selectionInfoMappedValues(relationMapInput)
+        val relationSI = traverseSubSelectionInfo(relationMapInput, visitedEmbeddedViews)
 
-
+        val idSI = "\"${entity.id.simpleName}\""
         val (columns, embedded) = entity.columns
             .partition { !it.isEmbedded }
         val columnSI = selectionInfoListValues(columns)
@@ -386,7 +387,7 @@ class BeePersistentRepoCodegen(
            val viewName = viewName(requireNotNull(it.embedded))
            Pair(it.simpleName, viewName)
         }
-        val embeddedSI = selectionInfoMappedValues(embeddedMapInput)
+        val embeddedSI = traverseSubEmbeddedInfo(embeddedMapInput, visitedEmbeddedViews)
 
         val (lazyColumns, lazyEmbedded) = entity.lazyColumns
             .partition { !it.isEmbedded }
@@ -395,13 +396,14 @@ class BeePersistentRepoCodegen(
             val viewName = viewName(requireNotNull(it.embedded))
             Pair(it.simpleName, viewName)
         }
-        val lazyEmbeddedSI = selectionInfoMappedValues(lazyEmbeddedMapInput)
+        val lazyEmbeddedSI = traverseSubEmbeddedInfo(lazyEmbeddedMapInput, visitedEmbeddedViews)
 
         poetMap.addMapping(_SELECTION_INFO_VAL, entityView.name.lowercase())
         poetMap.addMapping(__SELECTION_INFO_NAME, entityView.name)
         addNamedStmt("  val $_SELECTION_INFO_VAL = $SELECTION_INFO(")
         addNamedStmt("    view = $__SELECTION_INFO_NAME,")
         addNamedStmt("    relations = mapOf($relationSI),")
+        addNamedStmt("    id = $idSI,")
         addNamedStmt("    columns = setOf($columnSI),")
         addNamedStmt("    lazyColumns = setOf($lazyColumnSI),")
         addNamedStmt("    embedded = mapOf($embeddedSI),")
@@ -409,15 +411,52 @@ class BeePersistentRepoCodegen(
         addNamedStmt("  )")
     }
 
-    private fun CodeBlock.Builder.selectionInfoMappedValues(
-        simpleNameAndViewName: List<Pair<String, String>>
+    private fun CodeBlock.Builder.traverseEmbeddedInfo(
+        embeddedView: EmbeddedViewInfo
+    ): CodeBlock.Builder = apply {
+        val embedded = embeddedView.embedded
+        val columnSI = selectionInfoListValues(embedded.columns)
+        val lazyColumnSI = selectionInfoListValues(embedded.lazyColumns)
+
+        poetMap.addMapping(_SELECTION_INFO_VAL, embeddedView.name.lowercase())
+        poetMap.addMapping(__SELECTION_INFO_NAME, embeddedView.name)
+        addNamedStmt("  val $_SELECTION_INFO_VAL = $SELECTION_INFO(")
+        addNamedStmt("    view = $__SELECTION_INFO_NAME,")
+        addNamedStmt("    relations = emptyMap(),")
+        addNamedStmt("    id = null,")
+        addNamedStmt("    columns = setOf($columnSI),")
+        addNamedStmt("    lazyColumns = setOf($lazyColumnSI),")
+        addNamedStmt("    embedded = emptyMap(),")
+        addNamedStmt("    lazyEmbedded = emptyMap()")
+        addNamedStmt("  )")
+    }
+
+
+    private fun CodeBlock.Builder.traverseSubSelectionInfo(
+        simpleNameAndViewName: List<Pair<String, String>>,
+        visitedEmbeddedViews: MutableSet<String>
     ): String {
         for ((_, viewName) in simpleNameAndViewName) {
             val view = views.entityViews.getValue(viewName)
-            traverseSelectionInfo(view)
+            traverseSelectionInfo(view, visitedEmbeddedViews)
         }
         return simpleNameAndViewName.joinToString(separator = ", ") {
             (p, v) -> "\"$p\" to ${v.lowercase()}"
+        }
+    }
+
+    private fun CodeBlock.Builder.traverseSubEmbeddedInfo(
+        simpleNameAndViewName: List<Pair<String, String>>,
+        visitedEmbeddedViews: MutableSet<String>
+    ): String {
+        for ((_, viewName) in simpleNameAndViewName) {
+            if (visitedEmbeddedViews.contains(viewName)) continue
+            visitedEmbeddedViews.add(viewName)
+            val view = views.embeddedViews.getValue(viewName)
+            traverseEmbeddedInfo(view)
+        }
+        return simpleNameAndViewName.joinToString(separator = ", ") {
+                (p, v) -> "\"$p\" to ${v.lowercase()}"
         }
     }
 

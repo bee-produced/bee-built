@@ -17,6 +17,8 @@ fun EntityViewSetting<*, *>.fetchSelection(info: SelectionInfo, selection: BeeSe
 }
 
 private fun EntityViewSetting<*, *>.fetchSelection(path: String, info: SelectionInfo, selection: BeeSelection) {
+    if (info.id != null)
+        fetch<Any>("$path${info.id}")
     for (column in info.columns)
         fetch<Any>("$path$column")
     for (lazyColumn in info.lazyColumns)

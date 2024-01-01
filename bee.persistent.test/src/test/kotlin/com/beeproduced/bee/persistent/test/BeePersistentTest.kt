@@ -62,32 +62,49 @@ class BeePersistentTest(
                     field("companies") {
                         field("company") {
                             field("employees") {
-                                field("company")
-                                field("person")
+                                field("company") {
+                                    // TODO: When no field is set, relation will not be loaded...
+                                    field("id")
+                                }
+                                field("person") {
+                                    field("id")
+                                }
                             }
                         }
-                        // field("person") {
-                        //     field("companies") {
-                        //         field("company")
-                        //         field("person")
-                        //     }
-                        // }
+                        field("person") {
+                            field("companies") {
+                                field("company") {
+                                    field("id")
+                                }
+                                field("person") {
+                                    field("id")
+                                }
+                            }
+                        }
                     }
                 }
                 field("producer") {
                     field("employees") {
                         field("company") {
                             field("employees") {
-                                field("company")
-                                field("person")
+                                field("company") {
+                                    field("id")
+                                }
+                                field("person") {
+                                    field("id")
+                                }
                             }
                         }
-                        // field("person") {
-                        //     field("companies") {
-                        //         field("company")
-                        //         field("person")
-                        //     }
-                        // }
+                        field("person") {
+                            field("companies") {
+                                field("company") {
+                                    field("id")
+                                }
+                                field("person") {
+                                    field("id")
+                                }
+                            }
+                        }
                     }
                 }
             }
