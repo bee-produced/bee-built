@@ -1,5 +1,6 @@
 package com.beeproduced.bee.persistent.blaze.patch.bytebuddy
 
+import com.beeproduced.bee.persistent.blaze.patch.bytebuddy.objectbuilder.BlazeViewTypeObjectBuilderPatch
 import com.beeproduced.bee.persistent.blaze.patch.bytebuddy.proxy.BlazeAssignmentInstantiatorPatch
 import com.beeproduced.bee.persistent.blaze.patch.bytebuddy.proxy.BlazeTupleInstantiatorPatch
 import net.bytebuddy.ByteBuddy
@@ -23,6 +24,8 @@ class BlazePatchByteBuddyListener : SpringApplicationRunListener {
             // Since Java 9, an agent installation is also possible at runtime without a JDK-installation
             ByteBuddyAgent.install()
             val byteBuddy = ByteBuddy()
+            BlazeViewTypeObjectBuilderPatch
+                .patchViewTypeObjectBuilder(byteBuddy)
             BlazeTupleInstantiatorPatch
                 .patchTupleConstructorReflectionInstantiator(byteBuddy)
             BlazeAssignmentInstantiatorPatch
