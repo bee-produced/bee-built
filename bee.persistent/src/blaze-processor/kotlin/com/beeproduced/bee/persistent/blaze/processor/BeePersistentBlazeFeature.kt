@@ -257,19 +257,26 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             .filter { it.hasBackingField }
             .toList()
 
+        val properties: MutableList<EntityProperty> = mutableListOf()
+        val jpaProperties: MutableList<EntityProperty> = mutableListOf()
         val columns: MutableList<ColumnProperty> = mutableListOf()
         val lazyColumns: MutableList<ColumnProperty> = mutableListOf()
 
         for (p in propertyDeclarations) {
             val annotations = resolveAnnotations(p.annotations)
             val type = p.type.resolve().resolveTypeAlias()
-            val columnProperty = ColumnProperty(p, type, annotations, null, null)
+            val entityProperty = EntityProperty(p, type, annotations)
+            properties.add(entityProperty)
 
+            if (annotations.hasAnnotation(ANNOTATION_TRANSIENT)) continue
+            jpaProperties.add(entityProperty)
+
+            val columnProperty = ColumnProperty(p, type, annotations, null, null)
             if (annotations.hasAnnotation(ANNOTATION_LAZY_FIELD)) lazyColumns.add(columnProperty)
             else columns.add(columnProperty)
         }
 
-        return EmbeddedInfo(declaration, columns, lazyColumns)
+        return EmbeddedInfo(declaration, properties, jpaProperties, columns, lazyColumns)
     }
 
     private fun getRepoInfo(symbols: BeeGenerativeSymbols): List<RepoInfo> {

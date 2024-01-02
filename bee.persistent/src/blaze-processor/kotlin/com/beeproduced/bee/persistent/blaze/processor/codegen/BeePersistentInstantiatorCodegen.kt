@@ -6,6 +6,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInsta
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.BLAZE_INSTANTIATORS
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.FIELD
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.TCI
+import com.beeproduced.bee.persistent.blaze.processor.info.BaseInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.Property
@@ -68,20 +69,31 @@ class BeePersistentInstantiatorCodegen(
             if (entity.subClasses != null) continue
             file.buildInfo(entity)
         }
+        for (embeddedView in views.embeddedViews.values) {
+            val embedded = embeddedView.embedded
+            file.buildInfo(embedded)
+        }
 
+        val assignmentCreators = mutableListOf<String>()
+        val tupleCreators = mutableListOf<String>()
         for (entityView in views.entityViews.values) {
             // Do not generate creators for super classes
             if (entityView.entity.subClasses != null) continue
             if (entityView.entity.superClass != null)
-                file.buildAssignmentCreator(entityView)
-            else file.buildTupleCreator(entityView)
+                file.buildAssignmentCreator(entityView, assignmentCreators)
+            else file.buildTupleCreator(entityView, tupleCreators)
+        }
+        for (embeddedView in views.embeddedViews.values) {
+            file.buildTupleCreator(embeddedView, tupleCreators)
         }
 
         file.build().writeTo(codeGenerator, dependencies)
     }
 
 
-    private fun FileSpec.Builder.buildAssignmentCreator(view: EntityViewInfo) = apply {
+    private fun FileSpec.Builder.buildAssignmentCreator(
+        view: EntityViewInfo, assignmentCreators: MutableList<String>
+    ) = apply {
         val construction = constructions.getValue(view.qualifiedName)
         val decClassName = view.entity.declaration.toClassName()
 
@@ -90,8 +102,10 @@ class BeePersistentInstantiatorCodegen(
         val keys = viewFields.mapTo(HashSet()) { it.simpleName }
         val missingFields = entityFields.filter { !keys.contains(it.simpleName) }
 
+        val propertyName = "${view.name}__Creator"
+        assignmentCreators.add(propertyName)
         val property = PropertySpec.builder(
-            "${view.name}__Creator",
+            propertyName,
             poetMap.classMapping(ACI)
         )
 
@@ -129,17 +143,22 @@ class BeePersistentInstantiatorCodegen(
         addProperty(property.initializer(initializer).build())
     }
 
-    private fun FileSpec.Builder.buildTupleCreator(view: EntityViewInfo) = apply {
+    private fun FileSpec.Builder.buildTupleCreator(
+        view: BaseViewInfo,
+        tupleCreators: MutableList<String>
+    ) = apply {
         val construction = constructions.getValue(view.qualifiedName)
-        val decClassName = view.entity.declaration.toClassName()
+        val decClassName = view.declaration.toClassName()
 
         val entityFields = view.entityFields()
         val viewFields = view.viewFields()
         val keys = viewFields.mapTo(HashSet()) { it.simpleName }
         val missingFields = entityFields.filter { !keys.contains(it.simpleName) }
 
+        val propertyName = "${view.name}__Creator"
+        tupleCreators.add(propertyName)
         val property = PropertySpec.builder(
-            "${view.name}__Creator",
+            propertyName,
             poetMap.classMapping(TCI)
         )
 
@@ -163,7 +182,7 @@ class BeePersistentInstantiatorCodegen(
             for (field in construction.setterProps) {
                 addStatement("    entity.${field.simpleName} = ${field.simpleName}")
             }
-            val infoObj = infoName(view.entity.uniqueName)
+            val infoObj = infoName(view.uniqueName)
             for (field in construction.reflectionProps) {
                 val infoField = infoField(field)
                 val setterName = field.type.reflectionSetterName()
@@ -177,7 +196,7 @@ class BeePersistentInstantiatorCodegen(
         addProperty(property.initializer(initializer).build())
     }
 
-    private fun FileSpec.Builder.buildInfo(entityInfo: EntityInfo) = apply {
+    private fun FileSpec.Builder.buildInfo(entityInfo: BaseInfo) = apply {
         val construction = entityInfo.construction()
         constructions[entityInfo.qualifiedName] = construction
 
@@ -205,7 +224,7 @@ class BeePersistentInstantiatorCodegen(
         val reflectionProps: List<EntityProperty>
     )
 
-    private fun EntityInfo.construction(): EntityConstruction {
+    private fun BaseInfo.construction(): EntityConstruction {
         val constructor = declaration.primaryConstructor
             ?: throw IllegalArgumentException("Class [${qualifiedName}] has no primary constructor.")
 
@@ -243,6 +262,8 @@ class BeePersistentInstantiatorCodegen(
         return EntityConstruction(constructorProperties, setterProperties, reflectionProperties)
     }
 
+
+
     private fun infoName(uniqueName: String): String
         = "${uniqueName}InstatiatorInfo"
     private fun infoField(prop: EntityProperty): String
@@ -250,26 +271,39 @@ class BeePersistentInstantiatorCodegen(
 
 
     // TODO: Id column of superclass is present in columns of subclass!
-    private fun EntityViewInfo.viewFields(): List<Property> {
-        val id = entity.id
-        val keys = relations.keys
-        val props = (
-            entity.columns.filter { it.simpleName != id.simpleName } +
-            entity.lazyColumns +
-            entity.relations.filter { keys.contains(it.simpleName) }
-        ).sortedBy { it.simpleName }
-
-        return listOf(id) + props
+    private fun BaseViewInfo.viewFields(): List<Property> {
+        return when (this) {
+            is EntityViewInfo -> {
+                val id = entity.id
+                val keys = relations.keys
+                val props = (
+                    entity.columns.filter { it.simpleName != id.simpleName } +
+                        entity.lazyColumns +
+                        entity.relations.filter { keys.contains(it.simpleName) }
+                    ).sortedBy { it.simpleName }
+                listOf(id) + props
+            }
+            is EmbeddedViewInfo -> {
+                (embedded.columns + embedded.lazyColumns).sortedBy { it.simpleName }
+            }
+        }
     }
 
-    private fun EntityViewInfo.entityFields(): List<Property> {
-        val id = entity.id
-        val props = (
-            entity.columns.filter { it.simpleName != id.simpleName } +
-            entity.lazyColumns +
-            entity.relations
-        ).sortedBy { it.simpleName }
-        return listOf(id) + props
+    private fun BaseViewInfo.entityFields(): List<Property> {
+        return when (this) {
+            is EntityViewInfo -> {
+                val id = entity.id
+                val props = (
+                    entity.columns.filter { it.simpleName != id.simpleName } +
+                        entity.lazyColumns +
+                        entity.relations
+                    ).sortedBy { it.simpleName }
+                listOf(id) + props
+            }
+            is EmbeddedViewInfo -> {
+                (embedded.columns + embedded.lazyColumns).sortedBy { it.simpleName }
+            }
+        }
     }
 
     private fun KSType.reflectionSetterName(): String {

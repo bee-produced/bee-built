@@ -3,6 +3,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.persistent.blaze.processor.info.EmbeddedInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.symbol.KSClassDeclaration
 
 /**
  *
@@ -11,21 +12,34 @@ import com.google.devtools.ksp.processing.KSPLogger
  * @version 2023-12-27
  */
 
+sealed interface BaseViewInfo {
+    val name: String
+    val declaration: KSClassDeclaration
+    val qualifiedName: String
+    val uniqueName: String
+}
+
 data class EntityViewInfo(
-    val name: String,
+    override val name: String,
     val entity: EntityInfo,
     val superClassName: String? = null,
     val relations: MutableMap<String, String> = mutableMapOf(),
     val isExtended: Boolean = false
-) {
+) : BaseViewInfo {
     val entityRelations get() = entity.relations
-    val qualifiedName get() = entity.qualifiedName!!
+    override val qualifiedName get() = entity.qualifiedName
+    override val declaration: KSClassDeclaration get() = entity.declaration
+    override val uniqueName: String get() = entity.uniqueName
 }
 
 data class EmbeddedViewInfo(
-    val name: String,
+    override val name: String,
     val embedded: EmbeddedInfo
-)
+) : BaseViewInfo {
+    override val qualifiedName get() = embedded.qualifiedName
+    override val declaration: KSClassDeclaration get() = embedded.declaration
+    override val uniqueName: String get() = embedded.uniqueName
+}
 
 data class ViewInfo(
     val entityViews: Map<String, EntityViewInfo>,

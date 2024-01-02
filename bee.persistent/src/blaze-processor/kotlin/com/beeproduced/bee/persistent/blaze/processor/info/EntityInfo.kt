@@ -2,7 +2,7 @@ package com.beeproduced.bee.persistent.blaze.processor.info
 
 import com.beeproduced.bee.generative.util.DummyKSPropertyDeclaration
 import com.beeproduced.bee.generative.util.DummyKSType
-import com.beeproduced.bee.persistent.blaze.processor.utils.buildUniqueClassName
+import com.beeproduced.bee.persistent.blaze.processor.utils.*
 import com.google.devtools.ksp.symbol.*
 
 /**
@@ -12,31 +12,45 @@ import com.google.devtools.ksp.symbol.*
  * @version 2023-12-16
  */
 
+sealed interface BaseInfo {
+    val declaration: KSClassDeclaration
+    val properties: List<EntityProperty>
+    val jpaProperties: List<EntityProperty>
+    val columns: List<ColumnProperty>
+    val lazyColumns: List<ColumnProperty>
+
+    val simpleName: String
+    val qualifiedName: String
+    val uniqueName: String
+}
+
 data class EntityInfo(
-    val declaration: KSClassDeclaration,
+    override val declaration: KSClassDeclaration,
     val annotations: List<ResolvedAnnotation>,
-    val properties: List<EntityProperty>,
-    val jpaProperties: List<EntityProperty>,
+    override val properties: List<EntityProperty>,
+    override val jpaProperties: List<EntityProperty>,
     val id: IdProperty,
-    val columns: List<ColumnProperty>,
-    val lazyColumns: List<ColumnProperty>,
+    override val columns: List<ColumnProperty>,
+    override val lazyColumns: List<ColumnProperty>,
     val relations: List<ColumnProperty>,
     val superClass: String?,
     val subClasses: Set<String>?
-) {
-    val simpleName: String = declaration.simpleName.asString()
-    val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
-    val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
+) : BaseInfo {
+    override val simpleName: String = declaration.simpleName.asString()
+    override val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
+    override val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
 }
 
 data class EmbeddedInfo(
-    val declaration: KSClassDeclaration,
-    val columns: List<ColumnProperty>,
-    val lazyColumns: List<ColumnProperty>,
-) {
-    val simpleName: String = declaration.simpleName.asString()
-    val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
-    val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
+    override val declaration: KSClassDeclaration,
+    override val properties: List<EntityProperty>,
+    override val jpaProperties: List<EntityProperty>,
+    override val columns: List<ColumnProperty>,
+    override val lazyColumns: List<ColumnProperty>,
+) : BaseInfo {
+    override val simpleName: String = declaration.simpleName.asString()
+    override val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
+    override val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
 }
 
 data class ResolvedAnnotation(
