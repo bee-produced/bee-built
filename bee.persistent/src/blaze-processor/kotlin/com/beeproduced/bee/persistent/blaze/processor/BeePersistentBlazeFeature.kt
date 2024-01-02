@@ -126,23 +126,25 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         // Add inheritance info
         val inheritedEntities: MutableMap<String, EntityInfo> = entitiesWithoutInheritanceInfo
-            .associateByTo(HashMap()) { it.qualifiedName!! }
+            .associateByTo(HashMap()) { it.qualifiedName }
 
         for (entityInfo in entitiesWithoutInheritanceInfo) {
             if (!entityInfo.annotations.hasAnnotation(ANNOTATION_INHERITANCE)) continue
 
             // Store subclasses for superclass
             val subClasses = entitiesWithoutInheritanceInfo.findSubclasses(entityInfo)
-            val subClassNames = subClasses.mapTo(HashSet()) { it.qualifiedName!! }
-            inheritedEntities[entityInfo.qualifiedName!!] = entityInfo
+            val subClassNames = subClasses.mapTo(HashSet()) { it.qualifiedName }
+            inheritedEntities[entityInfo.qualifiedName] = entityInfo
                 .copy(subClasses = subClassNames)
 
             // Store superclass for subclass
             // Also set inherited id
-            val superClassName = entityInfo.qualifiedName!!
+            val superClassName = entityInfo.qualifiedName
             for (subClass in subClasses) {
-                inheritedEntities[subClass.qualifiedName!!] = subClass
-                    .copy(id = entityInfo.id, superClass = superClassName)
+                val columnsWithoutId = subClass.columns
+                    .filter { it.simpleName != entityInfo.id.simpleName }
+                inheritedEntities[subClass.qualifiedName] = subClass
+                    .copy(id = entityInfo.id, columns = columnsWithoutId, superClass = superClassName)
             }
         }
 

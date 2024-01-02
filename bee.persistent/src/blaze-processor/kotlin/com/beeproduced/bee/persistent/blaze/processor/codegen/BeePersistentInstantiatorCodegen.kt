@@ -349,7 +349,7 @@ class BeePersistentInstantiatorCodegen(
                 val id = entity.id
                 val keys = relations.keys
                 val props = (
-                    entity.columns.filter { it.simpleName != id.simpleName } +
+                    entity.columns +
                         entity.lazyColumns +
                         entity.relations.filter { keys.contains(it.simpleName) }
                     ).sortedBy { it.simpleName }
@@ -366,7 +366,7 @@ class BeePersistentInstantiatorCodegen(
             is EntityViewInfo -> {
                 val id = entity.id
                 val props = (
-                    entity.columns.filter { it.simpleName != id.simpleName } +
+                    entity.columns +
                         entity.lazyColumns +
                         entity.relations
                     ).sortedBy { it.simpleName }

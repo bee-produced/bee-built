@@ -1,5 +1,7 @@
 package com.beeproduced.datasource.b
 
+import com.beeproduced.bee.persistent.blaze.BeeBlazeRepository
+import com.beeproduced.bee.persistent.blaze.annotations.BeeRepository
 import jakarta.persistence.*
 import java.util.*
 
@@ -12,11 +14,14 @@ import java.util.*
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-open class Composer(
+class Composer(
     @Id
     val id: UUID,
     val name: String
 )
+
+@BeeRepository
+interface ComposerRepository : BeeBlazeRepository<Composer, UUID>
 
 @Entity
 data class AiComposer(
@@ -79,3 +84,6 @@ data class ComposerContainer(
     @JoinColumn(name = "c2_id", insertable = false, updatable = false)
     val c2: Composer?
 )
+
+@BeeRepository
+interface ComposerContainerRepository : BeeBlazeRepository<ComposerContainer, UUID>
