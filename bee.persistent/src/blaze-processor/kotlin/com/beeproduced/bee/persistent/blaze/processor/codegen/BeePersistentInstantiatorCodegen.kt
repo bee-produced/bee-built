@@ -5,6 +5,7 @@ import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilde
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.ACI
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.APPLICATION_READY_EVENT
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.BLAZE_INSTANTIATORS
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.COLLECTION_STAR
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.COMPONENT
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.EVENT_LISTENER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.FIELD
@@ -20,6 +21,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.Modifier
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -59,6 +61,7 @@ class BeePersistentInstantiatorCodegen(
         const val COMPONENT = "%component:T"
         const val EVENT_LISTENER = "%eventlistener:T"
         const val APPLICATION_READY_EVENT = "%applicationreadyevent:T"
+        const val COLLECTION_STAR = "%collection:T"
     }
 
     init {
@@ -69,6 +72,7 @@ class BeePersistentInstantiatorCodegen(
         poetMap.addMapping(COMPONENT, ClassName("org.springframework.stereotype", "Component"))
         poetMap.addMapping(EVENT_LISTENER, ClassName("org.springframework.context.event", "EventListener"))
         poetMap.addMapping(APPLICATION_READY_EVENT, ClassName("org.springframework.boot.context.event", "ApplicationReadyEvent"))
+        poetMap.addMapping(COLLECTION_STAR, ClassName("kotlin.collections", "Collection").parameterizedBy(STAR))
     }
 
     fun processViews(views: ViewInfo, entities: List<EntityInfo>) {
@@ -128,7 +132,7 @@ class BeePersistentInstantiatorCodegen(
             addNamedStmt("  viewProperties = emptyList(),")
             addNamedStmt("  create = { tuple: Array<Any?>, sort: IntArray -> ")
             for ((index, field) in viewFields.withIndex()) {
-                addStatement("    val ${field.simpleName} = tuple[sort[$index]] as %T", field.declaration.type.toTypeName())
+                addField(index, field, true)
             }
             for (field in missingFields) {
                 addStatement("    val ${field.simpleName} = null as %T", field.declaration.type.toTypeName())
@@ -179,7 +183,7 @@ class BeePersistentInstantiatorCodegen(
             addNamedStmt("  viewProperties = emptyList(),")
             addNamedStmt("  create = { tuple: Array<Any?> -> ")
             for ((index, field) in viewFields.withIndex()) {
-                addStatement("    val ${field.simpleName} = tuple[$index] as %T", field.declaration.type.toTypeName())
+                addField(index, field)
             }
             for (field in missingFields) {
                 addStatement("    val ${field.simpleName} = null as %T", field.declaration.type.toTypeName())
@@ -204,6 +208,22 @@ class BeePersistentInstantiatorCodegen(
         }.build()
 
         addProperty(property.initializer(initializer).build())
+    }
+
+    private fun CodeBlock.Builder.addField(index: Int, field: Property, hasSort: Boolean = false) {
+        val isSet = field.type.declaration.qualifiedName?.asString()?.startsWith(
+            "kotlin.collections.Set"
+        ) ?: false
+        if (isSet) {
+            // TODO: Change type of generated view to set to omit this problem?
+            val tupleAccess = if (!hasSort) "$index" else "sort[$index]"
+            addStatement("    val ${field.simpleName} = (tuple[$tupleAccess] as %T?)?.toSet() as %T",
+                poetMap.mappings[COLLECTION_STAR], field.type.toTypeName()
+            )
+        } else {
+            addStatement("    val ${field.simpleName} = tuple[$index] as %T", field.type.toTypeName())
+        }
+
     }
 
     private fun FileSpec.Builder.buildInfo(entityInfo: BaseInfo) = apply {
