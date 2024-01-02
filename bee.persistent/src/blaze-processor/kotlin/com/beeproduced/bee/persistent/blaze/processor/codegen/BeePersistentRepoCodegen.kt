@@ -259,21 +259,32 @@ class BeePersistentRepoCodegen(
         addType(companionObject)
     }
 
-    // TODO: Map inheritance fields!
     private fun CodeBlock.Builder.traverseSelectionInfo(
         entityView: EntityViewInfo,
         visitedEmbeddedViews: MutableSet<String> = mutableSetOf()
     ): CodeBlock.Builder = apply {
         val entity = entityView.entity
+        val allRelations: MutableMap<String, String> = entityView.relations.toMutableMap()
+        val allColumns: MutableList<ColumnProperty> = entity.columns.toMutableList()
+        val allLazyColumns: MutableList<ColumnProperty> = entity.lazyColumns.toMutableList()
 
-        val relationMapInput = entityView.relations.map {
+        // TODO: Optimize this access?
+        val subViews = views.entityViews.values
+            .filter { it.superClassName == entityView.name }
+        for (subView in subViews) {
+            allRelations.putAll(subView.relations)
+            allColumns.addAll(subView.entity.columns)
+            allLazyColumns.addAll(subView.entity.lazyColumns)
+        }
+
+        val relationMapInput = allRelations.map {
             (simpleName, viewName) -> Pair(simpleName, viewName)
         }
         val relationSI = traverseSubSelectionInfo(relationMapInput, visitedEmbeddedViews)
 
         val idSI = "\"${entity.id.simpleName}\""
-        val (columns, embedded) = entity.columns
-            .partition { !it.isEmbedded }
+        val (columns, embedded)
+            = allColumns.partition { !it.isEmbedded }
         val columnSI = selectionInfoListValues(columns)
         val embeddedMapInput = embedded.map {
            val viewName = viewName(requireNotNull(it.embedded))
@@ -281,8 +292,8 @@ class BeePersistentRepoCodegen(
         }
         val embeddedSI = traverseSubEmbeddedInfo(embeddedMapInput, visitedEmbeddedViews)
 
-        val (lazyColumns, lazyEmbedded) = entity.lazyColumns
-            .partition { !it.isEmbedded }
+        val (lazyColumns, lazyEmbedded)
+            = allLazyColumns.partition { !it.isEmbedded }
         val lazyColumnSI = selectionInfoListValues(lazyColumns)
         val lazyEmbeddedMapInput = lazyEmbedded.map {
             val viewName = viewName(requireNotNull(it.embedded))
