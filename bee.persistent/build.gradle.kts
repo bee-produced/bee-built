@@ -107,8 +107,11 @@ dependencies {
     "blazeRuntimeOnly"(libs.blaze.core.impl.jakarta)
     "blazeApi"(libs.blaze.integration.hibernate)
     "blazeApi"(libs.blaze.entity.view.api.jakarta)
-    "blazeApi"(libs.blaze.entity.view.impl.jakarta)
+    "blazeImplementation"(libs.blaze.entity.view.impl.jakarta)
     "blazeApi"(libs.blaze.integration.spring)
+    "blazeImplementation"(libs.spring.boot.starter.web)
+    "blazeImplementation"(libs.bytebuddy)
+    "blazeImplementation"(libs.bytebuddy.agent)
     "blazeProcessorImplementation"("com.beeproduced:bee.generative:$version")
     "blazeProcessorImplementation"(sourceSets["blaze"].output)
 

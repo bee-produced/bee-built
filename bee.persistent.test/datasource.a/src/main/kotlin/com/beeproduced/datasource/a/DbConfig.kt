@@ -1,6 +1,7 @@
 package com.beeproduced.datasource.a
 
 import com.beeproduced.bee.persistent.blaze.annotations.EnableBeeRepositories
+import com.beeproduced.bee.persistent.blaze.meta.proxy.BlazeInstantiators
 import com.blazebit.persistence.Criteria
 import com.blazebit.persistence.CriteriaBuilderFactory
 import com.blazebit.persistence.integration.view.spring.EnableEntityViews
@@ -51,6 +52,8 @@ class DbConfigA(val env: Environment) {
     @Bean(name = ["aDataSource"])
     @ConfigurationProperties(prefix = "spring.datasource-a")
     fun aDataSource(): DataSource {
+        val b = ComBeeproducedDatasourceACompany__View__ComBeeproducedDatasourceASong__1__Creator
+        val kek = BlazeInstantiators
         return DataSourceBuilder.create().build()
     }
 

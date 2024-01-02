@@ -79,7 +79,7 @@ bytebuddy-agent = { group = "net.bytebuddy", name = "byte-buddy-agent", version.
 blaze-core-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-core-impl-jakarta", version.ref = "blaze" }
 blaze-integration-hibernate = { group = "com.blazebit", name = "blaze-persistence-integration-hibernate-6.2", version.ref = "blaze" }
 blaze-entity-view-api-jakarta = { group = "com.blazebit", name = "blaze-persistence-entity-view-api-jakarta", version.ref = "blaze" }
-blaze-entity-view-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-core-impl-jakarta", version.ref = "blaze" }
+blaze-entity-view-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-entity-view-impl-jakarta", version.ref = "blaze" }
 blaze-integration-spring = { group = "com.blazebit", name = "blaze-persistence-integration-spring-data-3.1", version.ref = "blaze"}
 
 [plugins]

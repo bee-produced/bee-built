@@ -11,4 +11,5 @@ typealias ViewName = String
 
 object BlazeInstantiators {
     val tupleInstantiators: MutableMap<ViewName, TupleConstructorInstantiator> = mutableMapOf()
+    val assignmentInstantiators: MutableMap<ViewName, AssignmentConstructorInstantiator> = mutableMapOf()
 }

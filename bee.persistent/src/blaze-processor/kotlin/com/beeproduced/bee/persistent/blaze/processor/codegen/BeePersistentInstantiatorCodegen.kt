@@ -2,6 +2,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.ACI
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.BLAZE_INSTANTIATORS
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.FIELD
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.TCI
@@ -49,12 +50,14 @@ class BeePersistentInstantiatorCodegen(
         const val FIELD = "%field:T"
         const val BLAZE_INSTANTIATORS = "%blazeinstantiators:T"
         const val TCI = "%tci:T"
+        const val ACI = "%aci:T"
     }
 
     init {
         poetMap.addMapping(FIELD, ClassName("java.lang.reflect", "Field"))
         poetMap.addMapping(BLAZE_INSTANTIATORS, ClassName("com.beeproduced.bee.persistent.blaze.meta.proxy", "BlazeInstantiators"))
         poetMap.addMapping(TCI, ClassName("com.beeproduced.bee.persistent.blaze.meta.proxy", "TupleConstructorInstantiator"))
+        poetMap.addMapping(ACI, ClassName("com.beeproduced.bee.persistent.blaze.meta.proxy", "AssignmentConstructorInstantiator"))
     }
 
     fun processViews(views: ViewInfo, entities: List<EntityInfo>) {
@@ -69,14 +72,64 @@ class BeePersistentInstantiatorCodegen(
         for (entityView in views.entityViews.values) {
             // Do not generate creators for super classes
             if (entityView.entity.subClasses != null) continue
-            file.buildCreator(entityView)
+            if (entityView.entity.superClass != null)
+                file.buildAssignmentCreator(entityView)
+            else file.buildTupleCreator(entityView)
         }
 
         file.build().writeTo(codeGenerator, dependencies)
     }
 
 
-    private fun FileSpec.Builder.buildCreator(view: EntityViewInfo) = apply {
+    private fun FileSpec.Builder.buildAssignmentCreator(view: EntityViewInfo) = apply {
+        val construction = constructions.getValue(view.qualifiedName)
+        val decClassName = view.entity.declaration.toClassName()
+
+        val entityFields = view.entityFields()
+        val viewFields = view.viewFields()
+        val keys = viewFields.mapTo(HashSet()) { it.simpleName }
+        val missingFields = entityFields.filter { !keys.contains(it.simpleName) }
+
+        val property = PropertySpec.builder(
+            "${view.name}__Creator",
+            poetMap.classMapping(ACI)
+        )
+
+        // Use · to omit line breaks
+        // See: https://github.com/square/kotlinpoet/issues/598#issuecomment-454337042
+        val initializer = CodeBlock.builder().apply {
+            addNamedStmt("$ACI(")
+            addNamedStmt("  viewProperties = emptyList(),")
+            addNamedStmt("  create = { tuple: Array<Any?>, sort: IntArray -> ")
+            for ((index, field) in viewFields.withIndex()) {
+                addStatement("    val ${field.simpleName} = tuple[sort[$index]] as %T", field.declaration.type.toTypeName())
+            }
+            for (field in missingFields) {
+                addStatement("    val ${field.simpleName} = null as %T", field.declaration.type.toTypeName())
+            }
+            addStatement("    val entity = %T(", decClassName)
+            for (field in construction.constructorProps) {
+                addStatement("      ${field.simpleName} = ${field.simpleName},")
+            }
+            addStatement("    )")
+            for (field in construction.setterProps) {
+                addStatement("    entity.${field.simpleName} = ${field.simpleName}")
+            }
+            val infoObj = infoName(view.entity.uniqueName)
+            for (field in construction.reflectionProps) {
+                val infoField = infoField(field)
+                val setterName = field.type.reflectionSetterName()
+                addStatement("    ${infoObj}.${infoField}.${setterName}(entity, ${field.simpleName})")
+            }
+            addNamedStmt("    entity")
+            addNamedStmt("  }")
+            addNamedStmt(").also·{·$BLAZE_INSTANTIATORS.assignmentInstantiators[\"${view.name}\"]·=·it·}")
+        }.build()
+
+        addProperty(property.initializer(initializer).build())
+    }
+
+    private fun FileSpec.Builder.buildTupleCreator(view: EntityViewInfo) = apply {
         val construction = constructions.getValue(view.qualifiedName)
         val decClassName = view.entity.declaration.toClassName()
 
@@ -95,9 +148,9 @@ class BeePersistentInstantiatorCodegen(
         val initializer = CodeBlock.builder().apply {
             addNamedStmt("$TCI(")
             addNamedStmt("  viewProperties = emptyList(),")
-            addNamedStmt("  create = { tuple: Array<Any?>, sort: IntArray -> ")
+            addNamedStmt("  create = { tuple: Array<Any?> -> ")
             for ((index, field) in viewFields.withIndex()) {
-                addStatement("    val ${field.simpleName} = tuple[sort[$index]] as %T", field.declaration.type.toTypeName())
+                addStatement("    val ${field.simpleName} = tuple[$index] as %T", field.declaration.type.toTypeName())
             }
             for (field in missingFields) {
                 addStatement("    val ${field.simpleName} = null as %T", field.declaration.type.toTypeName())

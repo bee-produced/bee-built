@@ -1,6 +1,6 @@
 package com.beeproduced.bee.persistent.blaze.meta.proxy
 
-typealias TupleCreator = (Array<Any?>, IntArray)->Any
+typealias TupleCreator = (tuple: Array<Any?>)->Any
 data class TupleConstructorInstantiator(
     val viewProperties: List<String>,
     val create: TupleCreator
