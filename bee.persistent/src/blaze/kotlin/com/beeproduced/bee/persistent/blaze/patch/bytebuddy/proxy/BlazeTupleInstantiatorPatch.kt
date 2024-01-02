@@ -41,7 +41,7 @@ open class BlazeTupleInstantiatorPatch {
             @FieldValue("constructor") constructor: Constructor<*>,
             @FieldValue("defaultObject") defaultObject: Array<Any?>,
             @This self: TupleConstructorReflectionInstantiator<Any>,
-        ): Any {
+        ): Any? {
             val clazz = constructor.declaringClass
             val viewName = clazz.simpleName.substringBefore("_$$")
             AbstractReflectionInstantiatorUtils
@@ -50,7 +50,11 @@ open class BlazeTupleInstantiatorPatch {
             // array[2] = tuple
             val instantiator = BlazeInstantiators
                 .tupleInstantiators.getValue(viewName)
-            return instantiator.create(tuple)
+            // TODO: Even called on inherited entities that do not contain this field!
+            // Hacky Workaround, ..., check in creator if param null in embedded field?
+            // Add check for creator(?):
+            //   if (field1 !is <field1> || field2 !is <field2> || ...) return null
+            return try { instantiator.create(tuple) } catch (ex: Exception) { null }
         }
     }
 

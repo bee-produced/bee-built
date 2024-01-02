@@ -30,7 +30,7 @@ import kotlin.test.assertTrue
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [Application::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BeePersistentTest(
+class BeePersistentTestA(
     @Qualifier("aEM")
     val em: EntityManager,
     @Qualifier("aTM")
@@ -48,7 +48,6 @@ class BeePersistentTest(
         transaction.executeWithoutResult {
             val selection = BeeSelection.create {  }
             val songs = songRepository.select(selection)
-                as List<Song>
             assertTrue { songs.isNotEmpty() }
             val song = songs.first()
             assertNull(song.interpret)
