@@ -102,7 +102,7 @@ class BeePersistentTest(
                     }
                 }
             }
-            val songs = songRepository.select(selection) as List<Song>
+            val songs = songRepository.select(selection)
             assertTrue { songs.isNotEmpty() }
             val song = songs.first()
 
@@ -165,7 +165,7 @@ class BeePersistentTest(
                     }
                 }
             }
-            val songs = songRepository.select(selection) as List<Song>
+            val songs = songRepository.select(selection)
             assertTrue { songs.isNotEmpty() }
             val song = songs.first()
 
@@ -213,7 +213,7 @@ class BeePersistentTest(
                     }
                 }
             }
-            val songs = songRepository.select(selection) as List<Song>
+            val songs = songRepository.select(selection)
             assertTrue { songs.isNotEmpty() }
             val song = songs.first()
 
@@ -261,7 +261,7 @@ class BeePersistentTest(
                     field("id")
                 }
             }
-            val songs = songRepository.select(selection) as List<Song>
+            val songs = songRepository.select(selection)
             assertTrue { songs.isNotEmpty() }
             val song = songs.first()
 
@@ -291,7 +291,7 @@ class BeePersistentTest(
             em.beePersist(WeirdClass(id, fooBar, foxtrot))
 
             val ws = weirdRepository.select(BeeSelection.create {  })
-            val w = ws.firstOrNull() as WeirdClass?
+            val w = ws.firstOrNull()
 
             assertNotNull(w)
             assertEquals(id, w.id)

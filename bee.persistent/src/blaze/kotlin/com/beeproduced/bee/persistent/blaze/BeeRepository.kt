@@ -17,5 +17,5 @@ interface BeeBlazeRepository<T : Any, ID: Any> {
     val evm: EntityViewManager
 
     // TODO: Change return type to T later on...
-    fun select(selection: BeeSelection): List<Any>
+    fun select(selection: BeeSelection): List<T>
 }

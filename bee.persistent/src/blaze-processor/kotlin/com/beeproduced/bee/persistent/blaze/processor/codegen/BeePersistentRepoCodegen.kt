@@ -115,7 +115,6 @@ class BeePersistentRepoCodegen(
 
         FileSpec
             .builder(packageName, className)
-            .buildCreate()
             .buildRepo()
             .build()
             .writeTo(codeGenerator, dependencies)
@@ -218,7 +217,7 @@ class BeePersistentRepoCodegen(
 
     private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {
         val listOfEntity = ClassName("kotlin.collections", "List")
-            .parameterizedBy(Any::class.asClassName())
+            .parameterizedBy(entity.declaration.toClassName())
         val selectFn = FunSpec.builder("select")
             .addModifiers(KModifier.OVERRIDE)
             .addParameter("selection", poetMap.classMapping(BEE_SELECTION))
@@ -228,7 +227,8 @@ class BeePersistentRepoCodegen(
             addNamedStmt("  .apply { $_FETCH_SELECTION_FN(selectionInfo, selection) }")
             addNamedStmt("val builder = $_CBF_PROP.create($_EM_PROP, $_CLAZZ_PROPERTY)")
             addNamedStmt("val query = $_EVM_PROP.applySetting(setting, builder)")
-            addNamedStmt("return query.resultList")
+            addNamedStmt("@Suppress(\"UNCHECKED_CAST\")")
+            addStatement("return query.resultList as %T", listOfEntity)
         }
         addFunction(selectFn.build())
     }
@@ -240,112 +240,6 @@ class BeePersistentRepoCodegen(
         } ?: throw IllegalArgumentException("No view for [$qualifiedName] found")
         return view
     }
-
-    // TODO: Extract to own class?
-    // TODO: Should be generated for all classes, not only views
-    private fun FileSpec.Builder.buildCreate(): FileSpec.Builder = apply {
-        val inputMap = ClassName("kotlin.collections", "Map")
-            .parameterizedBy(
-                ClassName("kotlin", "String"),
-                ClassName("kotlin", "Any").copy(
-                    nullable = true
-                )
-            )
-
-        val declaration = entity.declaration
-        val decClassName = declaration.toClassName()
-
-        val constructor = declaration.primaryConstructor
-            ?: throw IllegalArgumentException("Class [${entity.qualifiedName}] has no primary constructor.")
-
-        val jpaProperties = entity.jpaProperties
-            .associateByTo(HashMap(entity.jpaProperties.count())) {
-                it.simpleName
-            }
-
-        val constructorProperties = constructor.parameters.map { parameter ->
-            val pName = requireNotNull(parameter.name).asString()
-            if (!parameter.isVal && !parameter.isVar) {
-                throw IllegalArgumentException("Class [${entity.qualifiedName}] has non managed constructor parameter type [$pName]")
-            }
-            val jpaProp = jpaProperties.remove(pName)
-                ?: throw IllegalArgumentException("Class [${entity.qualifiedName}] has non managed constructor parameter type [$pName]")
-
-            jpaProp
-        }
-
-        val setterProperties = mutableListOf<EntityProperty>()
-        val reflectionProperties = mutableListOf<EntityProperty>()
-        for (jpaProp in jpaProperties.values) {
-            val modifiers = jpaProp.declaration.modifiers
-            if (
-                modifiers.contains(Modifier.PRIVATE) ||
-                modifiers.contains(Modifier.PROTECTED) ||
-                modifiers.contains(Modifier.INTERNAL)
-            ) {
-                reflectionProperties.add(jpaProp)
-            } else if (!jpaProp.declaration.isMutable) {
-                reflectionProperties.add(jpaProp)
-            } else setterProperties.add(jpaProp)
-        }
-
-        val fieldClassName = ClassName("java.lang.reflect", "Field")
-        val setterObjName = "${entity.uniqueName}Fields"
-        if (reflectionProperties.isNotEmpty()) {
-            val setterObj = TypeSpec.objectBuilder(setterObjName)
-            for (reflectionProperty in reflectionProperties) {
-                val setterProp = PropertySpec
-                    .builder(reflectionPropertyName(reflectionProperty), fieldClassName)
-                    .initializer("%T::class.java.getDeclaredField(\"${reflectionProperty.simpleName}\").apply { isAccessible = true }", decClassName)
-                    .build()
-                setterObj.addProperty(setterProp)
-            }
-            addType(setterObj.build())
-        }
-
-        val create = FunSpec.builder("create${entity.uniqueName}")
-            .returns(decClassName)
-            .addParameter("values", inputMap)
-            .addStatement("val entity = %T(", decClassName)
-            .apply {
-                for (cP in constructorProperties) {
-                    addStatement("  ${cP.simpleName} = values.getValue(\"${cP.simpleName}\") as %T,", cP.type.toTypeName())
-                }
-            }
-            .addStatement(")")
-            .apply {
-                for (sP in setterProperties) {
-                    sP.type.isMarkedNullable
-                    addStatement("entity.${sP.simpleName} = values.getValue(\"${sP.simpleName}\") as %T", sP.type.toTypeName())
-                }
-            }
-            .apply {
-                for (rP in reflectionProperties) {
-                    val setterName = if (rP.type.isMarkedNullable) "set"
-                    else {
-                        val rpType = rP.type.declaration.simpleName.asString()
-                        when (rpType) {
-                            "Double" -> "setDouble"
-                            "Float" -> "setFloat"
-                            "Long" -> "setLong"
-                            "Int" -> "setInt"
-                            "Short" -> "setShort"
-                            "Byte" -> "setByte"
-                            "Boolean" -> "setBoolean"
-                            "Char" -> "setChar"
-                            else -> "set"
-                        }
-                    }
-                    val setterPropertyName = reflectionPropertyName(rP)
-                    addStatement("${setterObjName}.${setterPropertyName}.${setterName}(entity, values.getValue(\"${rP.simpleName}\") as %T)", rP.type.toTypeName())
-                }
-            }
-            .addStatement("return entity")
-            .build()
-        addFunction(create)
-    }
-
-    private fun reflectionPropertyName(prop: EntityProperty) = "${prop.simpleName}Field"
 
     private fun TypeSpec.Builder.buildSelectionInfo(): TypeSpec.Builder = apply {
         val initializerBlock = CodeBlock.builder()
