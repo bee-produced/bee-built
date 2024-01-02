@@ -16,6 +16,7 @@ import com.beeproduced.datasource.a.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.util.*
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -35,7 +36,9 @@ class BeePersistentTest(
     @Qualifier("aTM")
     transactionManager: PlatformTransactionManager,
     @Autowired
-    val songRepository: SongRepository
+    val songRepository: SongRepository,
+    @Autowired
+    val weirdRepository: WeirdClassRepository
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
@@ -272,10 +275,28 @@ class BeePersistentTest(
             assertNotNull(interpretCompaniesPerson)
             val iCPE = interpretCompaniesPerson.companies?.firstOrNull()
             assertNotNull(iCPE)
-            
+
             val producer = song.producer
             assertNotNull(producer)
             assertTrue { producer.employees.isNullOrEmpty() }
+        }
+    }
+
+    @Test
+    fun `test value class and converter`() {
+        transaction.executeWithoutResult {
+            val id = UUID.randomUUID()
+            val fooBar = FooBar("foo", "bar")
+            val foxtrot = Foxtrot("foxtrot")
+            em.beePersist(WeirdClass(id, fooBar, foxtrot))
+
+            val ws = weirdRepository.select(BeeSelection.create {  })
+            val w = ws.firstOrNull() as WeirdClass?
+
+            assertNotNull(w)
+            assertEquals(id, w.id)
+            assertEquals(fooBar, w.fooBar)
+            assertEquals(foxtrot, w.foxtrot)
         }
     }
 
@@ -322,6 +343,7 @@ class BeePersistentTest(
             songRepository.cbf.delete(em, CompanyPerson::class.java).executeUpdate()
             songRepository.cbf.delete(em, Person::class.java).executeUpdate()
             songRepository.cbf.delete(em, Company::class.java).executeUpdate()
+            weirdRepository.cbf.delete(em, WeirdClass::class.java).executeUpdate()
         }
     }
 }

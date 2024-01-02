@@ -117,3 +117,6 @@ data class WeirdClass(
     val fooBar: FooBar,
     val foxtrot: Foxtrot
 )
+
+@BeeRepository
+interface WeirdClassRepository : BeeBlazeRepository<WeirdClass, UUID>

@@ -10,10 +10,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInsta
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.EVENT_LISTENER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.FIELD
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.TCI
-import com.beeproduced.bee.persistent.blaze.processor.info.BaseInfo
-import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
-import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
-import com.beeproduced.bee.persistent.blaze.processor.info.Property
+import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.utils.buildUniqueClassName
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -211,19 +208,34 @@ class BeePersistentInstantiatorCodegen(
     }
 
     private fun CodeBlock.Builder.addField(index: Int, field: Property, hasSort: Boolean = false) {
+        val tupleAccess = if (!hasSort) "$index" else "sort[$index]"
+
         val isSet = field.type.declaration.qualifiedName?.asString()?.startsWith(
             "kotlin.collections.Set"
         ) ?: false
         if (isSet) {
             // TODO: Change type of generated view to set to omit this problem?
-            val tupleAccess = if (!hasSort) "$index" else "sort[$index]"
             addStatement("    val ${field.simpleName} = (tuple[$tupleAccess] as %T?)?.toSet() as %T",
                 poetMap.mappings[COLLECTION_STAR], field.type.toTypeName()
             )
-        } else {
-            addStatement("    val ${field.simpleName} = tuple[$index] as %T", field.type.toTypeName())
+            return
         }
 
+        if (field.isValueClass) {
+            val innerValue = requireNotNull(field.innerValue)
+            if (!field.type.isMarkedNullable) {
+                addStatement("    val ${field.simpleName} = %T(tuple[$tupleAccess] as %T)",
+                    field.type.toTypeName(), innerValue.type.toTypeName()
+                )
+            } else {
+                addStatement("    val ${field.simpleName} = (tuple[$tupleAccess] as %T).let { %T(it) }",
+                    innerValue.type.toTypeName(), field.type.toTypeName(),
+                )
+            }
+            return
+        }
+
+        addStatement("    val ${field.simpleName} = tuple[$tupleAccess] as %T", field.type.toTypeName())
     }
 
     private fun FileSpec.Builder.buildInfo(entityInfo: BaseInfo) = apply {
