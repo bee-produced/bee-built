@@ -52,8 +52,6 @@ class DbConfigA(val env: Environment) {
     @Bean(name = ["aDataSource"])
     @ConfigurationProperties(prefix = "spring.datasource-a")
     fun aDataSource(): DataSource {
-        val b = ComBeeproducedDatasourceACompany__View__ComBeeproducedDatasourceASong__1__Creator
-        val kek = BlazeInstantiators
         return DataSourceBuilder.create().build()
     }
 

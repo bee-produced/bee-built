@@ -3,13 +3,17 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.ACI
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.APPLICATION_READY_EVENT
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.BLAZE_INSTANTIATORS
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.COMPONENT
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.EVENT_LISTENER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.FIELD
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.TCI
 import com.beeproduced.bee.persistent.blaze.processor.info.BaseInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.Property
+import com.beeproduced.bee.persistent.blaze.processor.utils.buildUniqueClassName
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -52,6 +56,9 @@ class BeePersistentInstantiatorCodegen(
         const val BLAZE_INSTANTIATORS = "%blazeinstantiators:T"
         const val TCI = "%tci:T"
         const val ACI = "%aci:T"
+        const val COMPONENT = "%component:T"
+        const val EVENT_LISTENER = "%eventlistener:T"
+        const val APPLICATION_READY_EVENT = "%applicationreadyevent:T"
     }
 
     init {
@@ -59,6 +66,9 @@ class BeePersistentInstantiatorCodegen(
         poetMap.addMapping(BLAZE_INSTANTIATORS, ClassName("com.beeproduced.bee.persistent.blaze.meta.proxy", "BlazeInstantiators"))
         poetMap.addMapping(TCI, ClassName("com.beeproduced.bee.persistent.blaze.meta.proxy", "TupleConstructorInstantiator"))
         poetMap.addMapping(ACI, ClassName("com.beeproduced.bee.persistent.blaze.meta.proxy", "AssignmentConstructorInstantiator"))
+        poetMap.addMapping(COMPONENT, ClassName("org.springframework.stereotype", "Component"))
+        poetMap.addMapping(EVENT_LISTENER, ClassName("org.springframework.context.event", "EventListener"))
+        poetMap.addMapping(APPLICATION_READY_EVENT, ClassName("org.springframework.boot.context.event", "ApplicationReadyEvent"))
     }
 
     fun processViews(views: ViewInfo, entities: List<EntityInfo>) {
@@ -74,8 +84,8 @@ class BeePersistentInstantiatorCodegen(
             file.buildInfo(embedded)
         }
 
-        val assignmentCreators = mutableListOf<String>()
-        val tupleCreators = mutableListOf<String>()
+        val assignmentCreators = mutableMapOf<String, String>()
+        val tupleCreators = mutableMapOf<String, String>()
         for (entityView in views.entityViews.values) {
             // Do not generate creators for super classes
             if (entityView.entity.subClasses != null) continue
@@ -87,12 +97,14 @@ class BeePersistentInstantiatorCodegen(
             file.buildTupleCreator(embeddedView, tupleCreators)
         }
 
+        file.buildRegistration(tupleCreators, assignmentCreators)
+
         file.build().writeTo(codeGenerator, dependencies)
     }
 
 
     private fun FileSpec.Builder.buildAssignmentCreator(
-        view: EntityViewInfo, assignmentCreators: MutableList<String>
+        view: EntityViewInfo, assignmentCreators: MutableMap<String, String>
     ) = apply {
         val construction = constructions.getValue(view.qualifiedName)
         val decClassName = view.entity.declaration.toClassName()
@@ -103,7 +115,7 @@ class BeePersistentInstantiatorCodegen(
         val missingFields = entityFields.filter { !keys.contains(it.simpleName) }
 
         val propertyName = "${view.name}__Creator"
-        assignmentCreators.add(propertyName)
+        assignmentCreators[view.name] = propertyName
         val property = PropertySpec.builder(
             propertyName,
             poetMap.classMapping(ACI)
@@ -137,7 +149,7 @@ class BeePersistentInstantiatorCodegen(
             }
             addNamedStmt("    entity")
             addNamedStmt("  }")
-            addNamedStmt(").also·{·$BLAZE_INSTANTIATORS.assignmentInstantiators[\"${view.name}\"]·=·it·}")
+            addNamedStmt(")")
         }.build()
 
         addProperty(property.initializer(initializer).build())
@@ -145,7 +157,7 @@ class BeePersistentInstantiatorCodegen(
 
     private fun FileSpec.Builder.buildTupleCreator(
         view: BaseViewInfo,
-        tupleCreators: MutableList<String>
+        tupleCreators: MutableMap<String, String>
     ) = apply {
         val construction = constructions.getValue(view.qualifiedName)
         val decClassName = view.declaration.toClassName()
@@ -156,14 +168,12 @@ class BeePersistentInstantiatorCodegen(
         val missingFields = entityFields.filter { !keys.contains(it.simpleName) }
 
         val propertyName = "${view.name}__Creator"
-        tupleCreators.add(propertyName)
+        tupleCreators[view.name] = propertyName
         val property = PropertySpec.builder(
             propertyName,
             poetMap.classMapping(TCI)
         )
 
-        // Use · to omit line breaks
-        // See: https://github.com/square/kotlinpoet/issues/598#issuecomment-454337042
         val initializer = CodeBlock.builder().apply {
             addNamedStmt("$TCI(")
             addNamedStmt("  viewProperties = emptyList(),")
@@ -190,7 +200,7 @@ class BeePersistentInstantiatorCodegen(
             }
             addNamedStmt("    entity")
             addNamedStmt("  }")
-            addNamedStmt(").also·{·$BLAZE_INSTANTIATORS.tupleInstantiators[\"${view.name}\"]·=·it·}")
+            addNamedStmt(")")
         }.build()
 
         addProperty(property.initializer(initializer).build())
@@ -216,6 +226,36 @@ class BeePersistentInstantiatorCodegen(
             infoObj.addProperty(setterProp)
         }
         addType(infoObj.build())
+    }
+
+    private fun FileSpec.Builder.buildRegistration(
+        tupleCreators: Map<String, String>,
+        assignmentCreators: Map<String, String>,
+    ) {
+        val registration = TypeSpec
+            .classBuilder(buildUniqueClassName(packageName, "Registration"))
+            .addAnnotation(poetMap.classMapping(COMPONENT))
+
+        val eventListenerAnnotation = AnnotationSpec
+            .builder(poetMap.classMapping(EVENT_LISTENER))
+            .addMember("%T::class", poetMap.classMapping(APPLICATION_READY_EVENT))
+
+        val register = FunSpec
+            .builder("register")
+            .addAnnotation(eventListenerAnnotation.build())
+        register.apply {
+            // Use · to omit line breaks
+            // See: https://github.com/square/kotlinpoet/issues/598#issuecomment-454337042
+            for ((viewName, creator) in tupleCreators) {
+                addNamedStmt("$BLAZE_INSTANTIATORS.tupleInstantiators[\"$viewName\"]·=·$creator")
+            }
+            for ((viewName, creator) in assignmentCreators) {
+                addNamedStmt("$BLAZE_INSTANTIATORS.assignmentInstantiators[\"$viewName\"]·=·$creator")
+            }
+        }
+
+        registration.addFunction(register.build())
+        addType(registration.build())
     }
 
     data class EntityConstruction(
