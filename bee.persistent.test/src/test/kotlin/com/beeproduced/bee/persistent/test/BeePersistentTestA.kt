@@ -400,7 +400,7 @@ class BeePersistentTestA(
     fun addSong() {
         transaction.executeWithoutResult {
             val address1 = em.beePersist(Address(UUID.randomUUID(), "Street 1"))
-            val address2 = em.beePersist(Address(UUID.randomUUID(), "Street 1"))
+            val address2 = em.beePersist(Address(UUID.randomUUID(), "Street 2"))
             val person1 = em.beePersist(Person(UUID.randomUUID(), "A", "A", null, address1.id, null))
             val person2 = em.beePersist(Person(UUID.randomUUID(), "B", "B", null, address2.id, null))
             val company = em.beePersist(
