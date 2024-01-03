@@ -178,12 +178,24 @@ class BeePersistentInstantiatorCodegen(
         val initializer = CodeBlock.builder().apply {
             addNamedStmt("$TCI(")
             addNamedStmt("  viewProperties = emptyList(),")
-            addNamedStmt("  create = { tuple: Array<Any?> -> ")
+            addNamedStmt("  create = create@ { tuple: Array<Any?> -> ")
+            // Needed because BlazeTupleInstantiatorPatch.newInstance tries to create embedded columns on
+            // inherited entities which fill these columns with null only
+            // (thus potentially violating nullable rules)
+            if (view is EmbeddedViewInfo) {
+                add("    if (")
+                for ((index, field) in entityFields.withIndex()) {
+                    add("tuple[$index] !is %T", field.type.toTypeName())
+                    if (index != entityFields.count()-1) add(" || ")
+                }
+                addStatement(")")
+                addStatement("      return@create null")
+            }
             for ((index, field) in viewFields.withIndex()) {
                 addField(index, field)
             }
             for (field in missingFields) {
-                addStatement("    val ${field.simpleName} = null as %T", field.declaration.type.toTypeName())
+                addStatement("    val ${field.simpleName} = null as %T", field.type.toTypeName())
             }
             addStatement("    val entity = %T(", decClassName)
             for (field in construction.constructorProps) {

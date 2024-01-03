@@ -50,11 +50,9 @@ open class BlazeTupleInstantiatorPatch {
             // array[2] = tuple
             val instantiator = BlazeInstantiators
                 .tupleInstantiators.getValue(viewName)
-            // TODO: Even called on inherited entities that do not contain this field!
-            // Hacky Workaround, ..., check in creator if param null in embedded field?
-            // Add check for creator(?):
-            //   if (field1 !is <field1> || field2 !is <field2> || ...) return null
-            return try { instantiator.create(tuple) } catch (ex: Exception) { null }
+            // Only returns null on embedded properties that are only present on
+            // one of the subclasses in case of inheritance
+            return instantiator.create(tuple)
         }
     }
 

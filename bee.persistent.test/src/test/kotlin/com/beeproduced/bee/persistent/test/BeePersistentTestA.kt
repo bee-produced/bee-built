@@ -16,6 +16,7 @@ import com.beeproduced.datasource.a.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.util.*
+import kotlin.reflect.KProperty2
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -149,6 +150,15 @@ class BeePersistentTestA(
             val pEPCP = pEPC.person
             assertNotNull(pEPCP)
             assertNull(pEPCP.address)
+
+            data class Wow(val s: String)
+
+            val test = Wow::s
+            val testName = test.name
+
+            println("hey?")
+
+
         }
     }
 
