@@ -78,8 +78,10 @@ class BeePersistentTestA(
                             field("companies") {
                                 field("id")
                             }
+                            field("address") { field("id") }
                         }
                     }
+                    field("address") { field("id") }
                 }
                 field("producer") {
                     field("employees") {
@@ -97,7 +99,9 @@ class BeePersistentTestA(
                                     field("id")
                                 }
                             }
+                            field("address") { field("id") }
                         }
+
                     }
                 }
             }
@@ -107,16 +111,21 @@ class BeePersistentTestA(
 
             val interpret = song.interpret
             assertNotNull(interpret)
+            assertNotNull(interpret.address)
             val interpretCompanies = interpret.companies?.firstOrNull()
             assertNotNull(interpretCompanies)
             val interpretCompaniesCompany = interpretCompanies.company
             assertNotNull(interpretCompaniesCompany)
             val iCCE = interpretCompaniesCompany.employees?.firstOrNull()
             assertNotNull(iCCE)
-            assertNotNull(iCCE.company)
-            assertNotNull(iCCE.person)
+            val iCCEC = iCCE.company
+            assertNotNull(iCCEC)
+            val iCCEP = iCCE.person
+            assertNotNull(iCCEP)
+            assertNull(iCCEP.address)
             val interpretCompaniesPerson = interpretCompanies.person
             assertNotNull(interpretCompaniesPerson)
+            assertNotNull(interpretCompaniesPerson.address)
             val iCPE = interpretCompaniesPerson.companies?.firstOrNull()
             assertNotNull(iCPE)
 
@@ -130,12 +139,14 @@ class BeePersistentTestA(
             assertNotNull(pECE)
             val producerEmployeesPerson = producerEmployees.person
             assertNotNull(producerEmployeesPerson)
+            assertNotNull(producerEmployeesPerson.address)
             val pEPC = producerEmployeesPerson.companies?.firstOrNull()
             assertNotNull(pEPC)
             val pEPCC = pEPC.company
             assertNotNull(pEPCC)
             val pEPCP = pEPC.person
             assertNotNull(pEPCP)
+            assertNull(pEPCP.address)
         }
     }
 
@@ -160,6 +171,7 @@ class BeePersistentTestA(
                             field("companies") {
                                 field("id")
                             }
+                            field("address") { field("id") }
                         }
                     }
                 }
@@ -170,6 +182,7 @@ class BeePersistentTestA(
 
             val interpret = song.interpret
             assertNotNull(interpret)
+            assertNull(interpret.address)
             val interpretCompanies = interpret.companies?.firstOrNull()
             assertNotNull(interpretCompanies)
             val interpretCompaniesCompany = interpretCompanies.company
@@ -180,6 +193,7 @@ class BeePersistentTestA(
             assertNotNull(iCCE.person)
             val interpretCompaniesPerson = interpretCompanies.person
             assertNotNull(interpretCompaniesPerson)
+            assertNotNull(interpretCompaniesPerson.address)
             val iCPE = interpretCompaniesPerson.companies?.firstOrNull()
             assertNotNull(iCPE)
 
@@ -208,6 +222,7 @@ class BeePersistentTestA(
                                     field("id")
                                 }
                             }
+                            field("address") { field("id") }
                         }
                     }
                 }
@@ -229,6 +244,7 @@ class BeePersistentTestA(
             assertNotNull(pECE)
             val producerEmployeesPerson = producerEmployees.person
             assertNotNull(producerEmployeesPerson)
+            assertNotNull(producerEmployeesPerson.address)
             val pEPC = producerEmployeesPerson.companies?.firstOrNull()
             assertNotNull(pEPC)
             val pEPCC = pEPC.company
@@ -301,8 +317,10 @@ class BeePersistentTestA(
 
     fun addSong() {
         transaction.executeWithoutResult {
-            val person1 = em.beePersist(Person(UUID.randomUUID(), "A", "A"))
-            val person2 = em.beePersist(Person(UUID.randomUUID(), "B", "B"))
+            val address1 = em.beePersist(Address(UUID.randomUUID(), "Street 1"))
+            val address2 = em.beePersist(Address(UUID.randomUUID(), "Street 1"))
+            val person1 = em.beePersist(Person(UUID.randomUUID(), "A", "A", null, address1.id, null))
+            val person2 = em.beePersist(Person(UUID.randomUUID(), "B", "B", null, address2.id, null))
             val company = em.beePersist(
                 Company(UUID.randomUUID(), null)
             )

@@ -49,7 +49,19 @@ data class Person(
     val firstname: String,
     val lastname: String,
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "person")
-    val companies: Set<CompanyPerson>? = null
+    val companies: Set<CompanyPerson>? = null,
+    val addressId: UUID? = null,
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "addressId", insertable = false, updatable = false)
+    val address: Address? = null
+)
+
+@Entity
+@Table(name = "addresses")
+data class Address(
+    @Id
+    val id: UUID,
+    val street: String
 )
 
 @Entity
