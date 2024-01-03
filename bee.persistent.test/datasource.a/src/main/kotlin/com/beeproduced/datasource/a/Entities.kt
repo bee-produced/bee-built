@@ -132,3 +132,17 @@ data class WeirdClass(
 
 @BeeRepository
 interface WeirdClassRepository : BeeBlazeRepository<WeirdClass, UUID>
+
+
+@Entity
+data class Circular(
+    @Id
+    val id: UUID,
+    val cId: UUID?,
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cId", referencedColumnName = "id", insertable = false, updatable = false)
+    val circular: Circular? = null
+)
+
+@BeeRepository
+interface CircularRepository : BeeBlazeRepository<Circular, UUID>

@@ -38,7 +38,9 @@ class BeePersistentTestA(
     @Autowired
     val songRepository: SongRepository,
     @Autowired
-    val weirdRepository: WeirdClassRepository
+    val weirdRepository: WeirdClassRepository,
+    @Autowired
+    val circularRepository: CircularRepository
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
@@ -315,6 +317,86 @@ class BeePersistentTestA(
         }
     }
 
+    @Test
+    fun `test circular`() {
+        transaction.executeWithoutResult {
+            val id = UUID.randomUUID()
+            em.beePersist(Circular(id, id, null))
+
+            val selection = BeeSelection.create {
+                field("circular") {
+                    field("circular") {
+                        field("circular")
+                    }
+                }
+            }
+            val circles = circularRepository.select(selection)
+            val circle = circles.firstOrNull()
+            assertNotNull(circle)
+            val circleD1 = circle.circular
+            assertNotNull(circleD1)
+            val circleD2 = circleD1.circular
+            assertNotNull(circleD2)
+            assertNull(circleD2.circular)
+        }
+    }
+
+    @Test
+    fun `test circular 2`() {
+        transaction.executeWithoutResult {
+            val id1 = UUID.randomUUID()
+            val id2 = UUID.randomUUID()
+            em.beePersist(Circular(id1, null, null))
+            em.beePersist(Circular(id2, id1, null))
+            circularRepository.cbf.update(em, Circular::class.java)
+                .set("cId", id2)
+                .where("id").eq(id1)
+                .executeUpdate()
+
+            val selection = BeeSelection.create {
+                field("circular") {
+                    field("circular") {
+                        field("circular")
+                    }
+                }
+            }
+            val circles = circularRepository.select(selection)
+            val circle1 = circles.firstOrNull { it.id == id1 }
+            assertNotNull(circle1)
+            val circle1D1 = circle1.circular
+            assertNotNull(circle1D1)
+            assertEquals(id2, circle1D1.id)
+            val circle1D2 = circle1D1.circular
+            assertNotNull(circle1D2)
+            assertEquals(id1, circle1D2.id)
+            assertNull(circle1D2.circular)
+
+            val circle2 = circles.firstOrNull { it.id == id2 }
+            assertNotNull(circle2)
+            val circle2D1 = circle2.circular
+            assertNotNull(circle2D1)
+            assertEquals(id1, circle2D1.id)
+            val circle2D2 = circle2D1.circular
+            assertNotNull(circle2D2)
+            assertEquals(id2, circle2D2.id)
+            assertNull(circle2D2.circular)
+        }
+    }
+
+    @Test
+    fun `test circular 3`() {
+        transaction.executeWithoutResult {
+            val id1 = UUID.randomUUID()
+            em.beePersist(Circular(id1, id1, null))
+
+            val selection = BeeSelection.create { }
+            val circles = circularRepository.select(selection)
+            val circle = circles.firstOrNull()
+            assertNotNull(circle)
+            assertNull(circle.circular)
+        }
+    }
+
     fun addSong() {
         transaction.executeWithoutResult {
             val address1 = em.beePersist(Address(UUID.randomUUID(), "Street 1"))
@@ -361,6 +443,7 @@ class BeePersistentTestA(
             songRepository.cbf.delete(em, Person::class.java).executeUpdate()
             songRepository.cbf.delete(em, Company::class.java).executeUpdate()
             weirdRepository.cbf.delete(em, WeirdClass::class.java).executeUpdate()
+            circularRepository.cbf.delete(em, Circular::class.java).executeUpdate()
         }
     }
 }

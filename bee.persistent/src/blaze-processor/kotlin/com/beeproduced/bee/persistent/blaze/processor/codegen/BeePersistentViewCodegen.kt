@@ -122,6 +122,11 @@ class BeePersistentViewCodegen(
                         if (viewInfo.isExtended && isCollection) {
                             it.addAnnotation(blazeFetchMapping)
                         }
+                        // 1:1 relations to the same type do not trigger joins
+                        // which leads to wrongful results (this object is reused)
+                        else if (info.qualifiedName == viewInfo.qualifiedName) {
+                            it.addAnnotation(blazeFetchMapping)
+                        }
                     }
                     .mutable(true)
                     .build()
@@ -182,6 +187,9 @@ class BeePersistentViewCodegen(
                     .also {
                         val viewInfo = views.entityViews.getValue(viewTypeStr)
                         if (viewInfo.isExtended && isCollection) {
+                            it.addAnnotation(blazeFetchMapping)
+                        }
+                        else if (info.qualifiedName == viewInfo.qualifiedName) {
                             it.addAnnotation(blazeFetchMapping)
                         }
                     }
