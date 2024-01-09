@@ -8,6 +8,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.BEE_SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.CRITERIA_BUILDER_FACTORY
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.DEFAULT_BEE_SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_MANAGER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_MANAGER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_SETTING
@@ -84,6 +85,7 @@ class BeePersistentRepoCodegen(
         const val _FETCH_SELECTION_FN = "%fetchselectionfn:M"
         const val ENTITY_VIEW_SETTING = "%entityviewsetting:T"
         const val TYPED_FIELD_NODE = "%typedfieldnode:T"
+        const val DEFAULT_BEE_SELECTION = "%default_bee_selection:T"
     }
 
     init {
@@ -102,6 +104,8 @@ class BeePersistentRepoCodegen(
         poetMap.addMapping(_FETCH_SELECTION_FN, MemberName("com.beeproduced.bee.persistent.blaze.repository", "fetchSelection"))
         poetMap.addMapping(ENTITY_VIEW_SETTING, ClassName("com.blazebit.persistence.view", "EntityViewSetting"))
         poetMap.addMapping(TYPED_FIELD_NODE, ClassName("com.beeproduced.bee.persistent.blaze.selection.DefaultBeeSelection", "TypedFieldNode"))
+        poetMap.addMapping(DEFAULT_BEE_SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.selection", "DefaultBeeSelection"))
+
     }
 
     fun processRepo(repo: RepoInfo) {
@@ -375,7 +379,18 @@ class BeePersistentRepoCodegen(
         val selectionDSLName = "${entity.simpleName}DSL"
         val selectionDSL = TypeSpec
             .objectBuilder(selectionDSLName)
-        selectionDSL.traverseDSL(view, selectionDSLName,)
+        val name = selectionDSL.traverseDSL(view, selectionDSLName,)
+
+        val viewDSL = ClassName("", name)
+        val selectorLambda = LambdaTypeName.get(receiver = viewDSL, returnType = UNIT)
+        val selectorFn = FunSpec.builder("select")
+            .returns(poetMap.classMapping(BEE_SELECTION))
+            .addParameter("selector", selectorLambda)
+            .addStatement("val selectionBuilder = %T()", viewDSL)
+            .addStatement("selectionBuilder.selector()")
+            .addNamedStmt("return $DEFAULT_BEE_SELECTION(selectionBuilder.fields)")
+        selectionDSL.addFunction(selectorFn.build())
+
 
         addType(selectionDSL.build())
     }
@@ -434,6 +449,14 @@ class BeePersistentRepoCodegen(
                 .addNamedStmt("fields.add($TYPED_FIELD_NODE(\"$simpleName\", \"$entitySimpleName\",")
                 .addStatement("  selectionBuilder.fields")
                 .addStatement("))")
+            viewDSL.addFunction(selectorFn.build())
+        }
+
+        val lazyColumns = allLazyColumns.filter { !it.isEmbedded }
+        for (lazyColumn in lazyColumns) {
+            val simpleName = lazyColumn.simpleName
+            val selectorFn = FunSpec.builder(simpleName)
+                .addNamedStmt("fields.add($TYPED_FIELD_NODE(\"$simpleName\", \"$entitySimpleName\"))")
             viewDSL.addFunction(selectorFn.build())
         }
 
