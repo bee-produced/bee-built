@@ -13,6 +13,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_SETTING
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.QUALIFIER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.TYPED_FIELD_NODE
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.VIEW_CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CBF_PROP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CLAZZ_PROPERTY
@@ -27,11 +28,9 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.Modifier
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
-import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 
 /**
@@ -84,6 +83,7 @@ class BeePersistentRepoCodegen(
         const val QUALIFIER = "%qualifier:T"
         const val _FETCH_SELECTION_FN = "%fetchselectionfn:M"
         const val ENTITY_VIEW_SETTING = "%entityviewsetting:T"
+        const val TYPED_FIELD_NODE = "%typedfieldnode:T"
     }
 
     init {
@@ -101,6 +101,7 @@ class BeePersistentRepoCodegen(
         poetMap.addMapping(QUALIFIER, ClassName("org.springframework.beans.factory.annotation", "Qualifier"))
         poetMap.addMapping(_FETCH_SELECTION_FN, MemberName("com.beeproduced.bee.persistent.blaze.repository", "fetchSelection"))
         poetMap.addMapping(ENTITY_VIEW_SETTING, ClassName("com.blazebit.persistence.view", "EntityViewSetting"))
+        poetMap.addMapping(TYPED_FIELD_NODE, ClassName("com.beeproduced.bee.persistent.blaze.selection.DefaultBeeSelection", "TypedFieldNode"))
     }
 
     fun processRepo(repo: RepoInfo) {
@@ -115,6 +116,7 @@ class BeePersistentRepoCodegen(
 
         FileSpec
             .builder(packageName, className)
+            .buildSelectionDSL()
             .buildRepo()
             .build()
             .writeTo(codeGenerator, dependencies)
@@ -365,4 +367,147 @@ class BeePersistentRepoCodegen(
 
     private fun selectionInfoListValues(columnProperties: List<ColumnProperty>) : String
         = columnProperties.joinToString(separator = ", ") { "\"${it.simpleName}\"" }
+
+
+    private fun FileSpec.Builder.buildSelectionDSL(): FileSpec.Builder = apply {
+        // TODO: What with duplicate names?
+        // Move to package as unique name?
+        val selectionDSLName = "${entity.simpleName}DSL"
+        val selectionDSL = TypeSpec
+            .objectBuilder(selectionDSLName)
+        selectionDSL.traverseDSL(view, selectionDSLName,)
+
+        addType(selectionDSL.build())
+    }
+
+    private fun TypeSpec.Builder.traverseDSL(
+        entityView: EntityViewInfo,
+        dslName: String,
+        visitedEmbeddedViews: MutableSet<String> = mutableSetOf()
+    ): String = run {
+        val entity = entityView.entity
+
+        val viewDSLName = "${entityView.name}__Selection"
+        val viewDSL = TypeSpec.classBuilder(viewDSLName)
+        val viewDSLFields = PropertySpec.builder(
+            "fields", MUTABLE_SET.parameterizedBy(poetMap.classMapping(TYPED_FIELD_NODE))
+        )
+        val idName = entity.id.simpleName
+        val entitySimpleName = entity.simpleName
+        viewDSLFields.initializer(
+            CodeBlock.builder()
+                .addNamedStmt("mutableSetOf($TYPED_FIELD_NODE(\"$idName\", \"$entitySimpleName\"))")
+                .build()
+        )
+        viewDSL.addProperty(viewDSLFields.build())
+
+
+
+        val allRelations: MutableMap<String, String> = entityView.relations.toMutableMap()
+        val allColumns: MutableList<ColumnProperty> = entity.columns.toMutableList()
+        val allLazyColumns: MutableList<ColumnProperty> = entity.lazyColumns.toMutableList()
+
+        // TODO: Optimize this access?
+        val subViews = views.entityViews.values
+            .filter { it.superClassName == entityView.name }
+        for (subView in subViews) {
+            allRelations.putAll(subView.relations)
+            allColumns.addAll(subView.entity.columns)
+            allLazyColumns.addAll(subView.entity.lazyColumns)
+        }
+
+        val relationMapInput = allRelations.map {
+                (simpleName, viewName) -> Pair(simpleName, viewName)
+        }
+
+        for ((simpleName, viewName) in relationMapInput) {
+            val view = views.entityViews.getValue(viewName)
+            val name = traverseDSL(view, dslName, visitedEmbeddedViews)
+            // val subViewDSL = ClassName("$packageName.$dslName", name)
+            val subViewDSL = ClassName("", name)
+
+            val selectorLambda = LambdaTypeName.get(receiver = subViewDSL, returnType = UNIT)
+            val selectorFn = FunSpec.builder(simpleName)
+                .addParameter("selector", selectorLambda)
+                .addStatement("val selectionBuilder = %T()", subViewDSL)
+                .addStatement("selectionBuilder.selector()")
+                .addNamedStmt("fields.add($TYPED_FIELD_NODE(\"$simpleName\", \"$entitySimpleName\",")
+                .addStatement("  selectionBuilder.fields")
+                .addStatement("))")
+            viewDSL.addFunction(selectorFn.build())
+        }
+
+        // val relationSI = traverseSubSelectionInfo(relationMapInput, visitedEmbeddedViews)
+        //
+        // val idSI = "\"${entity.id.simpleName}\""
+        // val (columns, embedded)
+        //     = allColumns.partition { !it.isEmbedded }
+        // val columnSI = selectionInfoListValues(columns)
+        // val embeddedMapInput = embedded.map {
+        //     val viewName = viewName(requireNotNull(it.embedded))
+        //     Pair(it.simpleName, viewName)
+        // }
+        // val embeddedSI = traverseSubEmbeddedInfo(embeddedMapInput, visitedEmbeddedViews)
+        //
+        // val (lazyColumns, lazyEmbedded)
+        //     = allLazyColumns.partition { !it.isEmbedded }
+        // val lazyColumnSI = selectionInfoListValues(lazyColumns)
+        // val lazyEmbeddedMapInput = lazyEmbedded.map {
+        //     val viewName = viewName(requireNotNull(it.embedded))
+        //     Pair(it.simpleName, viewName)
+        // }
+        // val lazyEmbeddedSI = traverseSubEmbeddedInfo(lazyEmbeddedMapInput, visitedEmbeddedViews)
+        //
+        // poetMap.addMapping(_SELECTION_INFO_VAL, entityView.name.lowercase())
+        // poetMap.addMapping(__SELECTION_INFO_NAME, entityView.name)
+        // addNamedStmt("  val $_SELECTION_INFO_VAL = $SELECTION_INFO(")
+        // addNamedStmt("    view = $__SELECTION_INFO_NAME,")
+        // addNamedStmt("    relations = mapOf($relationSI),")
+        // addNamedStmt("    id = $idSI,")
+        // addNamedStmt("    columns = setOf($columnSI),")
+        // addNamedStmt("    lazyColumns = setOf($lazyColumnSI),")
+        // addNamedStmt("    embedded = mapOf($embeddedSI),")
+        // addNamedStmt("    lazyEmbedded = mapOf($lazyEmbeddedSI)")
+        // addNamedStmt("  )")
+
+        addType(viewDSL.build())
+
+        viewDSLName
+    }
+
+    // private fun TypeSpec.Builder.traverseEmbeddedInfo(
+    //     embeddedView: EmbeddedViewInfo
+    // ): TypeSpec.Builder = apply {
+    //     val embedded = embeddedView.embedded
+    //     val columnSI = selectionInfoListValues(embedded.columns)
+    //     val lazyColumnSI = selectionInfoListValues(embedded.lazyColumns)
+    //
+    //     poetMap.addMapping(_SELECTION_INFO_VAL, embeddedView.name.lowercase())
+    //     poetMap.addMapping(__SELECTION_INFO_NAME, embeddedView.name)
+    //     addNamedStmt("  val $_SELECTION_INFO_VAL = $SELECTION_INFO(")
+    //     addNamedStmt("    view = $__SELECTION_INFO_NAME,")
+    //     addNamedStmt("    relations = emptyMap(),")
+    //     addNamedStmt("    id = null,")
+    //     addNamedStmt("    columns = setOf($columnSI),")
+    //     addNamedStmt("    lazyColumns = setOf($lazyColumnSI),")
+    //     addNamedStmt("    embedded = emptyMap(),")
+    //     addNamedStmt("    lazyEmbedded = emptyMap()")
+    //     addNamedStmt("  )")
+    // }
+    //
+    //
+    // private fun CodeBlock.Builder.traverseSubEmbeddedInfo(
+    //     simpleNameAndViewName: List<Pair<String, String>>,
+    //     visitedEmbeddedViews: MutableSet<String>
+    // ): String {
+    //     for ((_, viewName) in simpleNameAndViewName) {
+    //         if (visitedEmbeddedViews.contains(viewName)) continue
+    //         visitedEmbeddedViews.add(viewName)
+    //         val view = views.embeddedViews.getValue(viewName)
+    //         traverseEmbeddedInfo(view)
+    //     }
+    //     return simpleNameAndViewName.joinToString(separator = ", ") {
+    //             (p, v) -> "\"$p\" to ${v.lowercase()}"
+    //     }
+    // }
 }

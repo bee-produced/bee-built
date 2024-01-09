@@ -92,7 +92,7 @@ class DefaultBeeSelection internal constructor(
         override val type: String? = null
     }
 
-    data class TypedFiledNode(
+    data class TypedFieldNode(
         override val field: String,
         override val type: String?,
         override val fields: Set<FieldNodeDefinition>? = null

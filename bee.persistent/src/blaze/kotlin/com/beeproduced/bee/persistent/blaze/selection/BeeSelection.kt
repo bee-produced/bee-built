@@ -29,7 +29,7 @@ interface BeeSelection {
             internal val fields = mutableSetOf<FieldNodeDefinition>()
 
             fun field(name: String, type: String? = null) {
-                fields.add(DefaultBeeSelection.TypedFiledNode(name, type))
+                fields.add(DefaultBeeSelection.TypedFieldNode(name, type))
             }
 
             fun fields(vararg names: String) {
@@ -40,14 +40,14 @@ interface BeeSelection {
 
             fun fields(vararg fields: Pair<String, String?>) {
                 val nodes = fields
-                    .map { (name, type) -> DefaultBeeSelection.TypedFiledNode(name, type) }
+                    .map { (name, type) -> DefaultBeeSelection.TypedFieldNode(name, type) }
                 this.fields.addAll(nodes)
             }
 
             fun field(name: String, type: String? = null, subFields: SelectionBuilder.()->Unit) {
                 val subNodes = SelectionBuilder()
                 subFields(subNodes)
-                fields.add(DefaultBeeSelection.TypedFiledNode(name, type, subNodes.fields))
+                fields.add(DefaultBeeSelection.TypedFieldNode(name, type, subNodes.fields))
             }
         }
 
