@@ -26,6 +26,7 @@ sealed interface BaseInfo {
 
 data class EntityInfo(
     override val declaration: KSClassDeclaration,
+    override val uniqueName: String,
     val annotations: List<ResolvedAnnotation>,
     override val properties: List<EntityProperty>,
     override val jpaProperties: List<EntityProperty>,
@@ -38,11 +39,11 @@ data class EntityInfo(
 ) : BaseInfo {
     override val simpleName: String = declaration.simpleName.asString()
     override val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
-    override val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
 }
 
 data class EmbeddedInfo(
     override val declaration: KSClassDeclaration,
+    override val uniqueName: String,
     override val properties: List<EntityProperty>,
     override val jpaProperties: List<EntityProperty>,
     override val columns: List<ColumnProperty>,
@@ -50,7 +51,6 @@ data class EmbeddedInfo(
 ) : BaseInfo {
     override val simpleName: String = declaration.simpleName.asString()
     override val qualifiedName: String = requireNotNull(declaration.qualifiedName).asString()
-    override val uniqueName: String = buildUniqueClassName(declaration.packageName.asString(), simpleName)
 }
 
 data class ResolvedAnnotation(

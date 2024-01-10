@@ -114,7 +114,7 @@ class BeePersistentRepoCodegen(
         view = findView(repo)
         entity = view.entity
         repoConfig = repo.config
-        className = "${entity.uniqueName}Repository"
+        className = "Generated${entity.uniqueName}BlazeRepository"
         poetMap.addMapping(CLAZZ, entity.qualifiedName.toPoetClassName())
         poetMap.addMapping(VIEW_CLAZZ, "${viewPackageName}.${view.name}".toPoetClassName())
 

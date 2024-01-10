@@ -5,8 +5,6 @@ import com.beeproduced.bee.generative.processor.Options
 import com.beeproduced.bee.generative.util.getOption
 import com.beeproduced.bee.generative.util.resolveTypeAlias
 import com.beeproduced.bee.persistent.blaze.BeeBlazeRepository
-import com.beeproduced.bee.persistent.blaze.annotations.BeeRepository
-import com.beeproduced.bee.persistent.blaze.annotations.EnableBeeRepositories
 import com.beeproduced.bee.persistent.blaze.processor.codegen.*
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATIONS_RELATION
@@ -20,12 +18,12 @@ import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTA
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_INHERITANCE
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_LAZY_FIELD
 import com.beeproduced.bee.persistent.blaze.processor.info.AnnotationInfo.ANNOTATION_TRANSIENT
+import com.beeproduced.bee.persistent.blaze.processor.utils.buildUniqueClassName
 import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
-import jakarta.persistence.Entity
 
 /**
  *
@@ -59,8 +57,18 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         val symbols = input.symbols
 
         val entityDeclarations = symbols.annotatedBy.getValue(ANNOTATION_ENTITY)
+        val duplicateEntitySimpleNames = duplicateSimpleNames(entityDeclarations)
+
+        val visitedEmbedded = mutableMapOf<String, EmbeddedInfo>()
+        val duplicateEmbeddedNames = mutableSetOf<String>()
+
         val entitiesWithoutInheritanceInfo = entityDeclarations.map { entityDeclaration ->
             val entityName = entityDeclaration.simpleName.asString()
+            val uniqueName = if (!duplicateEntitySimpleNames.contains(entityName))
+                entityName
+            else buildUniqueClassName(entityDeclaration.packageName.asString(), entityName)
+
+
             val entityAnnotations = resolveAnnotations(entityDeclaration.annotations)
             // logger.info(entityDeclaration.simpleName.asString())
             // logger.info(entityDeclaration.packageName.asString())
@@ -97,13 +105,17 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
                 val hasEmbeddedId = annotations.hasAnnotation(ANNOTATION_EMBEDDED_ID)
                 if (hasId || hasEmbeddedId) {
                     val isGenerated = annotations.hasAnnotation(ANNOTATION_GENERATED_VALUE)
-                    val embedded = if (hasEmbeddedId) getEmbeddedInfo(type) else null
+                    val embedded = if (hasEmbeddedId)
+                        getEmbeddedInfo(type, visitedEmbedded, duplicateEmbeddedNames)
+                    else null
                     idP = IdProperty(p, type, annotations, innerValue, isGenerated, embedded)
                     continue
                 }
 
                 val isEmbedded = annotations.hasAnnotation(ANNOTATION_EMBEDDED)
-                val embedded = if (isEmbedded) getEmbeddedInfo(type) else null
+                val embedded = if (isEmbedded)
+                    getEmbeddedInfo(type, visitedEmbedded, duplicateEmbeddedNames)
+                else null
                 val columnProperty = ColumnProperty(p, type, annotations, innerValue, embedded)
                 val hasRelation = annotations.hasAnnotation(ANNOTATIONS_RELATION)
                 if (hasRelation) {
@@ -119,8 +131,17 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             }
 
             EntityInfo(
-                entityDeclaration, entityAnnotations,
-                properties, jpaProperties, idP, columns, lazyColumns, relations, null, null
+                declaration = entityDeclaration,
+                uniqueName = uniqueName,
+                annotations = entityAnnotations,
+                properties = properties,
+                jpaProperties = jpaProperties,
+                id = idP,
+                columns = columns,
+                lazyColumns = lazyColumns,
+                relations = relations,
+                superClass = null,
+                subClasses = null
             )
         }
 
@@ -207,6 +228,20 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         }
     }
 
+    private fun duplicateSimpleNames(entities: Set<KSClassDeclaration>): Set<String> {
+        val processed = mutableSetOf<String>()
+        val duplicates = mutableSetOf<String>()
+
+        for (entityDeclaration in entities) {
+            val simpleName = entityDeclaration.simpleName.asString()
+            if (!processed.contains(simpleName))
+                processed.add(simpleName)
+            else
+                duplicates.add(simpleName)
+        }
+        return duplicates
+    }
+
     private fun resolveAnnotations(annotations: Sequence<KSAnnotation>): List<ResolvedAnnotation> {
         return annotations.map { a ->
             val type = a.annotationType.resolve().resolveTypeAlias()
@@ -252,8 +287,29 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         return subClasses
     }
 
-    private fun getEmbeddedInfo(eType: KSType): EmbeddedInfo {
+    private fun getEmbeddedInfo(
+        eType: KSType,
+        visitedEmbedded: MutableMap<String, EmbeddedInfo>,
+        duplicateEmbeddedNames: MutableSet<String>
+    ): EmbeddedInfo {
         val declaration = eType.declaration as KSClassDeclaration
+        val qualifiedName = requireNotNull(declaration.qualifiedName).asString()
+
+        if (visitedEmbedded.containsKey(qualifiedName))
+            return visitedEmbedded.getValue(qualifiedName)
+
+        val embedded = getEmbeddedInfo(declaration, duplicateEmbeddedNames)
+        visitedEmbedded[qualifiedName] = embedded
+
+        return embedded
+    }
+
+    private fun getEmbeddedInfo(declaration: KSClassDeclaration, duplicateEmbeddedNames: MutableSet<String>): EmbeddedInfo {
+        val embeddedName = declaration.simpleName.asString()
+        val uniqueName = if (!duplicateEmbeddedNames.contains(embeddedName))
+            embeddedName
+        else buildUniqueClassName(declaration.packageName.asString(), embeddedName)
+
         val propertyDeclarations = declaration
             .getAllProperties()
             .filter { it.hasBackingField }
@@ -278,7 +334,14 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             else columns.add(columnProperty)
         }
 
-        return EmbeddedInfo(declaration, properties, jpaProperties, columns, lazyColumns)
+        return EmbeddedInfo(
+            declaration = declaration,
+            uniqueName = uniqueName,
+            properties = properties,
+            jpaProperties = jpaProperties,
+            columns = columns,
+            lazyColumns = lazyColumns
+        )
     }
 
     private fun getRepoInfo(symbols: BeeGenerativeSymbols): List<RepoInfo> {
