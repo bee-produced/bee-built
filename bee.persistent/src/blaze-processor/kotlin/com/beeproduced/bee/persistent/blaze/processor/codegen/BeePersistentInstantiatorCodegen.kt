@@ -222,17 +222,6 @@ class BeePersistentInstantiatorCodegen(
     private fun CodeBlock.Builder.addField(index: Int, field: Property, hasSort: Boolean = false) {
         val tupleAccess = if (!hasSort) "$index" else "sort[$index]"
 
-        val isSet = field.type.declaration.qualifiedName?.asString()?.startsWith(
-            "kotlin.collections.Set"
-        ) ?: false
-        if (isSet) {
-            // TODO: Change type of generated view to set to omit this problem?
-            addStatement("    val ${field.simpleName} = (tuple[$tupleAccess] as %T?)?.toSet() as %T",
-                poetMap.mappings[COLLECTION_STAR], field.type.toTypeName()
-            )
-            return
-        }
-
         if (field.isValueClass) {
             val innerValue = requireNotNull(field.innerValue)
             if (!field.type.isMarkedNullable) {

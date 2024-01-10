@@ -2,6 +2,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
+import com.beeproduced.bee.generative.util.toPoetClassName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.IdProperty
@@ -102,12 +103,11 @@ class BeePersistentViewCodegen(
 
             val viewTypeStr = info.relations[relation.simpleName] ?: continue
             val viewType = ClassName(packageName, viewTypeStr)
-            val isCollection = relation.type.declaration.qualifiedName?.asString()?.startsWith(
-                "kotlin.collections."
-            ) ?: false
+            val propTypeQualifiedName = relation.type.declaration.qualifiedName?.asString()
+            val isCollection = propTypeQualifiedName?.startsWith("kotlin.collections.") ?: false
 
-            val propType = if (isCollection) {
-                ClassName("kotlin.collections", "Collection")
+            val propType = if (isCollection && propTypeQualifiedName != null) {
+                propTypeQualifiedName.toPoetClassName()
                     .parameterizedBy(viewType)
             } else viewType
 
@@ -170,16 +170,13 @@ class BeePersistentViewCodegen(
 
             val viewTypeStr = info.relations[relation.simpleName] ?: continue
             val viewType = ClassName(packageName, viewTypeStr)
-            val isCollection = relation.type.declaration.qualifiedName?.asString()?.startsWith(
-                "kotlin.collections."
-            ) ?: false
+            val propTypeQualifiedName = relation.type.declaration.qualifiedName?.asString()
+            val isCollection = propTypeQualifiedName?.startsWith("kotlin.collections.") ?: false
 
-            val propType = if (isCollection) {
-                ClassName("kotlin.collections", "Collection")
+            val propType = if (isCollection && propTypeQualifiedName != null) {
+                propTypeQualifiedName.toPoetClassName()
                     .parameterizedBy(viewType)
             } else viewType
-
-
 
             addProperty(
                 PropertySpec.builder(relation.simpleName, propType)
