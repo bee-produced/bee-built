@@ -1,6 +1,7 @@
 package com.beeproduced.bee.persistent.test
 
 import com.beeproduced.bee.persistent.application.Application
+import com.beeproduced.bee.persistent.blaze.dsl.entity.Path
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -404,6 +405,28 @@ class BeePersistentTestA(
             val circle = circles.firstOrNull()
             assertNotNull(circle)
             assertNull(circle.circular)
+        }
+    }
+
+    @Test
+    fun `test where`() {
+        transaction.executeWithoutResult {
+            val id1 = UUID.randomUUID()
+            val id2 = UUID.randomUUID()
+            em.beePersist(Circular(id1, null, null))
+            em.beePersist(Circular(id2, id1, null))
+            circularRepository.cbf.update(em, Circular::class.java)
+                .set("cId", id2)
+                .where("id").eq(id1)
+                .executeUpdate()
+
+            val circles = circularRepository.select {
+                where(Path<UUID>("id").equal(id2))
+            }
+
+            assertEquals(1, circles.size)
+            val circle = circles.first()
+            assertEquals(id2, circle.id)
         }
     }
 

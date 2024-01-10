@@ -13,7 +13,9 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_MANAGER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.ENTITY_VIEW_SETTING
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.QUALIFIER
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECT_QUERY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.TYPED_FIELD_NODE
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.VIEW_CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CBF_PROP
@@ -86,6 +88,8 @@ class BeePersistentRepoCodegen(
         const val ENTITY_VIEW_SETTING = "%entityviewsetting:T"
         const val TYPED_FIELD_NODE = "%typedfieldnode:T"
         const val DEFAULT_BEE_SELECTION = "%default_bee_selection:T"
+        const val SELECT_QUERY = "%select_query:T"
+        const val SELECTION = "%selection:T"
     }
 
     init {
@@ -105,7 +109,8 @@ class BeePersistentRepoCodegen(
         poetMap.addMapping(ENTITY_VIEW_SETTING, ClassName("com.blazebit.persistence.view", "EntityViewSetting"))
         poetMap.addMapping(TYPED_FIELD_NODE, ClassName("com.beeproduced.bee.persistent.blaze.selection.DefaultBeeSelection", "TypedFieldNode"))
         poetMap.addMapping(DEFAULT_BEE_SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.selection", "DefaultBeeSelection"))
-
+        poetMap.addMapping(SELECT_QUERY, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "SelectQuery"))
+        poetMap.addMapping(SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "Selection"))
     }
 
     fun processRepo(repo: RepoInfo) {
@@ -222,16 +227,27 @@ class BeePersistentRepoCodegen(
     }
 
     private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {
+        val entityClassName = entity.declaration.toClassName()
         val listOfEntity = ClassName("kotlin.collections", "List")
-            .parameterizedBy(entity.declaration.toClassName())
+            .parameterizedBy(entityClassName)
+        val selectQueryClassName = poetMap.classMapping(SELECT_QUERY)
+            .parameterizedBy(entityClassName)
+        val selectionClassName = poetMap.classMapping(SELECTION)
+            .parameterizedBy(entityClassName)
+        val dsl = LambdaTypeName.get(receiver = selectQueryClassName, returnType = selectionClassName)
         val selectFn = FunSpec.builder("select")
             .addModifiers(KModifier.OVERRIDE)
             .addParameter("selection", poetMap.classMapping(BEE_SELECTION))
+            .addParameter("dsl", dsl)
             .returns(listOfEntity)
         selectFn.apply {
             addNamedStmt("val setting = $ENTITY_VIEW_SETTING.create($_VIEW_CLAZZ_PROPERTY)")
             addNamedStmt("  .apply { $_FETCH_SELECTION_FN(selectionInfo, selection) }")
-            addNamedStmt("val builder = $_CBF_PROP.create($_EM_PROP, $_CLAZZ_PROPERTY)")
+            addNamedStmt("val builder = $_CBF_PROP.create($_EM_PROP, $_CLAZZ_PROPERTY).let { builder ->")
+            addNamedStmt("  val selectQuery = $SELECT_QUERY<$CLAZZ>()")
+            addNamedStmt("  selectQuery.dsl()")
+            addNamedStmt("  selectQuery.applyBuilder(builder)")
+            addNamedStmt("}")
             addNamedStmt("val query = $_EVM_PROP.applySetting(setting, builder)")
             addNamedStmt("@Suppress(\"UNCHECKED_CAST\")")
             addStatement("return query.resultList as %T", listOfEntity)

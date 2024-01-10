@@ -1,5 +1,7 @@
 package com.beeproduced.bee.persistent.blaze
 
+import com.beeproduced.bee.persistent.blaze.dsl.select.SelectQuery
+import com.beeproduced.bee.persistent.blaze.dsl.select.Selection
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.blazebit.persistence.CriteriaBuilderFactory
 import com.blazebit.persistence.view.EntityViewManager
@@ -16,6 +18,8 @@ interface BeeBlazeRepository<T : Any, ID: Any> {
     val cbf: CriteriaBuilderFactory
     val evm: EntityViewManager
 
-    // TODO: Change return type to T later on...
-    fun select(selection: BeeSelection): List<T>
+    fun select(
+        selection: BeeSelection = BeeSelection.empty(),
+        dsl: SelectQuery<T>.() -> Selection<T> = { this }
+    ): List<T>
 }

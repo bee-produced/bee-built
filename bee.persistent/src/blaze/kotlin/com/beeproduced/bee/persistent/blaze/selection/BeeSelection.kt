@@ -66,6 +66,11 @@ interface BeeSelection {
             selectionBuilder.create()
             return DefaultBeeSelection(selectionBuilder.fields)
         }
+
+        @JvmStatic
+        fun empty(): BeeSelection {
+            return DefaultBeeSelection(emptySet())
+        }
     }
 }
 

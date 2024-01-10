@@ -17,9 +17,11 @@ class SelectQuery<T: Any> : SelectWhere<T>, Selection<T> {
         where = predicate
     }
 
-    internal fun <W : BaseWhereBuilder<W>> applyBuilder(builder: W): W {
-        if (where != null) {
-            return where.let { this.applyBuilder(builder) }
+
+    // TODO Extract?
+    fun <W : BaseWhereBuilder<W>> applyBuilder(builder: W): W {
+        where?.run {
+            return applyBuilder(builder)
         }
 
         return builder
