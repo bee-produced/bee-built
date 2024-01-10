@@ -16,7 +16,7 @@ data class EqualValuePredicate<T>(
     override fun Predicate.expression(): Expression<*>
         = expression
 
-    override fun <W : BaseWhereBuilder<W>> Predicate.test(builder: W): W {
+    override fun <W : BaseWhereBuilder<W>> Predicate.applyBuilder(builder: W): W {
         val expressionString = expression.run { toExpressionString() }
         return builder.where(expressionString).eq(value)
     }
