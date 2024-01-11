@@ -9,7 +9,7 @@ import com.blazebit.persistence.BaseWhereBuilder
  * @author Kacper Urbaniec
  * @version 2024-01-10
  */
-data class EqualValuePredicate<T>(
+data class NotEqualValuePredicate<T>(
     val expression: Expression<T>,
     val value: T
 ) : PredicateExpression {
@@ -19,7 +19,7 @@ data class EqualValuePredicate<T>(
     override fun <W : BaseWhereBuilder<W>> Predicate.applyBuilder(builder: W): W {
         val expressionString = expression.run { toExpressionString() }
         return if (value != null)
-            builder.where(expressionString).eq(value)
-        else builder.where(expressionString).isNull()
+            builder.where(expressionString).notEq(value)
+        else builder.where(expressionString).isNotNull()
     }
 }

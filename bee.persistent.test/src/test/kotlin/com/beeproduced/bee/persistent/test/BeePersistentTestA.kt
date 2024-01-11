@@ -19,7 +19,6 @@ import com.beeproduced.datasource.a.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.util.*
-import kotlin.reflect.KProperty2
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -423,7 +422,7 @@ class BeePersistentTestA(
                 .executeUpdate()
 
             val circles = circularRepository.select {
-                where(Path<UUID>("id").equal(id2))
+                where(Path<UUID>("id").eq(id2))
             }
 
             assertEquals(1, circles.size)
@@ -432,18 +431,18 @@ class BeePersistentTestA(
 
             val circles2 = circularRepository.select {
                 whereAnd(
-                    Path<UUID>("id").equal(id1),
-                    Path<UUID>("id").equal(id2),
+                    Path<UUID>("id").eq(id1),
+                    Path<UUID>("id").eq(id2),
                 )
                 // where(Path<UUID>("id").equal(id2))
             }
 
             val circles3 = circularRepository.select {
                 whereOr(
-                    Path<UUID>("id").equal(id1),
+                    Path<UUID>("id").eq(id1),
                     and(
-                        Path<UUID>("id").equal(id2),
-                        Path<UUID>("id").equal(UUID.randomUUID())
+                        Path<UUID>("id").eq(id2),
+                        Path<UUID>("id").eq(UUID.randomUUID())
                     )
                 )
                 // where(Path<UUID>("id").equal(id2))
@@ -451,10 +450,10 @@ class BeePersistentTestA(
 
             val circles4 = circularRepository.select {
                 whereOr(
-                    Path<UUID>("id").equal(id1),
+                    Path<UUID>("id").eq(id1),
                     or(
-                        Path<UUID>("id").equal(id2),
-                        Path<UUID>("id").equal(UUID.randomUUID())
+                        Path<UUID>("id").eq(id2),
+                        Path<UUID>("id").eq(UUID.randomUUID())
                     )
                 )
                 // where(Path<UUID>("id").equal(id2))
@@ -462,20 +461,20 @@ class BeePersistentTestA(
 
             val circles5 = circularRepository.select {
                 whereAnd(
-                    Path<UUID>("id").equal(id1),
+                    Path<UUID>("id").eq(id1),
                     and(
-                        Path<UUID>("id").equal(id2),
-                        Path<UUID>("id").equal(UUID.randomUUID())
+                        Path<UUID>("id").eq(id2),
+                        Path<UUID>("id").eq(UUID.randomUUID())
                     )
                 )
             }
 
             val circles6 = circularRepository.select {
                 whereAnd(
-                    Path<UUID>("id").equal(id1),
+                    Path<UUID>("id").eq(id1),
                     or(
-                        Path<UUID>("id").equal(id2),
-                        Path<UUID>("id").equal(UUID.randomUUID())
+                        Path<UUID>("id").eq(id2),
+                        Path<UUID>("id").eq(UUID.randomUUID())
                     )
                 )
             }

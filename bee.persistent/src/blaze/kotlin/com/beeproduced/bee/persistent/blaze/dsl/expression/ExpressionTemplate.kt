@@ -1,6 +1,7 @@
 package com.beeproduced.bee.persistent.blaze.dsl.expression
 
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.EqualValuePredicate
+import com.beeproduced.bee.persistent.blaze.dsl.predicate.NotEqualValuePredicate
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.Predicate
 
 /**
@@ -17,8 +18,9 @@ abstract class ExpressionTemplate<T>(
 
     override fun Expression<T>.toExpressionString(): String = path
 
-    override fun equal(value: T): Predicate {
-        return EqualValuePredicate(this, value)
-    }
+    override fun eq(value: T): Predicate = EqualValuePredicate(this, value)
 
+    override fun notEq(value: T): Predicate = NotEqualValuePredicate(this, value)
+
+    // TODO: Implement most functions of RestrictionBuilder
 }

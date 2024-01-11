@@ -12,5 +12,7 @@ interface Expression<T> {
 
     fun Expression<T>.toExpressionString(): String
 
-    fun equal(value: T): Predicate
+    fun eq(value: T): Predicate
+
+    fun notEq(value: T): Predicate
 }

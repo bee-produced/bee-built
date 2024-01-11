@@ -13,17 +13,11 @@ import com.blazebit.persistence.BaseWhereBuilder
  * @version 2024-01-11
  */
 class SelectQueryBuilder<T: Any> : SelectQuery<T> {
-
-
-
-
-
     private var where: Predicate? = null
 
     override fun where(predicate: Predicate): Selection<T> = apply {
         where = predicate
     }
-
 
     override fun SelectQuery<T>.whereAnd(vararg predicates: Predicate) = apply {
         where = WhereAnd(predicates.toList())
@@ -33,20 +27,12 @@ class SelectQueryBuilder<T: Any> : SelectQuery<T> {
         where = WhereOrBuilder(predicates.toList())
     }
 
-    // TODO Extract?
     fun <W : BaseWhereBuilder<W>> applyBuilder(builder: W): W {
-        where?.run {
-            return applyBuilder(builder)
-        }
-
+        where?.run { return applyBuilder(builder) }
+        // TODO order by
         return builder
     }
 }
-
-// internal interface WhereBuilder {
-//     fun <W : BaseWhereBuilder<W>> applyBuilder(builder: W): W
-// }
-
 
 internal class WhereOrBuilder(
     private val predicates: List<Predicate>
@@ -91,18 +77,3 @@ internal class WhereAnd(
         return b
     }
 }
-
-
-fun kek(str: String) {
-    if (str == "a" || (str == "b" || str == "c")) {
-        println("baum")
-    }
-}
-
-// internal class SingleWhereBuilder(
-//     private val predicate: Predicate
-// ) : WhereBuilder {
-//     override fun <W : BaseWhereBuilder<W>> applyBuilder(builder: W): W {
-//         return predicate.run { applyBuilder(builder) }
-//     }
-// }
