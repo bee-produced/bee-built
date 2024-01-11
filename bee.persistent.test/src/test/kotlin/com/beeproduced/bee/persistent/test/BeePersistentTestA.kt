@@ -2,6 +2,8 @@ package com.beeproduced.bee.persistent.test
 
 import com.beeproduced.bee.persistent.application.Application
 import com.beeproduced.bee.persistent.blaze.dsl.entity.Path
+import com.beeproduced.bee.persistent.blaze.dsl.select.and
+import com.beeproduced.bee.persistent.blaze.dsl.select.or
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -427,6 +429,59 @@ class BeePersistentTestA(
             assertEquals(1, circles.size)
             val circle = circles.first()
             assertEquals(id2, circle.id)
+
+            val circles2 = circularRepository.select {
+                whereAnd(
+                    Path<UUID>("id").equal(id1),
+                    Path<UUID>("id").equal(id2),
+                )
+                // where(Path<UUID>("id").equal(id2))
+            }
+
+            val circles3 = circularRepository.select {
+                whereOr(
+                    Path<UUID>("id").equal(id1),
+                    and(
+                        Path<UUID>("id").equal(id2),
+                        Path<UUID>("id").equal(UUID.randomUUID())
+                    )
+                )
+                // where(Path<UUID>("id").equal(id2))
+            }
+
+            val circles4 = circularRepository.select {
+                whereOr(
+                    Path<UUID>("id").equal(id1),
+                    or(
+                        Path<UUID>("id").equal(id2),
+                        Path<UUID>("id").equal(UUID.randomUUID())
+                    )
+                )
+                // where(Path<UUID>("id").equal(id2))
+            }
+
+            val circles5 = circularRepository.select {
+                whereAnd(
+                    Path<UUID>("id").equal(id1),
+                    and(
+                        Path<UUID>("id").equal(id2),
+                        Path<UUID>("id").equal(UUID.randomUUID())
+                    )
+                )
+            }
+
+            val circles6 = circularRepository.select {
+                whereAnd(
+                    Path<UUID>("id").equal(id1),
+                    or(
+                        Path<UUID>("id").equal(id2),
+                        Path<UUID>("id").equal(UUID.randomUUID())
+                    )
+                )
+            }
+
+            println("baum")
+
         }
     }
 

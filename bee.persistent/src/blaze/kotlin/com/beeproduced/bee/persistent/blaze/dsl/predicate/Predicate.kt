@@ -12,6 +12,11 @@ import com.blazebit.persistence.BaseWhereBuilder
 interface Predicate {
     // Is only visible via scope like `with`
     // https://medium.com/@wada811/kotlintips-private-protected-and-internal-methods-in-interfaces-9504df2f0289
-    fun Predicate.expression(): Expression<*>
     fun <W : BaseWhereBuilder<W>> Predicate.applyBuilder(builder: W): W
+}
+
+interface PredicateContainer : Predicate
+
+interface PredicateExpression: Predicate {
+    fun Predicate.expression(): Expression<*>
 }

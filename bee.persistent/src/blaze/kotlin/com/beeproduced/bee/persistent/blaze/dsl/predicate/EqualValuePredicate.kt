@@ -12,7 +12,7 @@ import com.blazebit.persistence.BaseWhereBuilder
 data class EqualValuePredicate<T>(
     val expression: Expression<T>,
     val value: T
-) : Predicate {
+) : PredicateExpression {
     override fun Predicate.expression(): Expression<*>
         = expression
 

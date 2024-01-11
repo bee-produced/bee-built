@@ -9,21 +9,21 @@ import com.blazebit.persistence.BaseWhereBuilder
  * @author Kacper Urbaniec
  * @version 2024-01-10
  */
-class SelectQuery<T: Any> : SelectWhere<T>, Selection<T> {
+interface SelectQuery<T : Any> :
+    SelectWhere<T>,
 
-    private var where: Predicate? = null
+    Selection<T>
+{
+    fun SelectQuery<T>.whereAnd(vararg predicates: Predicate): Selection<T>
 
-    override fun where(predicate: Predicate): Selection<T> = apply {
-        where = predicate
-    }
+    fun SelectQuery<T>.whereOr(vararg predicates: Predicate): Selection<T>
 
+}
 
-    // TODO Extract?
-    fun <W : BaseWhereBuilder<W>> applyBuilder(builder: W): W {
-        where?.run {
-            return applyBuilder(builder)
-        }
+fun and(vararg predicates: Predicate): Predicate {
+    return WhereAnd(predicates.toList())
+}
 
-        return builder
-    }
+fun or(vararg predicates: Predicate): Predicate {
+    return WhereOrBuilder(predicates.toList())
 }

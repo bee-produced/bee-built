@@ -16,6 +16,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECTION_INFO
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECT_QUERY
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECT_QUERY_BUILDER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.TYPED_FIELD_NODE
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.VIEW_CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CBF_PROP
@@ -89,6 +90,7 @@ class BeePersistentRepoCodegen(
         const val TYPED_FIELD_NODE = "%typedfieldnode:T"
         const val DEFAULT_BEE_SELECTION = "%default_bee_selection:T"
         const val SELECT_QUERY = "%select_query:T"
+        const val SELECT_QUERY_BUILDER = "%select_query_builder:T"
         const val SELECTION = "%selection:T"
     }
 
@@ -110,6 +112,7 @@ class BeePersistentRepoCodegen(
         poetMap.addMapping(TYPED_FIELD_NODE, ClassName("com.beeproduced.bee.persistent.blaze.selection.DefaultBeeSelection", "TypedFieldNode"))
         poetMap.addMapping(DEFAULT_BEE_SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.selection", "DefaultBeeSelection"))
         poetMap.addMapping(SELECT_QUERY, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "SelectQuery"))
+        poetMap.addMapping(SELECT_QUERY_BUILDER, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "SelectQueryBuilder"))
         poetMap.addMapping(SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "Selection"))
     }
 
@@ -244,7 +247,7 @@ class BeePersistentRepoCodegen(
             addNamedStmt("val setting = $ENTITY_VIEW_SETTING.create($_VIEW_CLAZZ_PROPERTY)")
             addNamedStmt("  .apply { $_FETCH_SELECTION_FN(selectionInfo, selection) }")
             addNamedStmt("val builder = $_CBF_PROP.create($_EM_PROP, $_CLAZZ_PROPERTY).let { builder ->")
-            addNamedStmt("  val selectQuery = $SELECT_QUERY<$CLAZZ>()")
+            addNamedStmt("  val selectQuery = $SELECT_QUERY_BUILDER<$CLAZZ>()")
             addNamedStmt("  selectQuery.dsl()")
             addNamedStmt("  selectQuery.applyBuilder(builder)")
             addNamedStmt("}")
