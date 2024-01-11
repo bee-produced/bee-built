@@ -20,6 +20,9 @@ import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.beeproduced.datasource.a.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.lang.invoke.LambdaMetafactory
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -486,6 +489,10 @@ class BeePersistentTestA(
         }
     }
 
+    fun interface UnwrapInline {
+        fun unwrap(inline: Any): Any
+    }
+
     @Test
     fun `more where`() {
         transaction.executeWithoutResult {
@@ -508,6 +515,26 @@ class BeePersistentTestA(
                 )
 
             }.firstOrNull()
+
+            // fun unwrapInline(v: Any): Any = v.javaClass.getMethod("unbox-impl").invoke(v)
+
+
+
+            val clazz = Foxtrot::class.java
+            val method = clazz.getDeclaredMethod("unbox-impl")
+            val lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+            val methodHandle = lookup.unreflect(method)
+
+            val unwrap = LambdaMetafactory.metafactory(
+                lookup,
+                UnwrapInline::unwrap.name,
+                MethodType.methodType(UnwrapInline::class.java),
+                MethodType.methodType(Any::class.java, Any::class.java),
+                methodHandle,
+                MethodType.methodType(String::class.java, Foxtrot::class.java),
+            ).target.invokeExact() as UnwrapInline
+
+            val baum = unwrap.unwrap(foxtrot)
 
             println("baum")
 
