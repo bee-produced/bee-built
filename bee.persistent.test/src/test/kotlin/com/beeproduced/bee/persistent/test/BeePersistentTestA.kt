@@ -2,6 +2,8 @@ package com.beeproduced.bee.persistent.test
 
 import com.beeproduced.bee.persistent.application.Application
 import com.beeproduced.bee.persistent.blaze.dsl.entity.Path
+import com.beeproduced.bee.persistent.blaze.dsl.entity.ValuePath
+import com.beeproduced.bee.persistent.blaze.dsl.expression.StringFunctions.lower
 import com.beeproduced.bee.persistent.blaze.dsl.select.and
 import com.beeproduced.bee.persistent.blaze.dsl.select.or
 import jakarta.persistence.EntityManager
@@ -481,6 +483,38 @@ class BeePersistentTestA(
 
             println("baum")
 
+        }
+    }
+
+    @Test
+    fun `more where`() {
+        transaction.executeWithoutResult {
+            val id = UUID.randomUUID()
+            val fooBar = FooBar("foo", "bar")
+            val foxtrot = Foxtrot("Foxtrot")
+            em.beePersist(WeirdClass(id, fooBar, foxtrot))
+            val id2 = UUID.randomUUID()
+            val fooBar2 = FooBar("foo2", "bar2")
+            val foxtrot2 = Foxtrot("foxtrot2")
+            em.beePersist(WeirdClass(id2, fooBar2, foxtrot2))
+
+            val w = weirdRepository.select {
+                where(ValuePath<Foxtrot, String>("foxtrot").eq(Foxtrot("Foxtrot")))
+            }.firstOrNull()
+
+            val w2 = weirdRepository.select {
+                where(
+                    lower(ValuePath<Foxtrot, String>("foxtrot")).eq("foxtrot")
+                )
+
+            }.firstOrNull()
+
+            println("baum")
+
+            // assertNotNull(w)
+            // assertEquals(id, w.id)
+            // assertEquals(fooBar, w.fooBar)
+            // assertEquals(foxtrot, w.foxtrot)
         }
     }
 

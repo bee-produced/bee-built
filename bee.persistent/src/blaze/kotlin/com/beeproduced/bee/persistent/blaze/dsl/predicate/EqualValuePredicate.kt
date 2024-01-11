@@ -9,9 +9,9 @@ import com.blazebit.persistence.BaseWhereBuilder
  * @author Kacper Urbaniec
  * @version 2024-01-10
  */
-data class EqualValuePredicate<T>(
+data class EqualValuePredicate<T : Any>(
     val expression: Expression<T>,
-    val value: T
+    val value: T?
 ) : PredicateExpression {
     override fun Predicate.expression(): Expression<*>
         = expression
