@@ -6,6 +6,8 @@ import com.beeproduced.bee.persistent.blaze.dsl.entity.ValuePath
 import com.beeproduced.bee.persistent.blaze.dsl.expression.StringFunctions.lower
 import com.beeproduced.bee.persistent.blaze.dsl.select.and
 import com.beeproduced.bee.persistent.blaze.dsl.select.or
+import com.beeproduced.bee.persistent.blaze.meta.dsl.InlineValueUnwrapper
+import com.beeproduced.bee.persistent.blaze.meta.dsl.InlineValueUnwrappers
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -489,12 +491,26 @@ class BeePersistentTestA(
         }
     }
 
-    fun interface UnwrapInline {
-        fun unwrap(inline: Any): Any
-    }
+
 
     @Test
     fun `more where`() {
+        val clazz = Foxtrot::class.java
+        val method = clazz.getDeclaredMethod("unbox-impl")
+        val lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+        val methodHandle = lookup.unreflect(method)
+
+        val unwrap = LambdaMetafactory.metafactory(
+            lookup,
+            InlineValueUnwrapper::unwrap.name,
+            MethodType.methodType(InlineValueUnwrapper::class.java),
+            MethodType.methodType(Any::class.java, Any::class.java),
+            methodHandle,
+            MethodType.methodType(String::class.java, Foxtrot::class.java),
+        ).target.invokeExact() as InlineValueUnwrapper
+
+        InlineValueUnwrappers.unwrappers[Foxtrot::class.qualifiedName!!] = unwrap
+
         transaction.executeWithoutResult {
             val id = UUID.randomUUID()
             val fooBar = FooBar("foo", "bar")
@@ -506,35 +522,17 @@ class BeePersistentTestA(
             em.beePersist(WeirdClass(id2, fooBar2, foxtrot2))
 
             val w = weirdRepository.select {
-                where(ValuePath<Foxtrot, String>("foxtrot").eq(Foxtrot("Foxtrot")))
+                where(
+                    ValuePath<Foxtrot, String>("foxtrot", Foxtrot::class
+                ).eq(Foxtrot("Foxtrot")))
             }.firstOrNull()
 
             val w2 = weirdRepository.select {
-                where(
-                    lower(ValuePath<Foxtrot, String>("foxtrot")).eq("foxtrot")
-                )
+                where(lower(
+                    ValuePath("foxtrot", Foxtrot::class)
+                ).eq("foxtrot"))
 
             }.firstOrNull()
-
-            // fun unwrapInline(v: Any): Any = v.javaClass.getMethod("unbox-impl").invoke(v)
-
-
-
-            val clazz = Foxtrot::class.java
-            val method = clazz.getDeclaredMethod("unbox-impl")
-            val lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
-            val methodHandle = lookup.unreflect(method)
-
-            val unwrap = LambdaMetafactory.metafactory(
-                lookup,
-                UnwrapInline::unwrap.name,
-                MethodType.methodType(UnwrapInline::class.java),
-                MethodType.methodType(Any::class.java, Any::class.java),
-                methodHandle,
-                MethodType.methodType(String::class.java, Foxtrot::class.java),
-            ).target.invokeExact() as UnwrapInline
-
-            val baum = unwrap.unwrap(foxtrot)
 
             println("baum")
 

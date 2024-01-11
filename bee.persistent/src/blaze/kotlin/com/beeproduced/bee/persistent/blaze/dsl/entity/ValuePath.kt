@@ -12,9 +12,11 @@ import kotlin.reflect.KClass
  */
 class ValuePath<V : Any, T : Any>(
     private val path: String,
+    private val qualifiedName: String
 ) : ValueExpression<V, T> {
 
-    constructor(path: String, kclass: KClass<V>) : this(path)
+    constructor(path: String, kClass: KClass<V>) : this(path, requireNotNull(kClass.qualifiedName))
 
     override fun Expression<T>.toExpressionString(): String = path
+    override fun ValueExpression<V, T>.unwrapKey(): String = qualifiedName
 }
