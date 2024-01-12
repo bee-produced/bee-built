@@ -17,9 +17,14 @@ interface ValueExpression<V : Any, T : Any> : Expression<T> {
 
     @JvmName("eqValue")
     @Suppress("INAPPLICABLE_JVM_NAME")
-    fun eq(value: V?): Predicate {
-        return eq(unwrap(value))
-    }
+    fun eq(value: V?): Predicate = eq(unwrap(value))
+
+    @JvmName("notEqValue")
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    fun notEq(value: V?): Predicate = notEq(unwrap(value))
+
+
+
 }
 
 @Suppress("UNCHECKED_CAST")

@@ -1,7 +1,6 @@
 package com.beeproduced.bee.persistent.blaze.dsl.select
 
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.Predicate
-import com.blazebit.persistence.BaseWhereBuilder
 
 /**
  *
@@ -20,10 +19,3 @@ interface SelectQuery<T : Any> :
 
 }
 
-fun and(vararg predicates: Predicate): Predicate {
-    return WhereAnd(predicates.toList())
-}
-
-fun or(vararg predicates: Predicate): Predicate {
-    return WhereOrBuilder(predicates.toList())
-}

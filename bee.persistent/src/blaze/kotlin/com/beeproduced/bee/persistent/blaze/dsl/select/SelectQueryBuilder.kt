@@ -1,9 +1,8 @@
 package com.beeproduced.bee.persistent.blaze.dsl.select
 
-import com.blazebit.persistence.WhereBuilder as BlazeWhereBuilder
-import com.blazebit.persistence.WhereOrBuilder as BlazeWhereOrBuilder
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.Predicate
-import com.beeproduced.bee.persistent.blaze.dsl.predicate.PredicateContainer
+import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.WhereAndBuilder
+import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.WhereOrBuilder
 import com.blazebit.persistence.BaseWhereBuilder
 
 /**
@@ -20,7 +19,7 @@ class SelectQueryBuilder<T: Any> : SelectQuery<T> {
     }
 
     override fun SelectQuery<T>.whereAnd(vararg predicates: Predicate) = apply {
-        where = WhereAnd(predicates.toList())
+        where = WhereAndBuilder(predicates.toList())
     }
 
     override fun SelectQuery<T>.whereOr(vararg predicates: Predicate): Selection<T> = apply {
@@ -31,49 +30,5 @@ class SelectQueryBuilder<T: Any> : SelectQuery<T> {
         where?.run { return applyBuilder(builder) }
         // TODO order by
         return builder
-    }
-}
-
-internal class WhereOrBuilder(
-    private val predicates: List<Predicate>
-) : PredicateContainer {
-
-    override fun <W : BaseWhereBuilder<W>> Predicate.applyBuilder(builder: W): W {
-        if (builder is BlazeWhereOrBuilder<*>) {
-            @Suppress("UNCHECKED_CAST")
-            return iterateOverPredicates(builder) as W
-        } else {
-            builder as BlazeWhereBuilder<*>
-            var b = builder.whereOr()
-            b = iterateOverPredicates(b)
-            @Suppress("UNCHECKED_CAST")
-            return b.endOr() as W
-        }
-    }
-
-    private fun <B> iterateOverPredicates(builder: BlazeWhereOrBuilder<B>): BlazeWhereOrBuilder<B> {
-        var b = builder
-        for (predicate in predicates) {
-            if (predicate is WhereAnd) {
-                var orB = b.whereAnd()
-                orB = predicate.run { applyBuilder(orB) }
-                b = orB.endAnd()
-            } else {
-                b = predicate.run { applyBuilder(b) }
-            }
-        }
-        return b
-    }
-}
-
-internal class WhereAnd(
-    private val predicates: List<Predicate>
-) : PredicateContainer {
-    override fun <W : BaseWhereBuilder<W>> Predicate.applyBuilder(builder: W): W {
-        var b = builder
-        for (predicate in predicates) {
-            b = predicate.run { applyBuilder(b) }
-        }
-        return b
     }
 }
