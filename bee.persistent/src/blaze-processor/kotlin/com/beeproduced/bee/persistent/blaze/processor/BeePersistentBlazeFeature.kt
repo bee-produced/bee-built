@@ -249,9 +249,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             views,
             config
         )
-        for (repo in repos) {
-            dslCodegen.processRepoDSL(repo)
-        }
+        dslCodegen.processRepoDSL(repos)
 
     }
 

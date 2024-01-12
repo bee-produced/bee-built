@@ -502,16 +502,16 @@ class BeePersistentTestA(
         val lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
         val methodHandle = lookup.unreflect(method)
 
-        val unwrap = LambdaMetafactory.metafactory(
-            lookup,
-            InlineValueUnwrapper::unwrap.name,
-            MethodType.methodType(InlineValueUnwrapper::class.java),
-            MethodType.methodType(Any::class.java, Any::class.java),
-            methodHandle,
-            MethodType.methodType(String::class.java, Foxtrot::class.java),
-        ).target.invokeExact() as InlineValueUnwrapper
-
-        InlineValueUnwrappers.unwrappers[Foxtrot::class.qualifiedName!!] = unwrap
+        // val unwrap = LambdaMetafactory.metafactory(
+        //     lookup,
+        //     InlineValueUnwrapper::unwrap.name,
+        //     MethodType.methodType(InlineValueUnwrapper::class.java),
+        //     MethodType.methodType(Any::class.java, Any::class.java),
+        //     methodHandle,
+        //     MethodType.methodType(String::class.java, Foxtrot::class.java),
+        // ).target.invokeExact() as InlineValueUnwrapper
+        //
+        // InlineValueUnwrappers.unwrappers[Foxtrot::class.qualifiedName!!] = unwrap
 
         transaction.executeWithoutResult {
             val id = UUID.randomUUID()

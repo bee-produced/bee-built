@@ -3,20 +3,25 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.generative.util.toPoetClassName
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.APPLICATION_READY_EVENT
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.BEE_SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.CLAZZ
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.COMPONENT
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.DEFAULT_BEE_SELECTION
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.EVENT_LISTENER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.EXP
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.INLINE_VALUE_CLAZZ
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.INLINE_VALUE_UNWRAPPERS
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.INNER_CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.PATH
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.SORTABLE_EXP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.SORTABLE_VALUE_EXP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.TYPED_FIELD_NODE
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.VALUE_EXP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.VALUE_PATH
-import com.beeproduced.bee.persistent.blaze.processor.info.ColumnProperty
-import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
-import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
+import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.utils.SubProperty
+import com.beeproduced.bee.persistent.blaze.processor.utils.buildUniqueClassName
 import com.beeproduced.bee.persistent.blaze.processor.utils.viewColumnsWithSubclasses
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -26,6 +31,8 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 import org.gradle.configurationcache.extensions.capitalized
+import java.nio.file.Files
+import java.nio.file.Paths
 
 /**
  *
@@ -47,6 +54,8 @@ class BeePersistentDSLCodegen(
     private lateinit var view: EntityViewInfo
     private lateinit var entity: EntityInfo
 
+    private val inlineValues = mutableMapOf<String, Property>()
+
     private val poetMap: PoetMap = PoetMap()
     private fun FunSpec.Builder.addNamedStmt(format: String)
         = addNStatementBuilder(format, poetMap)
@@ -65,6 +74,12 @@ class BeePersistentDSLCodegen(
         const val VALUE_EXP = "%valuexpression:T"
         const val SORTABLE_EXP = "%sortablexpression:T"
         const val SORTABLE_VALUE_EXP = "%sortablevalueexpression:T"
+        const val COMPONENT = "%component:T"
+        const val EVENT_LISTENER = "%eventlistener:T"
+        const val APPLICATION_READY_EVENT = "%applicationreadyevent:T"
+        const val INLINE_VALUE_UNWRAPPERS = "%inlinevalueunwrappers:T"
+        const val INLINE_VALUE_CLAZZ = "%inlinevalueclazz:T"
+        const val INNER_CLAZZ = "%innerclass:T"
     }
 
     init {
@@ -79,9 +94,19 @@ class BeePersistentDSLCodegen(
         poetMap.addMapping(VALUE_EXP, ClassName("com.beeproduced.bee.persistent.blaze.dsl.expression", "ValueExpression"))
         poetMap.addMapping(SORTABLE_EXP, ClassName("com.beeproduced.bee.persistent.blaze.dsl.path", "SortableExpression"))
         poetMap.addMapping(SORTABLE_VALUE_EXP, ClassName("com.beeproduced.bee.persistent.blaze.dsl.path", "SortableValueExpression"))
+        poetMap.addMapping(COMPONENT, ClassName("org.springframework.stereotype", "Component"))
+        poetMap.addMapping(EVENT_LISTENER, ClassName("org.springframework.context.event", "EventListener"))
+        poetMap.addMapping(APPLICATION_READY_EVENT, ClassName("org.springframework.boot.context.event", "ApplicationReadyEvent"))
+        poetMap.addMapping(INLINE_VALUE_UNWRAPPERS, ClassName("com.beeproduced.bee.persistent.blaze.meta.dsl", "InlineValueUnwrappers"))
     }
 
-    fun processRepoDSL(repo: RepoInfo) {
+
+    fun processRepoDSL(repos: List<RepoInfo>) {
+        for (repo in repos) processRepoDSL(repo)
+        buildRegistration()
+    }
+
+    private fun processRepoDSL(repo: RepoInfo) {
         logger.info("processRepoDSL($repo")
         view = findView(repo)
         entity = view.entity
@@ -334,6 +359,8 @@ class BeePersistentDSLCodegen(
                     .build()
                 )
             addProperty(pathProperty.build())
+            // Generate registration later
+            inlineValues[column.qualifiedName!!] = column
             return
         }
         val columnType = column.type.toTypeName().copy(nullable = false)
@@ -364,6 +391,64 @@ class BeePersistentDSLCodegen(
             subView == null -> { "$path.$simpleName" }
             else -> { "TREAT($path as $subView).$simpleName" }
         }
+    }
+
+    private fun buildRegistration() {
+        val unwrapperClassName = "GeneratedInlineValueUnwrappers"
+        FileSpec
+            .builder(packageName, unwrapperClassName)
+            .buildRegistration()
+            .build()
+            .writeTo(codeGenerator, dependencies)
+    }
+
+    private fun FileSpec.Builder.buildRegistration() = apply {
+
+
+        // TODO: Rewrite as listener !!
+        // Also update view instantiator !!
+
+        val registration = TypeSpec
+            .classBuilder(buildUniqueClassName(packageName, "UnwrapperRegistration"))
+            .addAnnotation(poetMap.classMapping(COMPONENT))
+
+        val eventListenerAnnotation = AnnotationSpec
+            .builder(poetMap.classMapping(EVENT_LISTENER))
+            .addMember("%T::class", poetMap.classMapping(APPLICATION_READY_EVENT))
+
+        val register = FunSpec
+            .builder("register")
+            .addAnnotation(eventListenerAnnotation.build())
+        register.apply {
+            // Use · to omit line breaks
+            // See: https://github.com/square/kotlinpoet/issues/598#issuecomment-454337042
+            for (unwrapProperty in inlineValues.values) {
+                val inner = requireNotNull(unwrapProperty.innerValue)
+                poetMap.addMapping(INLINE_VALUE_CLAZZ, unwrapProperty.type.toTypeName())
+                poetMap.addMapping(INNER_CLAZZ, inner.type.toTypeName())
+                addNamedStmt("$INLINE_VALUE_UNWRAPPERS.registerUnwrapper($INLINE_VALUE_CLAZZ::class.java, $INNER_CLAZZ::class.java)")
+            }
+        }
+
+        registration.addFunction(register.build())
+        addType(registration.build())
+
+
+        writeToFile("spring", "org.springframework.context.ApplicationListener=com.beeproduced.bee.persistent.blaze.meta.dsl.TestListener")
+    }
+
+    // https://stackoverflow.com/a/76545160/12347616
+    private fun writeToFile(resourceName: String, content: String) {
+        codeGenerator
+            .createNewFileByPath(Dependencies(false), "META-INF/$resourceName", "factories")
+            .also {
+                it.write(content.toByteArray())
+            }
+            .close()
+
+        // codeGenerator.generatedFile.firstOrNull { it.name.endsWith(".factories") }?.let {
+        //     it.appendText("!!!")
+        // }
     }
 
     private fun findView(repo: RepoInfo): EntityViewInfo {
