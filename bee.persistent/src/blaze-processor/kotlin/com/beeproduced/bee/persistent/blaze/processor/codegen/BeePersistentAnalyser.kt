@@ -45,7 +45,17 @@ data class ViewInfo(
     val entityViews: Map<String, EntityViewInfo>,
     val embeddedViews: Map<String, EmbeddedViewInfo>
 ) {
+    val coreEntityViewsByQualifiedName: Map<String, EntityViewInfo> = entityViews.values
+        .filter { it.name.endsWith("Core") }
+        .associateBy { it.qualifiedName }
+
+    val subclassEntityViewsBySuperClass = entityViews.values
+        .filter { it.superClassName != null }
+        .groupBy { requireNotNull(it.superClassName) }
+
     val entityViewCoreNames get() = entityViews.keys.filter { it.endsWith("Core") }
+
+
 }
 
 class BeePersistentAnalyser(

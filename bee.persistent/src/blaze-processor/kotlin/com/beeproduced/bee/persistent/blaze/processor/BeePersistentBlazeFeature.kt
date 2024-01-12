@@ -240,6 +240,19 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         for (repo in repos) {
             repoCodeGen.processRepo(repo)
         }
+
+        val dslCodegen = BeePersistentDSLCodegen(
+            input.codeGenerator,
+            input.dependencies,
+            input.logger,
+            inheritedEntities.values.toList(),
+            views,
+            config
+        )
+        for (repo in repos) {
+            dslCodegen.processRepoDSL(repo)
+        }
+
     }
 
     private fun duplicateSimpleNames(entities: Set<KSClassDeclaration>): Set<String> {
