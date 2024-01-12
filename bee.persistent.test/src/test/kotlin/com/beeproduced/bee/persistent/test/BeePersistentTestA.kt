@@ -11,6 +11,7 @@ import com.beeproduced.bee.persistent.blaze.meta.dsl.InlineValueUnwrappers
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.beeproduced.datasource.a.*
 import com.beeproduced.datasource.a.dsl.WeirdClassDSL
+import com.beeproduced.datasource.b.dsl.ComposerDSL
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -537,7 +538,6 @@ class BeePersistentTestA(
                     ValuePath<Foxtrot, String>("foxtrot", Foxtrot::class).desc()
                 )
             }
-
 
             val w4 = weirdRepository.select {
                 orderBy(

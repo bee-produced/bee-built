@@ -15,7 +15,6 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCo
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.VALUE_PATH
 import com.beeproduced.bee.persistent.blaze.processor.info.ColumnProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
-import com.beeproduced.bee.persistent.blaze.processor.info.Property
 import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
 import com.beeproduced.bee.persistent.blaze.processor.utils.SubProperty
 import com.beeproduced.bee.persistent.blaze.processor.utils.viewColumnsWithSubclasses
@@ -26,6 +25,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
+import org.gradle.configurationcache.extensions.capitalized
 
 /**
  *
@@ -278,13 +278,17 @@ class BeePersistentDSLCodegen(
         path: String = "",
         visitedEmbeddedViews: MutableMap<String, String?> = mutableMapOf(),
         sort: Boolean = false,
-    ): String = run {
+    ): TypeSpec.Builder {
 
         val (allRelations, allColumns)
             = viewColumnsWithSubclasses(entityView, views)
 
         val (columns, embedded) = allColumns.partition { !it.property.isEmbedded }
         for (column in columns) {
+            viewDSL.addPath(column, path, sort)
+        }
+
+        for (column in embedded) {
             viewDSL.addPath(column, path, sort)
         }
 
@@ -305,17 +309,17 @@ class BeePersistentDSLCodegen(
             addType(innerDSL.build())
         }
 
-
-        ""
+        return this
     }
 
     private fun TypeSpec.Builder.addPath(
         subProperty: SubProperty, path: String,
-        sort: Boolean
+        sort: Boolean, embeddedPropertyName: String? = null
     ) {
         val column = subProperty.property
-        val inner = column.innerValue
+        val propertyName = embeddedPropertyName ?: column.simpleName
         val newPath = buildPath(path, column.simpleName, subProperty.subView)
+        val inner = column.innerValue
         if (inner != null) {
             val innerType = inner.type.toTypeName().copy(nullable = false)
             val columnType = column.type.toTypeName().copy(nullable = false)
@@ -324,7 +328,7 @@ class BeePersistentDSLCodegen(
             else poetMap.classMapping(VALUE_EXP).parameterizedBy(columnType, innerType)
             val pathType = poetMap.classMapping(VALUE_PATH)
 
-            val pathProperty = PropertySpec.builder(column.simpleName, interfaceType)
+            val pathProperty = PropertySpec.builder(propertyName, interfaceType)
                 .initializer(CodeBlock.Builder()
                     .addStatement("%T(%S, %T::class)", pathType, newPath, columnType)
                     .build()
@@ -337,12 +341,20 @@ class BeePersistentDSLCodegen(
             poetMap.classMapping(SORTABLE_EXP).parameterizedBy(columnType)
         else poetMap.classMapping(EXP).parameterizedBy(columnType)
         val pathType = poetMap.classMapping(PATH)
-        val pathProperty = PropertySpec.builder(column.simpleName, interfaceType)
+        val pathProperty = PropertySpec.builder(propertyName, interfaceType)
             .initializer(CodeBlock.Builder()
                 .addStatement("%T(%S)", pathType, newPath)
                 .build()
             )
         addProperty(pathProperty.build())
+
+        val embedded = column.embedded ?: return
+        for (embeddedColumn in embedded.jpaProperties) {
+            val columnProp = ColumnProperty(embeddedColumn.declaration, embeddedColumn.type, embeddedColumn.annotations, null, null)
+            val embeddedSubProperty = SubProperty(columnProp)
+            val overrideName = "$propertyName${embeddedColumn.simpleName.capitalized()}"
+            addPath(embeddedSubProperty, newPath, sort, overrideName)
+        }
     }
 
     private fun buildPath(path: String, simpleName: String, subView: String?): String {
