@@ -15,7 +15,6 @@ import com.beeproduced.bee.persistent.blaze.processor.info.Property
 typealias AllRelations = MutableMap<String, String>
 typealias AllColumns = MutableList<ColumnProperty>
 typealias AllLazyColumns = MutableList<ColumnProperty>
-typealias AllColumnsWithId = MutableList<Property>
 
 fun viewLazyColumnsWithSubclasses(
     view: EntityViewInfo, views: ViewInfo
@@ -47,27 +46,36 @@ fun viewLazyColumnsWithSubclasses(
     return Triple(allRelations, allColumns, allLazyColumns)
 }
 
+
+typealias AllSubRelation = MutableMap<String, SubRelation>
+typealias AllSubColumnsWithId = MutableList<SubProperty>
+
+data class SubRelation(val relationView: String, val subView: String? = null)
+data class SubProperty(val property: Property, val subView: String? = null)
+
 fun viewColumnsWithSubclasses(
     view: EntityViewInfo, views: ViewInfo
-): Pair<AllRelations, AllColumnsWithId> {
+): Pair<AllSubRelation, AllSubColumnsWithId> {
     val entity = view.entity
-    val allRelations: MutableMap<String, String> = view.relations.toMutableMap()
-    val allColumns: MutableList<Property> = entity.columns.toMutableList()
-    allColumns.addAll(entity.lazyColumns)
-    allColumns.add(entity.id)
+    val allRelations: MutableMap<String, SubRelation> = view.relations
+        .mapValuesTo(HashMap()) { (_, v) -> SubRelation(v) }
+    val allColumns: MutableList<SubProperty> =
+        entity.columns.mapTo(ArrayList()) { SubProperty(it) }
+    allColumns.addAll(entity.lazyColumns.map { SubProperty(it) })
+    allColumns.add(SubProperty(entity.id))
 
     val subViews = views.subclassEntityViewsBySuperClass[view.name]
     subViews?.forEach { subView ->
 
         for ((relationViewName, relation) in subView.relations)
             if (!allRelations.containsKey(relationViewName))
-                allRelations[relationViewName] = relation
+                allRelations[relationViewName] = SubRelation(relation, subView.name)
 
-        val columnKeys = allColumns.mapTo(HashSet()) { it.simpleName }
+        val columnKeys = allColumns.mapTo(HashSet()) { it.property.simpleName }
         val subViewAllColumns = subView.entity.columns + subView.entity.lazyColumns
         for (column in subViewAllColumns)
             if (!columnKeys.contains(column.simpleName))
-                allColumns.add(column)
+                allColumns.add(SubProperty(column, subView.name))
     }
 
     return Pair(allRelations, allColumns)

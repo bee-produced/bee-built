@@ -17,6 +17,7 @@ import com.beeproduced.bee.persistent.blaze.processor.info.ColumnProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.Property
 import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
+import com.beeproduced.bee.persistent.blaze.processor.utils.SubProperty
 import com.beeproduced.bee.persistent.blaze.processor.utils.viewColumnsWithSubclasses
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -299,19 +300,18 @@ class BeePersistentDSLCodegen(
         val (allRelations, allColumns)
             = viewColumnsWithSubclasses(entityView, views)
 
-        val (columns, embedded) = allColumns.partition { !it.isEmbedded }
+        val (columns, embedded) = allColumns.partition { !it.property.isEmbedded }
         for (column in columns) {
             viewDSL.addPath(column, path, sort)
         }
 
-        for ((simpleName, viewName) in allRelations) {
-            val innerView = views.entityViews.getValue(viewName)
+        for ((simpleName, subRelation) in allRelations) {
+            val innerView = views.entityViews.getValue(subRelation.relationView)
             if (innerView.isExtended) continue
 
             val whereDSLName = "${innerView.name}__Where"
             val innerDSL = TypeSpec.objectBuilder(whereDSLName)
-            val newPath = if (path.isEmpty()) "$simpleName."
-            else "$path$simpleName."
+            val newPath = buildPath(path, simpleName, subRelation.subView)
             traverseWhereDSL(innerView, innerDSL, newPath, visitedEmbeddedViews)
 
             addType(innerDSL.build())
@@ -394,11 +394,12 @@ class BeePersistentDSLCodegen(
     }
 
     private fun TypeSpec.Builder.addPath(
-        column: Property, path: String,
+        subProperty: SubProperty, path: String,
         sort: Boolean
     ) {
+        val column = subProperty.property
         val inner = column.innerValue
-        val newPath = "$path${column.simpleName}"
+        val newPath = buildPath(path, column.simpleName, subProperty.subView)
         if (inner != null) {
             val innerType = inner.type.toTypeName().copy(nullable = false)
             val columnType = column.type.toTypeName().copy(nullable = false)
@@ -426,6 +427,15 @@ class BeePersistentDSLCodegen(
                 .build()
             )
         addProperty(pathProperty.build())
+    }
+
+    private fun buildPath(path: String, simpleName: String, subView: String?): String {
+        return when {
+            path.isEmpty() && subView == null -> { simpleName }
+            path.isEmpty() && subView != null -> { "TREAT(this as $subView).$simpleName" }
+            subView == null -> { "$path.$simpleName" }
+            else -> { "TREAT($path as $subView).$simpleName" }
+        }
     }
 
     private fun findView(repo: RepoInfo): EntityViewInfo {
