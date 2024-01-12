@@ -1,4 +1,4 @@
-package com.beeproduced.bee.persistent.blaze.dsl.sort
+package com.beeproduced.bee.persistent.blaze.dsl.path
 
 import com.beeproduced.bee.persistent.blaze.dsl.expression.ValueExpression
 

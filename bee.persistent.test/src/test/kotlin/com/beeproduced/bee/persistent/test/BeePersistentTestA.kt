@@ -1,8 +1,8 @@
 package com.beeproduced.bee.persistent.test
 
 import com.beeproduced.bee.persistent.application.Application
-import com.beeproduced.bee.persistent.blaze.dsl.entity.Path
-import com.beeproduced.bee.persistent.blaze.dsl.entity.ValuePath
+import com.beeproduced.bee.persistent.blaze.dsl.path.Path
+import com.beeproduced.bee.persistent.blaze.dsl.path.ValuePath
 import com.beeproduced.bee.persistent.blaze.dsl.expression.builder.lower
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.and
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.or
@@ -10,6 +10,7 @@ import com.beeproduced.bee.persistent.blaze.meta.dsl.InlineValueUnwrapper
 import com.beeproduced.bee.persistent.blaze.meta.dsl.InlineValueUnwrappers
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.beeproduced.datasource.a.*
+import com.beeproduced.datasource.a.dsl.WeirdClassDSL
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -528,10 +529,7 @@ class BeePersistentTestA(
             }.firstOrNull()
 
             val w2 = weirdRepository.select {
-                where(lower(
-                    ValuePath("foxtrot", Foxtrot::class)
-                ).eq("foxtrot"))
-
+                where(lower(WeirdClassDSL.foxtrot).eq("foxtrot"))
             }.firstOrNull()
 
             val w3 = weirdRepository.select {
@@ -544,7 +542,7 @@ class BeePersistentTestA(
             val w4 = weirdRepository.select {
                 orderBy(
                     ValuePath<Foxtrot, String>("foxtrot", Foxtrot::class).asc(),
-                    Path<UUID>("id").desc()
+                    WeirdClassDSL.id.desc()
                 )
             }
 

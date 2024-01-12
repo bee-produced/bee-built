@@ -28,6 +28,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._VIEW_CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
 import com.beeproduced.bee.persistent.blaze.processor.info.*
+import com.beeproduced.bee.persistent.blaze.processor.utils.viewLazyColumnsWithSubclasses
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -286,16 +287,10 @@ class BeePersistentRepoCodegen(
         visitedEmbeddedViews: MutableSet<String> = mutableSetOf()
     ): CodeBlock.Builder = apply {
         val entity = entityView.entity
-        val allRelations: MutableMap<String, String> = entityView.relations.toMutableMap()
-        val allColumns: MutableList<ColumnProperty> = entity.columns.toMutableList()
-        val allLazyColumns: MutableList<ColumnProperty> = entity.lazyColumns.toMutableList()
 
-        val subViews = views.subclassEntityViewsBySuperClass[entityView.name]
-        subViews?.forEach { subView ->
-            allRelations.putAll(subView.relations)
-            allColumns.addAll(subView.entity.columns)
-            allLazyColumns.addAll(subView.entity.lazyColumns)
-        }
+        val (allRelations, allColumns, allLazyColumns)
+            = viewLazyColumnsWithSubclasses(entityView, views)
+
 
         val relationMapInput = allRelations.map {
             (simpleName, viewName) -> Pair(simpleName, viewName)
