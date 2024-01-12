@@ -69,13 +69,13 @@ fun viewColumnsWithSubclasses(
 
         for ((relationViewName, relation) in subView.relations)
             if (!allRelations.containsKey(relationViewName))
-                allRelations[relationViewName] = SubRelation(relation, subView.name)
+                allRelations[relationViewName] = SubRelation(relation, subView.entity.simpleName)
 
         val columnKeys = allColumns.mapTo(HashSet()) { it.property.simpleName }
         val subViewAllColumns = subView.entity.columns + subView.entity.lazyColumns
         for (column in subViewAllColumns)
             if (!columnKeys.contains(column.simpleName))
-                allColumns.add(SubProperty(column, subView.name))
+                allColumns.add(SubProperty(column, subView.entity.simpleName))
     }
 
     return Pair(allRelations, allColumns)

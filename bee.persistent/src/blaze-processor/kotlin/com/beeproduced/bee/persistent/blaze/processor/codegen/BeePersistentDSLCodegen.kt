@@ -279,24 +279,7 @@ class BeePersistentDSLCodegen(
         visitedEmbeddedViews: MutableMap<String, String?> = mutableMapOf(),
         sort: Boolean = false,
     ): String = run {
-        val entity = entityView.entity
 
-
-        // val whereDSLName = "${entityView.name}__Where"
-        // val viewDSL = TypeSpec.classBuilder(whereDSLName)
-        // val viewDSLFields = PropertySpec.builder(
-        //     "fields", MUTABLE_SET.parameterizedBy(poetMap.classMapping(TYPED_FIELD_NODE))
-        // )
-        // val idName = entity.id.simpleName
-        // val entitySimpleName = entity.simpleName
-        // viewDSLFields.initializer(
-        //     CodeBlock.builder()
-        //         .addNamedStmt("mutableSetOf(${TYPED_FIELD_NODE}(\"$idName\", \"$entitySimpleName\"))")
-        //         .build()
-        // )
-        // viewDSL.addProperty(viewDSLFields.build())
-
-        // TODO: Apply treat operator!
         val (allRelations, allColumns)
             = viewColumnsWithSubclasses(entityView, views)
 
@@ -312,84 +295,17 @@ class BeePersistentDSLCodegen(
             val whereDSLName = "${innerView.name}__Where"
             val innerDSL = TypeSpec.objectBuilder(whereDSLName)
             val newPath = buildPath(path, simpleName, subRelation.subView)
+
+            val relationProperty = PropertySpec.builder(simpleName, ClassName("", whereDSLName))
+                .initializer("%L",  whereDSLName)
+            viewDSL.addProperty(relationProperty.build())
+
             traverseWhereDSL(innerView, innerDSL, newPath, visitedEmbeddedViews)
 
             addType(innerDSL.build())
         }
 
 
-        // if (this !== viewDSL)
-        //     addType(viewDSL.build())
-
-        // val relationMapInput = allRelations.map {
-        //         (simpleName, viewName) -> Pair(simpleName, viewName)
-        // }
-        //
-        // for ((simpleName, viewName) in relationMapInput) {
-        //     val view = views.entityViews.getValue(viewName)
-        //     val name = traverseDSL(view, dslName, visitedEmbeddedViews)
-        //     // val subViewDSL = ClassName("$packageName.$dslName", name)
-        //     val subViewDSL = ClassName("", name)
-        //
-        //     val selectorLambda = LambdaTypeName.get(receiver = subViewDSL, returnType = UNIT)
-        //     val selectorFn = FunSpec.builder(simpleName)
-        //         .addParameter("selector", selectorLambda)
-        //         .addStatement("val selectionBuilder = %T()", subViewDSL)
-        //         .addStatement("selectionBuilder.selector()")
-        //         .addNamedStmt("fields.add(${TYPED_FIELD_NODE}(\"$simpleName\", \"$entitySimpleName\",")
-        //         .addStatement("  selectionBuilder.fields")
-        //         .addStatement("))")
-        //     viewDSL.addFunction(selectorFn.build())
-        // }
-        //
-        // val lazyColumns = allLazyColumns.filter { !it.isEmbedded }
-        // for (lazyColumn in lazyColumns) {
-        //     val simpleName = lazyColumn.simpleName
-        //     val selectorFn = FunSpec.builder(simpleName)
-        //         .addNamedStmt("fields.add(${TYPED_FIELD_NODE}(\"$simpleName\", \"$entitySimpleName\"))")
-        //     viewDSL.addFunction(selectorFn.build())
-        // }
-        //
-        // // TODO: Streamline...
-        // for (embeddedColumn in allColumns.filter { it.isEmbedded }) {
-        //     val simpleName = embeddedColumn.simpleName
-        //     val embedded = requireNotNull(embeddedColumn.embedded)
-        //     val name = traverseDSL(embeddedColumn, visitedEmbeddedViews, false)
-        //     if (name == null) continue
-        //     val subViewDSL = ClassName("", name)
-        //
-        //     val selectorLambda = LambdaTypeName.get(receiver = subViewDSL, returnType = UNIT)
-        //     val selectorFn = FunSpec.builder(simpleName)
-        //         .addParameter("selector", selectorLambda)
-        //         .addStatement("val selectionBuilder = %T()", subViewDSL)
-        //         .addStatement("selectionBuilder.selector()")
-        //         .addNamedStmt("fields.add(${TYPED_FIELD_NODE}(\"$simpleName\", \"$entitySimpleName\",")
-        //         .addStatement("  selectionBuilder.fields")
-        //         .addStatement("))")
-        //     viewDSL.addFunction(selectorFn.build())
-        // }
-        //
-        // for (embeddedColumn in lazyColumns.filter { it.isEmbedded }) {
-        //     val simpleName = embeddedColumn.simpleName
-        //     val embedded = requireNotNull(embeddedColumn.embedded)
-        //     val name = traverseDSL(embeddedColumn, visitedEmbeddedViews, true)
-        //     if (name == null) continue
-        //     val subViewDSL = ClassName("", name)
-        //
-        //     val selectorLambda = LambdaTypeName.get(receiver = subViewDSL, returnType = UNIT)
-        //     val selectorFn = FunSpec.builder(simpleName)
-        //         .addParameter("selector", selectorLambda)
-        //         .addStatement("val selectionBuilder = %T()", subViewDSL)
-        //         .addStatement("selectionBuilder.selector()")
-        //         .addNamedStmt("fields.add(${TYPED_FIELD_NODE}(\"$simpleName\", \"$entitySimpleName\",")
-        //         .addStatement("  selectionBuilder.fields")
-        //         .addStatement("))")
-        //     viewDSL.addFunction(selectorFn.build())
-        // }
-        //
-        // addType(viewDSL.build())
-
-        // whereDSLName
         ""
     }
 
