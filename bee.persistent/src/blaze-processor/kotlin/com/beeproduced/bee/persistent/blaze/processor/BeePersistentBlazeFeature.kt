@@ -187,11 +187,25 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             }
         }
 
+        val packageName = input.options.getOption(BeePersistentBlazeOptions.packageName)
+        val viewPackageName = input.options
+            .getOrDefault(BeePersistentBlazeOptions.subPackageView, "views")
+            .let { "$packageName.$it" }
+        val repositoryPackageName = input.options
+            .getOrDefault(BeePersistentBlazeOptions.subPackageRepository, "repositories")
+            .let { "$packageName.$it" }
+        val dlsPackageName = input.options
+            .getOrDefault(BeePersistentBlazeOptions.subPackageDSL, "dsl")
+            .let { "$packageName.$it" }
+        val depth = input.options
+            .getOrDefault(BeePersistentBlazeOptions.depth, "2").toInt()
+
         val config = BeePersistentBlazeConfig(
-            "com.beeproduced.persistent.generated",
-            2,
-            input.options.getOption(BeePersistentBlazeOptions.viewPackageName),
-            input.options.getOption(BeePersistentBlazeOptions.repositoryPackageName)
+            packageName,
+            depth,
+            viewPackageName,
+            repositoryPackageName,
+            dlsPackageName
         )
 
         // Process
@@ -290,7 +304,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
     private fun getEmbeddedInfo(
         eType: KSType,
         visitedEmbedded: MutableMap<String, EmbeddedInfo>,
-        duplicateEmbeddedNames: MutableSet<String>
+        duplicateEmbeddedNames: MutableSet<String>,
     ): EmbeddedInfo {
         val declaration = eType.declaration as KSClassDeclaration
         val qualifiedName = requireNotNull(declaration.qualifiedName).asString()
@@ -304,7 +318,10 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         return embedded
     }
 
-    private fun getEmbeddedInfo(declaration: KSClassDeclaration, duplicateEmbeddedNames: MutableSet<String>): EmbeddedInfo {
+    private fun getEmbeddedInfo(
+        declaration: KSClassDeclaration,
+        duplicateEmbeddedNames: MutableSet<String>,
+    ): EmbeddedInfo {
         val embeddedName = declaration.simpleName.asString()
         val uniqueName = if (!duplicateEmbeddedNames.contains(embeddedName))
             embeddedName

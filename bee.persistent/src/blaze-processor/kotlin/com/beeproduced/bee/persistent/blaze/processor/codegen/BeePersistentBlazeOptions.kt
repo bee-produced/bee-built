@@ -7,11 +7,11 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
  * @version 2023-12-14
  */
 object BeePersistentBlazeOptions {
-    const val scanPackage = "persistentScanPackage"
     const val packageName = "persistentPackageName"
     const val depth = "persistentDepth"
-    const val viewPackageName = "persistentViewPackageName"
-    const val repositoryPackageName = "persistentRepositoryPackageName"
+    const val subPackageRepository = "persistentSubPackageRepository"
+    const val subPackageView = "persistentSubPackageView"
+    const val subPackageDSL = "persistentSubPackageDSL"
 }
 
 data class BeePersistentBlazeConfig(
@@ -19,4 +19,5 @@ data class BeePersistentBlazeConfig(
     val depth: Int,
     val viewPackageName: String,
     val repositoryPackageName: String,
+    val dslPackageName: String
 )
