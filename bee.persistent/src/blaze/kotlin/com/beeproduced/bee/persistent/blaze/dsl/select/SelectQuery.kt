@@ -1,7 +1,5 @@
 package com.beeproduced.bee.persistent.blaze.dsl.select
 
-import com.beeproduced.bee.persistent.blaze.dsl.predicate.Predicate
-
 /**
  *
  *
@@ -10,12 +8,10 @@ import com.beeproduced.bee.persistent.blaze.dsl.predicate.Predicate
  */
 interface SelectQuery<T : Any> :
     SelectWhere<T>,
-
+    SelectOrderBy<T>,
     Selection<T>
 {
-    fun SelectQuery<T>.whereAnd(vararg predicates: Predicate): Selection<T>
 
-    fun SelectQuery<T>.whereOr(vararg predicates: Predicate): Selection<T>
 
 }
 

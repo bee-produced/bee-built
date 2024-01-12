@@ -1,6 +1,7 @@
 package com.beeproduced.bee.persistent.blaze.dsl.entity
 
 import com.beeproduced.bee.persistent.blaze.dsl.expression.Expression
+import com.beeproduced.bee.persistent.blaze.dsl.sort.SortableExpression
 
 /**
  *
@@ -10,7 +11,7 @@ import com.beeproduced.bee.persistent.blaze.dsl.expression.Expression
  */
 data class Path<T : Any>(
     private val path: String,
-) : Expression<T> {
+) : SortableExpression<T> {
     override fun Expression<T>.toExpressionString(): String = path
 
 }

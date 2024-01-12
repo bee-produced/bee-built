@@ -10,6 +10,10 @@ import com.beeproduced.bee.persistent.blaze.dsl.predicate.Predicate
  */
 interface SelectWhere<T> : Selection<T> {
 
-    fun where(predicate: Predicate): Selection<T>
+    fun where(predicate: Predicate): SelectOrderBy<T>
+
+    fun whereAnd(vararg predicates: Predicate): SelectOrderBy<T>
+
+    fun whereOr(vararg predicates: Predicate): SelectOrderBy<T>
 
 }

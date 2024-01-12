@@ -534,6 +534,20 @@ class BeePersistentTestA(
 
             }.firstOrNull()
 
+            val w3 = weirdRepository.select {
+                orderBy(
+                    ValuePath<Foxtrot, String>("foxtrot", Foxtrot::class).desc()
+                )
+            }
+
+
+            val w4 = weirdRepository.select {
+                orderBy(
+                    ValuePath<Foxtrot, String>("foxtrot", Foxtrot::class).asc(),
+                    Path<UUID>("id").desc()
+                )
+            }
+
             println("baum")
 
             // assertNotNull(w)

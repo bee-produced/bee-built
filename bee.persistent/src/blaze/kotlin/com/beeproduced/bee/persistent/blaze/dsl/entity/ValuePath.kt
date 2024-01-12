@@ -2,6 +2,7 @@ package com.beeproduced.bee.persistent.blaze.dsl.entity
 
 import com.beeproduced.bee.persistent.blaze.dsl.expression.Expression
 import com.beeproduced.bee.persistent.blaze.dsl.expression.ValueExpression
+import com.beeproduced.bee.persistent.blaze.dsl.sort.SortableExpression
 import kotlin.reflect.KClass
 
 /**
@@ -13,7 +14,7 @@ import kotlin.reflect.KClass
 class ValuePath<V : Any, T : Any>(
     private val path: String,
     private val qualifiedName: String
-) : ValueExpression<V, T> {
+) : ValueExpression<V, T>, SortableExpression<T> {
 
     constructor(path: String, kClass: KClass<V>) : this(path, requireNotNull(kClass.qualifiedName))
 

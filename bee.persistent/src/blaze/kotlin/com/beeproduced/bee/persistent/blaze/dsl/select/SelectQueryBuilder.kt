@@ -3,7 +3,10 @@ package com.beeproduced.bee.persistent.blaze.dsl.select
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.Predicate
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.WhereAndBuilder
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.WhereOrBuilder
+import com.beeproduced.bee.persistent.blaze.dsl.sort.Sort
 import com.blazebit.persistence.BaseWhereBuilder
+import com.blazebit.persistence.CriteriaBuilder
+import com.blazebit.persistence.FullQueryBuilder
 
 /**
  *
@@ -13,22 +16,31 @@ import com.blazebit.persistence.BaseWhereBuilder
  */
 class SelectQueryBuilder<T: Any> : SelectQuery<T> {
     private var where: Predicate? = null
+    private var orderBy: List<Sort>? = null
 
-    override fun where(predicate: Predicate): Selection<T> = apply {
+    override fun where(predicate: Predicate): SelectOrderBy<T> = apply {
         where = predicate
     }
 
-    override fun SelectQuery<T>.whereAnd(vararg predicates: Predicate) = apply {
+    override fun whereAnd(vararg predicates: Predicate): SelectOrderBy<T> = apply {
         where = WhereAndBuilder(predicates.toList())
     }
 
-    override fun SelectQuery<T>.whereOr(vararg predicates: Predicate): Selection<T> = apply {
+    override fun whereOr(vararg predicates: Predicate): SelectOrderBy<T> = apply {
         where = WhereOrBuilder(predicates.toList())
     }
 
-    fun <W : BaseWhereBuilder<W>> applyBuilder(builder: W): W {
-        where?.run { return applyBuilder(builder) }
-        // TODO order by
-        return builder
+    override fun orderBy(vararg sorts: Sort): Selection<T> = apply {
+        orderBy = sorts.toList()
+    }
+
+    fun applyBuilder(builder: CriteriaBuilder<T>): CriteriaBuilder<T> {
+        var b: CriteriaBuilder<T> = builder
+        where?.run { b = applyBuilder(b) }
+        orderBy?.let { sorts ->
+            for (sort in sorts)
+                sort.run { b = applyBuilder(b) }
+        }
+        return b
     }
 }
