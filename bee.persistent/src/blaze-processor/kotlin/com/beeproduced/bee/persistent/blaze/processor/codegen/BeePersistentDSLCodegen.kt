@@ -111,7 +111,7 @@ class BeePersistentDSLCodegen(
             .addNamedStmt("return ${DEFAULT_BEE_SELECTION}(selectionBuilder.fields)")
         selectionDSL.addFunction(selectorFn.build())
 
-        selectionDSL.traverseWhereDSL(view, selectionDSLName)
+        selectionDSL.traverseWhereDSL(view, selectionDSL, sort = true)
 
         addType(selectionDSL.build())
     }
@@ -273,35 +273,53 @@ class BeePersistentDSLCodegen(
 
     private fun TypeSpec.Builder.traverseWhereDSL(
         entityView: EntityViewInfo,
-        dslName: String,
+        viewDSL: TypeSpec.Builder,
         path: String = "",
-        visitedEmbeddedViews: MutableMap<String, String?> = mutableMapOf()
+        visitedEmbeddedViews: MutableMap<String, String?> = mutableMapOf(),
+        sort: Boolean = false,
     ): String = run {
         val entity = entityView.entity
 
 
-        val whereDSLName = "${entityView.name}__Where"
-        val viewDSL = TypeSpec.classBuilder(whereDSLName)
-        val viewDSLFields = PropertySpec.builder(
-            "fields", MUTABLE_SET.parameterizedBy(poetMap.classMapping(TYPED_FIELD_NODE))
-        )
-        val idName = entity.id.simpleName
-        val entitySimpleName = entity.simpleName
-        viewDSLFields.initializer(
-            CodeBlock.builder()
-                .addNamedStmt("mutableSetOf(${TYPED_FIELD_NODE}(\"$idName\", \"$entitySimpleName\"))")
-                .build()
-        )
-        viewDSL.addProperty(viewDSLFields.build())
+        // val whereDSLName = "${entityView.name}__Where"
+        // val viewDSL = TypeSpec.classBuilder(whereDSLName)
+        // val viewDSLFields = PropertySpec.builder(
+        //     "fields", MUTABLE_SET.parameterizedBy(poetMap.classMapping(TYPED_FIELD_NODE))
+        // )
+        // val idName = entity.id.simpleName
+        // val entitySimpleName = entity.simpleName
+        // viewDSLFields.initializer(
+        //     CodeBlock.builder()
+        //         .addNamedStmt("mutableSetOf(${TYPED_FIELD_NODE}(\"$idName\", \"$entitySimpleName\"))")
+        //         .build()
+        // )
+        // viewDSL.addProperty(viewDSLFields.build())
 
+        // TODO: Apply treat operator!
         val (allRelations, allColumns)
             = viewColumnsWithSubclasses(entityView, views)
 
         val (columns, embedded) = allColumns.partition { !it.isEmbedded }
         for (column in columns) {
-            addPath(column, path, true)
+            viewDSL.addPath(column, path, sort)
         }
 
+        for ((simpleName, viewName) in allRelations) {
+            val innerView = views.entityViews.getValue(viewName)
+            if (innerView.isExtended) continue
+
+            val whereDSLName = "${innerView.name}__Where"
+            val innerDSL = TypeSpec.objectBuilder(whereDSLName)
+            val newPath = if (path.isEmpty()) "$simpleName."
+            else "$path$simpleName."
+            traverseWhereDSL(innerView, innerDSL, newPath, visitedEmbeddedViews)
+
+            addType(innerDSL.build())
+        }
+
+
+        // if (this !== viewDSL)
+        //     addType(viewDSL.build())
 
         // val relationMapInput = allRelations.map {
         //         (simpleName, viewName) -> Pair(simpleName, viewName)
@@ -371,7 +389,8 @@ class BeePersistentDSLCodegen(
         //
         // addType(viewDSL.build())
 
-        whereDSLName
+        // whereDSLName
+        ""
     }
 
     private fun TypeSpec.Builder.addPath(
