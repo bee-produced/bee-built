@@ -13,15 +13,9 @@ interface ValueExpression<V : Any, T : Any> : Expression<T> {
 
     fun ValueExpression<V, T>.unwrapKey(): String
 
-    // https://stackoverflow.com/a/59716818/12347616
+    fun eqInline(value: V?): Predicate = eq(unwrap(value))
 
-    @JvmName("eqValue")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    fun eq(value: V?): Predicate = eq(unwrap(value))
-
-    @JvmName("notEqValue")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    fun notEq(value: V?): Predicate = notEq(unwrap(value))
+    fun notEqInline(value: V?): Predicate = notEq(unwrap(value))
 
 
 

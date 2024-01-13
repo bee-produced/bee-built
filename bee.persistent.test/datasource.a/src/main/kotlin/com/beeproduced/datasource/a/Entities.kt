@@ -3,6 +3,8 @@ package com.beeproduced.datasource.a
 import com.beeproduced.bee.persistent.blaze.BeeBlazeRepository
 import com.beeproduced.bee.persistent.blaze.annotations.BeeRepository
 import jakarta.persistence.*
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import java.io.Serializable
 import java.util.*
 
@@ -146,3 +148,29 @@ data class Circular(
 
 @BeeRepository
 interface CircularRepository : BeeBlazeRepository<Circular, UUID>
+
+
+@Entity
+data class SemiCircular1(
+    @Id
+    val id: UUID,
+    val cId: UUID?,
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cId", referencedColumnName = "id", insertable = false, updatable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    val circular: SemiCircular2? = null
+)
+
+@Entity
+data class SemiCircular2(
+    @Id
+    val id: UUID,
+    val cId: UUID?,
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cId", referencedColumnName = "id", insertable = false, updatable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    val circular: SemiCircular1? = null
+)
+
+@BeeRepository
+interface SemiCircular1Repository : BeeBlazeRepository<SemiCircular1, UUID>

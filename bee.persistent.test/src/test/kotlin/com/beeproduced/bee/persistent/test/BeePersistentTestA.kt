@@ -6,12 +6,11 @@ import com.beeproduced.bee.persistent.blaze.dsl.path.ValuePath
 import com.beeproduced.bee.persistent.blaze.dsl.expression.builder.lower
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.and
 import com.beeproduced.bee.persistent.blaze.dsl.predicate.builder.or
-import com.beeproduced.bee.persistent.blaze.meta.dsl.InlineValueUnwrapper
-import com.beeproduced.bee.persistent.blaze.meta.dsl.InlineValueUnwrappers
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.beeproduced.datasource.a.*
+import com.beeproduced.datasource.a.dsl.CircularDSL
+import com.beeproduced.datasource.a.dsl.SemiCircular1DSL
 import com.beeproduced.datasource.a.dsl.WeirdClassDSL
-import com.beeproduced.datasource.b.dsl.ComposerDSL
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -24,9 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
-import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -52,7 +49,9 @@ class BeePersistentTestA(
     @Autowired
     val weirdRepository: WeirdClassRepository,
     @Autowired
-    val circularRepository: CircularRepository
+    val circularRepository: CircularRepository,
+    @Autowired
+    val semiCircular1Repository: SemiCircular1Repository
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
@@ -419,6 +418,110 @@ class BeePersistentTestA(
     }
 
     @Test
+    fun `test semi circular`() {
+        transaction.executeWithoutResult {
+            val id1 = UUID.randomUUID()
+            val id2 = UUID.randomUUID()
+            em.beePersist(SemiCircular1(id1, null, null))
+            em.beePersist(SemiCircular2(id2, id1, null))
+            semiCircular1Repository.cbf.update(em, SemiCircular1::class.java)
+                .set("cId", id2)
+                .where("id").eq(id1)
+                .executeUpdate()
+
+            val selection = SemiCircular1DSL.select {
+                this.circular { this.circular { this.circular {  } } }
+            }
+            val circles = semiCircular1Repository.select(selection)
+            val circle = circles.firstOrNull()
+            assertNotNull(circle)
+            assertEquals(id1, circle.id)
+            val circleD1 = circle.circular
+            assertNotNull(circleD1)
+            assertEquals(id2, circleD1.id)
+            val circleD2 = circleD1.circular
+            assertNotNull(circleD2)
+            assertEquals(id1, circleD2.id)
+            val circleD3 = circleD2.circular
+            assertNotNull(circleD3)
+            assertEquals(id2, circleD3.id)
+            assertNull(circleD3.circular)
+        }
+    }
+
+    @Test
+    fun `test semi circular 2`() {
+        transaction.executeWithoutResult {
+            val id1 = UUID.randomUUID()
+            val id2 = UUID.randomUUID()
+            val id3 = UUID.randomUUID()
+            em.beePersist(SemiCircular1(id1, null, null))
+            em.beePersist(SemiCircular2(id2, id1, null))
+            em.beePersist(SemiCircular1(id3, id2, null))
+            semiCircular1Repository.cbf.update(em, SemiCircular1::class.java)
+                .set("cId", id2)
+                .where("id").eq(id1)
+                .executeUpdate()
+
+            val selection = SemiCircular1DSL.select {
+                this.circular { this.circular { this.circular {  } } }
+            }
+            val circles = semiCircular1Repository.select(selection)
+            val circle = circles.firstOrNull { it.id == id3 }
+            assertNotNull(circle)
+            assertEquals(id3, circle.id)
+            val circleD1 = circle.circular
+            assertNotNull(circleD1)
+            assertEquals(id2, circleD1.id)
+            val circleD2 = circleD1.circular
+            assertNotNull(circleD2)
+            assertEquals(id1, circleD2.id)
+            val circleD3 = circleD2.circular
+            assertNotNull(circleD3)
+            assertEquals(id2, circleD3.id)
+            assertNull(circleD3.circular)
+        }
+    }
+
+    @Test
+    fun `test semi circular 3`() {
+        transaction.executeWithoutResult {
+            val id1 = UUID.randomUUID()
+            val id2 = UUID.randomUUID()
+            val id3 = UUID.randomUUID()
+            val id4 = UUID.randomUUID()
+            em.beePersist(SemiCircular1(id1, null, null))
+            em.beePersist(SemiCircular2(id2, null, null))
+            em.beePersist(SemiCircular1(id3, null, null))
+            em.beePersist(SemiCircular2(id4, id1, null))
+            semiCircular1Repository.cbf.update(em, SemiCircular1::class.java)
+                .set("cId", id2).where("id").eq(id1).executeUpdate()
+            semiCircular1Repository.cbf.update(em, SemiCircular2::class.java)
+                .set("cId", id3).where("id").eq(id2).executeUpdate()
+            semiCircular1Repository.cbf.update(em, SemiCircular1::class.java)
+                .set("cId", id4).where("id").eq(id3).executeUpdate()
+
+            val selection = SemiCircular1DSL.select {
+                this.circular { this.circular { this.circular {  } } }
+            }
+            val circles = semiCircular1Repository.select(selection)
+            val circle = circles.firstOrNull { it.id == id1 }
+            assertNotNull(circle)
+            assertEquals(id1, circle.id)
+            val circleD1 = circle.circular
+            assertNotNull(circleD1)
+            assertEquals(id2, circleD1.id)
+            val circleD2 = circleD1.circular
+            assertNotNull(circleD2)
+            assertEquals(id3, circleD2.id)
+            val circleD3 = circleD2.circular
+            assertNotNull(circleD3)
+            assertEquals(id4, circleD3.id)
+            assertNull(circleD3.circular)
+        }
+    }
+
+    @Test
     fun `test where`() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
@@ -526,7 +629,7 @@ class BeePersistentTestA(
             val w = weirdRepository.select {
                 where(
                     ValuePath<Foxtrot, String>("foxtrot", Foxtrot::class
-                ).eq(Foxtrot("Foxtrot")))
+                ).eqInline(Foxtrot("Foxtrot")))
             }.firstOrNull()
 
             val w2 = weirdRepository.select {
@@ -602,6 +705,8 @@ class BeePersistentTestA(
             songRepository.cbf.delete(em, Company::class.java).executeUpdate()
             weirdRepository.cbf.delete(em, WeirdClass::class.java).executeUpdate()
             circularRepository.cbf.delete(em, Circular::class.java).executeUpdate()
+            semiCircular1Repository.cbf.delete(em, SemiCircular1::class.java).executeUpdate()
+            semiCircular1Repository.cbf.delete(em, SemiCircular2::class.java).executeUpdate()
         }
     }
 }
