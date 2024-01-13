@@ -3,6 +3,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.generative.util.toPoetClassName
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.BUILDER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.FIELD
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
@@ -44,6 +45,7 @@ class BeePersistentBuilderCodegen(
     object PoetConstants {
         const val FIELD = "%field:T"
         const val CLAZZ = "%clazz:T"
+        const val BUILDER = "%builder:T"
     }
 
     init {
@@ -79,11 +81,31 @@ class BeePersistentBuilderCodegen(
         poetMap.addMapping(CLAZZ, entity.qualifiedName.toPoetClassName())
         buildInfo(entity) // Generate reflection info
         buildBuilder(entity) // Generate builder for cloning
-        // Gerate clone extension function
+        buildCloneFunction(entity) // Gerate clone extension function
+    }
+
+    private fun FileSpec.Builder.buildInfo(entity: EntityInfo) = apply {
+        val access = entity.accessInfo(false)
+        if (access.reflectionProps.isEmpty()) return@apply
+
+        val infoObj = TypeSpec.objectBuilder(entity.infoName())
+        val entityClassName = entity.declaration.toClassName()
+        for (property in access.reflectionProps) {
+            val reflectionField = PropertySpec
+                .builder(property.infoField(), poetMap.classMapping(FIELD))
+                .initializer(
+                    "%T::class.java.getDeclaredField(\"${property.simpleName}\").apply { isAccessible = true }",
+                    entityClassName
+                )
+            infoObj.addProperty(reflectionField.build())
+        }
+        addType(infoObj.build())
     }
 
     private fun FileSpec.Builder.buildBuilder(entity: EntityInfo) = apply {
-        val entityBuilder = TypeSpec.classBuilder(entity.builderName())
+        val builderName = entity.builderName()
+        poetMap.addMapping(BUILDER, ClassName(packageName, builderName))
+        val entityBuilder = TypeSpec.classBuilder(builderName)
 
         val instance = "instance"
         val constructor = FunSpec.constructorBuilder()
@@ -114,22 +136,33 @@ class BeePersistentBuilderCodegen(
         addType(entityBuilder.build())
     }
 
-    private fun FileSpec.Builder.buildInfo(entity: EntityInfo) = apply {
-        val construction = entity.accessInfo(false)
-        if (construction.reflectionProps.isEmpty()) return@apply
+    private fun FileSpec.Builder.buildCloneFunction(entity: EntityInfo) = apply {
+        val construction = entity.constructionInfo(false)
 
-        val infoObj = TypeSpec.objectBuilder(entity.infoName())
         val entityClassName = entity.declaration.toClassName()
-        for (property in construction.reflectionProps) {
-            val reflectionField = PropertySpec
-                .builder(property.infoField(), poetMap.classMapping(FIELD))
-                .initializer(
-                    "%T::class.java.getDeclaredField(\"${property.simpleName}\").apply { isAccessible = true }",
-                    entityClassName
-                )
-            infoObj.addProperty(reflectionField.build())
+        val builderClassName = poetMap.classMapping(BUILDER)
+        val cloneFunction = FunSpec.builder("beeClone")
+            .receiver(entityClassName)
+            .returns(entityClassName)
+            .addParameter("block", LambdaTypeName.get(receiver = builderClassName, returnType = UNIT))
+        cloneFunction.apply {
+            addNamedStmt("val builder = $BUILDER(this)")
+            addNamedStmt("builder.block()")
+            addNamedStmt("val entity = $CLAZZ(")
+            for (property in construction.constructorProps)
+                addStatement("  ${property.simpleName} = builder.${property.simpleName},")
+            addStatement(")")
+            for (property in construction.setterProps)
+                addStatement("entity.${property.simpleName} = builder.${property.simpleName}")
+            val infoObjName = entity.infoName()
+            for (property in construction.reflectionProps) {
+                val infoField = property.infoField()
+                val setterName = property.type.reflectionSetterName()
+                addStatement("${infoObjName}.${infoField}.${setterName}(entity, builder.${property.simpleName})")
+            }
+            addStatement("return entity")
         }
-        addType(infoObj.build())
+        addFunction(cloneFunction.build())
     }
 
     private fun EntityInfo.builderName(): String = "${uniqueName}Builder"
