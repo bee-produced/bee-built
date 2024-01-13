@@ -207,6 +207,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             repositoryPackageName,
             dlsPackageName
         )
+        val resources = ResourcesCodegen(input.codeGenerator)
 
         // Process
         val entities = inheritedEntities.values.toList()
@@ -222,6 +223,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         val instantiatorCodegen = BeePersistentInstantiatorCodegen(
             input.codeGenerator,
+            resources,
             input.dependencies,
             input.logger,
             config
@@ -243,6 +245,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
 
         val dslCodegen = BeePersistentDSLCodegen(
             input.codeGenerator,
+            resources,
             input.dependencies,
             input.logger,
             inheritedEntities.values.toList(),
@@ -251,6 +254,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         )
         dslCodegen.processRepoDSL(repos)
 
+        resources.process()
     }
 
     private fun duplicateSimpleNames(entities: Set<KSClassDeclaration>): Set<String> {

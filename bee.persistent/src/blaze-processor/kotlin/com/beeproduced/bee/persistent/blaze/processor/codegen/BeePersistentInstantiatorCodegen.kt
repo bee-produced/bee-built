@@ -3,7 +3,9 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.ACI
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.APPLICATION_LISTENER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.APPLICATION_READY_EVENT
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.APPLICATION_STARTING_EVENT
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.BLAZE_INSTANTIATORS
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.COLLECTION_STAR
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.COMPONENT
@@ -31,6 +33,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
  */
 class BeePersistentInstantiatorCodegen(
     private val codeGenerator: CodeGenerator,
+    private val resourcesCodegen: ResourcesCodegen,
     private val dependencies: Dependencies,
     private val logger: KSPLogger,
     private val config: BeePersistentBlazeConfig
@@ -59,6 +62,8 @@ class BeePersistentInstantiatorCodegen(
         const val EVENT_LISTENER = "%eventlistener:T"
         const val APPLICATION_READY_EVENT = "%applicationreadyevent:T"
         const val COLLECTION_STAR = "%collection:T"
+        const val APPLICATION_LISTENER = "%applicationlistener:T"
+        const val APPLICATION_STARTING_EVENT = "%applicationstartingevent:T"
     }
 
     init {
@@ -70,6 +75,8 @@ class BeePersistentInstantiatorCodegen(
         poetMap.addMapping(EVENT_LISTENER, ClassName("org.springframework.context.event", "EventListener"))
         poetMap.addMapping(APPLICATION_READY_EVENT, ClassName("org.springframework.boot.context.event", "ApplicationReadyEvent"))
         poetMap.addMapping(COLLECTION_STAR, ClassName("kotlin.collections", "Collection").parameterizedBy(STAR))
+        poetMap.addMapping(APPLICATION_LISTENER, ClassName("org.springframework.context", "ApplicationListener"))
+        poetMap.addMapping(APPLICATION_STARTING_EVENT, ClassName("org.springframework.boot.context.event", "ApplicationStartingEvent"))
     }
 
     fun processViews(views: ViewInfo, entities: List<EntityInfo>) {
@@ -265,17 +272,19 @@ class BeePersistentInstantiatorCodegen(
         tupleCreators: Map<String, String>,
         assignmentCreators: Map<String, String>,
     ) {
-        val registration = TypeSpec
-            .classBuilder(buildUniqueClassName(packageName, "Registration"))
-            .addAnnotation(poetMap.classMapping(COMPONENT))
+        val event = poetMap.classMapping(BeePersistentDSLCodegen.PoetConstants.APPLICATION_STARTING_EVENT)
+        val listenerInterface = poetMap.classMapping(BeePersistentDSLCodegen.PoetConstants.APPLICATION_LISTENER)
+            .parameterizedBy(event)
 
-        val eventListenerAnnotation = AnnotationSpec
-            .builder(poetMap.classMapping(EVENT_LISTENER))
-            .addMember("%T::class", poetMap.classMapping(APPLICATION_READY_EVENT))
+        val registrationName = buildUniqueClassName(packageName, "Registration")
+        val registration = TypeSpec
+            .classBuilder(registrationName)
+            .addSuperinterface(listenerInterface)
 
         val register = FunSpec
-            .builder("register")
-            .addAnnotation(eventListenerAnnotation.build())
+            .builder("onApplicationEvent")
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter("event", event)
         register.apply {
             // Use · to omit line breaks
             // See: https://github.com/square/kotlinpoet/issues/598#issuecomment-454337042
@@ -289,6 +298,8 @@ class BeePersistentInstantiatorCodegen(
 
         registration.addFunction(register.build())
         addType(registration.build())
+
+        resourcesCodegen.addSpringListener("$packageName.$registrationName")
     }
 
     data class EntityConstruction(
@@ -342,8 +353,6 @@ class BeePersistentInstantiatorCodegen(
     private fun infoField(prop: EntityProperty): String
         = "${prop.simpleName}Field"
 
-
-    // TODO: Id column of superclass is present in columns of subclass!
     private fun BaseViewInfo.viewFields(): List<Property> {
         return when (this) {
             is EntityViewInfo -> {

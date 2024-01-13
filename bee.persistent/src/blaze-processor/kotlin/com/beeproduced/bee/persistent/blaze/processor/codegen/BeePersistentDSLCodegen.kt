@@ -44,6 +44,7 @@ import java.nio.file.Paths
  */
 class BeePersistentDSLCodegen(
     private val codeGenerator: CodeGenerator,
+    private val resourcesCodegen: ResourcesCodegen,
     private val dependencies: Dependencies,
     private val logger: KSPLogger,
     private val entities: List<EntityInfo>,
@@ -400,6 +401,8 @@ class BeePersistentDSLCodegen(
     }
 
     private fun buildRegistration() {
+        if (inlineValues.isEmpty()) return
+
         val unwrapperClassName = "GeneratedInlineValueUnwrappers"
         FileSpec
             .builder(packageName, unwrapperClassName)
@@ -409,11 +412,6 @@ class BeePersistentDSLCodegen(
     }
 
     private fun FileSpec.Builder.buildRegistration() = apply {
-        if (inlineValues.isEmpty()) return@apply
-
-        // TODO: Rewrite as listener !!
-        // Also update view instantiator !!
-
         val event = poetMap.classMapping(APPLICATION_STARTING_EVENT)
         val listenerInterface = poetMap.classMapping(APPLICATION_LISTENER)
             .parameterizedBy(event)
@@ -423,15 +421,10 @@ class BeePersistentDSLCodegen(
             .classBuilder(registrationName)
             .addSuperinterface(listenerInterface)
 
-        // val eventListenerAnnotation = AnnotationSpec
-        //     .builder(poetMap.classMapping(EVENT_LISTENER))
-        //     .addMember("%T::class", poetMap.classMapping(APPLICATION_READY_EVENT))
-
         val register = FunSpec
             .builder("onApplicationEvent")
             .addModifiers(KModifier.OVERRIDE)
             .addParameter("event", event)
-            // .addAnnotation(eventListenerAnnotation.build())
         register.apply {
             // Use · to omit line breaks
             // See: https://github.com/square/kotlinpoet/issues/598#issuecomment-454337042
@@ -446,11 +439,10 @@ class BeePersistentDSLCodegen(
         registration.addFunction(register.build())
         addType(registration.build())
 
-
-        writeToFile("spring", "org.springframework.context.ApplicationListener=$packageName.$registrationName")
+        resourcesCodegen.addSpringListener("$packageName.$registrationName")
     }
 
-    // https://stackoverflow.com/a/76545160/12347616
+
     private fun writeToFile(resourceName: String, content: String) {
         codeGenerator
             .createNewFileByPath(Dependencies(false), "META-INF/$resourceName", "factories")
