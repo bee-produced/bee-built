@@ -190,3 +190,6 @@ data class GeneratedPrimitiveId(
     val id: Long = -2
 )
 
+@BeeRepository
+interface GeneratedPrimitiveIdRepository : BeeBlazeRepository<GeneratedPrimitiveId, Long>
+

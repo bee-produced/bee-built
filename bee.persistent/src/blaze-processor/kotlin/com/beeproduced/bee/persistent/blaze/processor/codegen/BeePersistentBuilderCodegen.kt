@@ -3,6 +3,7 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.generative.util.toPoetClassName
+import com.beeproduced.bee.persistent.blaze.processor.FullyQualifiedName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.BUILDER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.FIELD
@@ -24,8 +25,6 @@ import com.squareup.kotlinpoet.ksp.writeTo
  * @author Kacper Urbaniec
  * @version 2024-01-13
  */
-typealias FullyQualifiedName = String
-
 class BeePersistentBuilderCodegen(
     private val codeGenerator: CodeGenerator,
     private val dependencies: Dependencies,
@@ -165,7 +164,9 @@ class BeePersistentBuilderCodegen(
         addFunction(cloneFunction.build())
     }
 
-    private fun EntityInfo.builderName(): String = "${uniqueName}Builder"
+    companion object {
+        fun EntityInfo.builderName(): String = "${uniqueName}Builder"
+    }
 
     private fun EntityInfo.infoName(): String = "${uniqueName}BuilderInfo"
 

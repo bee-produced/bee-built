@@ -31,6 +31,8 @@ import com.google.devtools.ksp.symbol.KSType
  * @author Kacper Urbaniec
  * @version 2023-12-14
  */
+typealias FullyQualifiedName = String
+
 class BeePersistentBlazeFeature : BeeGenerativeFeature {
     override fun order(): Int = Int.MAX_VALUE
 
@@ -146,7 +148,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         }
 
         // Add inheritance info
-        val inheritedEntities: MutableMap<String, EntityInfo> = entitiesWithoutInheritanceInfo
+        val inheritedEntities: MutableMap<FullyQualifiedName, EntityInfo> = entitiesWithoutInheritanceInfo
             .associateByTo(HashMap()) { it.qualifiedName }
 
         for (entityInfo in entitiesWithoutInheritanceInfo) {
@@ -238,7 +240,7 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             input.codeGenerator,
             input.dependencies,
             input.logger,
-            inheritedEntities.values.toList(),
+            inheritedEntities,
             views,
             config
         )

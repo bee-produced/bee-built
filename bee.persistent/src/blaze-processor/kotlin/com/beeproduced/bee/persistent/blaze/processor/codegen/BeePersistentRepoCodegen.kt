@@ -3,7 +3,9 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.generative.util.toPoetClassName
+import com.beeproduced.bee.persistent.blaze.processor.FullyQualifiedName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.Companion.builderName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.AUTOWIRED
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.BEE_SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.CLAZZ
@@ -19,6 +21,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.SELECT_QUERY_BUILDER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.TYPED_FIELD_NODE
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.VIEW_CLAZZ
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._BEE_CLONE_FN
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CBF_PROP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._EM_PROP
@@ -28,6 +31,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._VIEW_CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
 import com.beeproduced.bee.persistent.blaze.processor.info.*
+import com.beeproduced.bee.persistent.blaze.processor.utils.accessInfo
 import com.beeproduced.bee.persistent.blaze.processor.utils.viewLazyColumnsWithSubclasses
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -48,7 +52,7 @@ class BeePersistentRepoCodegen(
     private val codeGenerator: CodeGenerator,
     private val dependencies: Dependencies,
     private val logger: KSPLogger,
-    private val entities: List<EntityInfo>,
+    private val entities: Map<FullyQualifiedName, EntityInfo>,
     private val views: ViewInfo,
     private val config: BeePersistentBlazeConfig
 ) {
@@ -93,6 +97,7 @@ class BeePersistentRepoCodegen(
         const val SELECT_QUERY = "%select_query:T"
         const val SELECT_QUERY_BUILDER = "%select_query_builder:T"
         const val SELECTION = "%selection:T"
+        const val _BEE_CLONE_FN = "%beeclone:M"
     }
 
     init {
@@ -115,6 +120,7 @@ class BeePersistentRepoCodegen(
         poetMap.addMapping(SELECT_QUERY, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "SelectQuery"))
         poetMap.addMapping(SELECT_QUERY_BUILDER, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "SelectQueryBuilder"))
         poetMap.addMapping(SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "Selection"))
+        poetMap.addMapping(_BEE_CLONE_FN, MemberName(config.builderPackageName, "beeClone", isExtension = true))
     }
 
     fun processRepo(repo: RepoInfo) {
@@ -142,6 +148,7 @@ class BeePersistentRepoCodegen(
                 .addSuperinterface(repoInterface.toClassName())
                 .buildConstructor()
                 .addRepoProperties()
+                .buildPersist()
                 .buildSelect()
                 .buildSelectionInfo()
                 .build()
@@ -227,6 +234,77 @@ class BeePersistentRepoCodegen(
             .build()
 
         addProperties(listOf(clazzProperty, viewClazzProperty))
+    }
+
+    private fun EntityInfo.defaultIdLiteral(): String {
+        if (!id.isGenerated) return ""
+        val type = id.type
+        if (type.isMarkedNullable) return "null"
+        val typeName = type.declaration.simpleName.asString()
+        return when (typeName) {
+            "Double" -> "default.${id.simpleName}"
+            "Float" -> "default.${id.simpleName}"
+            "Long" -> "default.${id.simpleName}"
+            "Int", "Short", "Byte" -> "default.${id.simpleName}"
+            "Boolean" -> "default.${id.simpleName}"
+            "Char" -> "default.${id.simpleName}"
+            else -> "null"
+        }
+    }
+
+    private fun TypeSpec.Builder.buildPersist(): TypeSpec.Builder = apply {
+        // TODO: On inheritance generic T?
+        val persistFun = FunSpec.builder("persist")
+            .addParameter("entity", poetMap.classMapping(CLAZZ))
+        val idLiteral = entity.defaultIdLiteral()
+
+        if (entity.subClasses == null) {
+            buildDefault(entity, idLiteral)
+            persistFun.buildPersistBlock(entity, idLiteral)
+        }
+        else {
+            val subEntities = entity.subClasses!!.map { entities.getValue(it) }
+            buildDefault(subEntities.first(), idLiteral)
+            for (subEntity in subEntities) {
+                persistFun.addStatement("if (entity is %T) {", subEntity.declaration.toClassName())
+                persistFun.buildPersistBlock(subEntity, idLiteral, padding = "  ")
+                persistFun.addStatement("}")
+            }
+        }
+        persistFun.apply {
+
+        }
+        addFunction(persistFun.build())
+    }
+
+    private fun TypeSpec.Builder.buildDefault(e: EntityInfo, idLiteral: String) {
+        if (!idLiteral.startsWith("default.")) return
+        val defaultProperty = PropertySpec.builder("default", poetMap.classMapping(CLAZZ))
+            .initializer("%T::class.java.getConstructor().newInstance()", e.declaration.toClassName())
+        addProperty(defaultProperty.build())
+    }
+
+    private fun FunSpec.Builder.buildPersistBlock(
+        e: EntityInfo,
+        idLiteral: String,
+        padding: String = ""
+    ) = apply {
+        val idAssignment = if (idLiteral.isEmpty()) "" else "${e.id.simpleName}=$idLiteral"
+        addNamedStmt("${padding}val e = entity.$_BEE_CLONE_FN { $idAssignment }")
+        addNamedStmt("${padding}em.persist(e)")
+        addNamedStmt("${padding}em.flush()")
+        addNamedStmt("${padding}em.clear()")
+
+        if (e.relations.isEmpty()) {
+            addStatement("${padding}return e")
+            return@apply
+        }
+
+        addNamedStmt("${padding}return e.$_BEE_CLONE_FN { ")
+        for (relation in e.relations) {
+            addStatement("$padding  ${relation.simpleName}=null")
+        }
+        addStatement("$padding}")
     }
 
     private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {
