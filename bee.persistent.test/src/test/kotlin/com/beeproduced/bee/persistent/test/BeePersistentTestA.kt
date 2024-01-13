@@ -12,10 +12,7 @@ import com.beeproduced.datasource.a.dsl.CircularDSL
 import com.beeproduced.datasource.a.dsl.SemiCircular1DSL
 import com.beeproduced.datasource.a.dsl.WeirdClassDSL
 import jakarta.persistence.EntityManager
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -51,7 +48,7 @@ class BeePersistentTestA(
     @Autowired
     val circularRepository: CircularRepository,
     @Autowired
-    val semiCircular1Repository: SemiCircular1Repository
+    val semiCircular1Repository: SemiCircular1Repository,
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
@@ -59,7 +56,7 @@ class BeePersistentTestA(
     fun `empty selection`() {
         addSong()
         transaction.executeWithoutResult {
-            val selection = BeeSelection.create {  }
+            val selection = BeeSelection.create { }
             val songs = songRepository.select(selection)
             assertTrue { songs.isNotEmpty() }
             val song = songs.first()
@@ -327,7 +324,7 @@ class BeePersistentTestA(
             val foxtrot = Foxtrot("foxtrot")
             em.beePersist(WeirdClass(id, fooBar, foxtrot))
 
-            val ws = weirdRepository.select(BeeSelection.create {  })
+            val ws = weirdRepository.select(BeeSelection.create { })
             val w = ws.firstOrNull()
 
             assertNotNull(w)
@@ -430,7 +427,7 @@ class BeePersistentTestA(
                 .executeUpdate()
 
             val selection = SemiCircular1DSL.select {
-                this.circular { this.circular { this.circular {  } } }
+                this.circular { this.circular { this.circular { } } }
             }
             val circles = semiCircular1Repository.select(selection)
             val circle = circles.firstOrNull()
@@ -502,7 +499,7 @@ class BeePersistentTestA(
                 .set("cId", id4).where("id").eq(id3).executeUpdate()
 
             val selection = SemiCircular1DSL.select {
-                this.circular { this.circular { this.circular {  } } }
+                this.circular { this.circular { this.circular { } } }
             }
             val circles = semiCircular1Repository.select(selection)
             val circle = circles.firstOrNull { it.id == id1 }
@@ -597,7 +594,6 @@ class BeePersistentTestA(
     }
 
 
-
     @Test
     fun `more where`() {
         val clazz = Foxtrot::class.java
@@ -628,8 +624,10 @@ class BeePersistentTestA(
 
             val w = weirdRepository.select {
                 where(
-                    ValuePath<Foxtrot, String>("foxtrot", Foxtrot::class
-                ).eqInline(Foxtrot("Foxtrot")))
+                    ValuePath<Foxtrot, String>(
+                        "foxtrot", Foxtrot::class
+                    ).eqInline(Foxtrot("Foxtrot"))
+                )
             }.firstOrNull()
 
             val w2 = weirdRepository.select {
@@ -684,6 +682,48 @@ class BeePersistentTestA(
                     null
                 )
             )
+        }
+    }
+
+    @Test
+    fun persist() {
+        assertThrows<Exception> {
+            transaction.executeWithoutResult {
+                // Different value than in constructor (-2 != -42)!
+                val primitiveId2 = GeneratedPrimitiveId().copy(id = -42)
+                val pstPrimitiveId2 = em.beePersist(primitiveId2)
+                assertNotNull(pstPrimitiveId2.id)
+            }
+        }
+
+        assertThrows<Exception> {
+            transaction.executeWithoutResult {
+                // Primitive field which cannot be set to null!
+                val idField2 = GeneratedPrimitiveId::class.java.getDeclaredField("id").apply { isAccessible = true }
+                val primitiveId4 = GeneratedPrimitiveId()
+                idField2.set(primitiveId4, null)
+                val pstPrimitiveId4 = em.beePersist(primitiveId4)
+                assertNotNull(pstPrimitiveId4.id)
+            }
+        }
+
+        transaction.executeWithoutResult {
+            val idField = GeneratedObjectId::class.java.getDeclaredField("id").apply { isAccessible = true }
+            val objectId = GeneratedObjectId()
+            idField.set(objectId, null)
+            val pstObjectId = em.beePersist(objectId)
+            assertNotNull(pstObjectId.id)
+
+            val primitiveId = GeneratedPrimitiveId()
+            val pstPrimitiveId = em.beePersist(primitiveId)
+            assertNotNull(pstPrimitiveId.id)
+
+            val default = GeneratedPrimitiveId::class.java
+                .getConstructor()
+                .newInstance()
+            val primitiveId3 = GeneratedPrimitiveId().copy(id = -42)
+            val pstPrimitiveId3 = em.beePersist(primitiveId3.copy(id = default.id))
+            assertNotNull(pstPrimitiveId3.id)
         }
     }
 

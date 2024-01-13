@@ -174,3 +174,19 @@ data class SemiCircular2(
 
 @BeeRepository
 interface SemiCircular1Repository : BeeBlazeRepository<SemiCircular1, UUID>
+
+
+@Entity
+data class GeneratedObjectId(
+    @GeneratedValue
+    @Id
+    val id: UUID = UUID.randomUUID()
+)
+
+@Entity
+data class GeneratedPrimitiveId(
+    @GeneratedValue
+    @Id
+    val id: Long = -2
+)
+
