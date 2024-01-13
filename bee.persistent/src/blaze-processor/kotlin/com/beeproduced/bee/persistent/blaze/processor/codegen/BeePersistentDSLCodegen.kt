@@ -3,7 +3,9 @@ package com.beeproduced.bee.persistent.blaze.processor.codegen
 import com.beeproduced.bee.generative.util.PoetMap
 import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilder
 import com.beeproduced.bee.generative.util.toPoetClassName
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.APPLICATION_LISTENER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.APPLICATION_READY_EVENT
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.APPLICATION_STARTING_EVENT
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.BEE_SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentDSLCodegen.PoetConstants.COMPONENT
@@ -80,6 +82,8 @@ class BeePersistentDSLCodegen(
         const val INLINE_VALUE_UNWRAPPERS = "%inlinevalueunwrappers:T"
         const val INLINE_VALUE_CLAZZ = "%inlinevalueclazz:T"
         const val INNER_CLAZZ = "%innerclass:T"
+        const val APPLICATION_LISTENER = "%applicationlistener:T"
+        const val APPLICATION_STARTING_EVENT = "%applicationstartingevent:T"
     }
 
     init {
@@ -98,6 +102,8 @@ class BeePersistentDSLCodegen(
         poetMap.addMapping(EVENT_LISTENER, ClassName("org.springframework.context.event", "EventListener"))
         poetMap.addMapping(APPLICATION_READY_EVENT, ClassName("org.springframework.boot.context.event", "ApplicationReadyEvent"))
         poetMap.addMapping(INLINE_VALUE_UNWRAPPERS, ClassName("com.beeproduced.bee.persistent.blaze.meta.dsl", "InlineValueUnwrappers"))
+        poetMap.addMapping(APPLICATION_LISTENER, ClassName("org.springframework.context", "ApplicationListener"))
+        poetMap.addMapping(APPLICATION_STARTING_EVENT, ClassName("org.springframework.boot.context.event", "ApplicationStartingEvent"))
     }
 
 
@@ -403,22 +409,29 @@ class BeePersistentDSLCodegen(
     }
 
     private fun FileSpec.Builder.buildRegistration() = apply {
-
+        if (inlineValues.isEmpty()) return@apply
 
         // TODO: Rewrite as listener !!
         // Also update view instantiator !!
 
-        val registration = TypeSpec
-            .classBuilder(buildUniqueClassName(packageName, "UnwrapperRegistration"))
-            .addAnnotation(poetMap.classMapping(COMPONENT))
+        val event = poetMap.classMapping(APPLICATION_STARTING_EVENT)
+        val listenerInterface = poetMap.classMapping(APPLICATION_LISTENER)
+            .parameterizedBy(event)
 
-        val eventListenerAnnotation = AnnotationSpec
-            .builder(poetMap.classMapping(EVENT_LISTENER))
-            .addMember("%T::class", poetMap.classMapping(APPLICATION_READY_EVENT))
+        val registrationName = buildUniqueClassName(packageName, "UnwrapperRegistration")
+        val registration = TypeSpec
+            .classBuilder(registrationName)
+            .addSuperinterface(listenerInterface)
+
+        // val eventListenerAnnotation = AnnotationSpec
+        //     .builder(poetMap.classMapping(EVENT_LISTENER))
+        //     .addMember("%T::class", poetMap.classMapping(APPLICATION_READY_EVENT))
 
         val register = FunSpec
-            .builder("register")
-            .addAnnotation(eventListenerAnnotation.build())
+            .builder("onApplicationEvent")
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter("event", event)
+            // .addAnnotation(eventListenerAnnotation.build())
         register.apply {
             // Use · to omit line breaks
             // See: https://github.com/square/kotlinpoet/issues/598#issuecomment-454337042
@@ -434,7 +447,7 @@ class BeePersistentDSLCodegen(
         addType(registration.build())
 
 
-        writeToFile("spring", "org.springframework.context.ApplicationListener=com.beeproduced.bee.persistent.blaze.meta.dsl.TestListener")
+        writeToFile("spring", "org.springframework.context.ApplicationListener=$packageName.$registrationName")
     }
 
     // https://stackoverflow.com/a/76545160/12347616

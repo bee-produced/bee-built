@@ -1,5 +1,7 @@
 package com.beeproduced.bee.persistent.blaze.meta.dsl
 
+import org.springframework.boot.context.event.ApplicationStartedEvent
+import org.springframework.boot.context.event.ApplicationStartingEvent
 import org.springframework.context.ApplicationEvent
 
 import org.springframework.context.ApplicationListener
@@ -16,8 +18,8 @@ import org.springframework.context.ApplicationListener
 
 // TODO: Remove
 
-class TestListener : ApplicationListener<ApplicationEvent?> {
-    override fun onApplicationEvent(event: ApplicationEvent) {
+class TestListener : ApplicationListener<ApplicationStartingEvent> {
+    override fun onApplicationEvent(event: ApplicationStartingEvent) {
         println("event: $event")
     }
 }
