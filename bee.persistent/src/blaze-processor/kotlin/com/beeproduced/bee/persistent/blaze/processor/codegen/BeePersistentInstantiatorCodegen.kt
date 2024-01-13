@@ -14,6 +14,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInsta
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentInstantiatorCodegen.PoetConstants.TCI
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.utils.buildUniqueClassName
+import com.beeproduced.bee.persistent.blaze.processor.utils.reflectionSetterName
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -302,6 +303,7 @@ class BeePersistentInstantiatorCodegen(
         resourcesCodegen.addSpringListener("$packageName.$registrationName")
     }
 
+    // TODO: Use Utils Construction
     data class EntityConstruction(
         val constructorProps: List<EntityProperty>,
         val setterProps: List<EntityProperty>,
@@ -385,21 +387,6 @@ class BeePersistentInstantiatorCodegen(
             is EmbeddedViewInfo -> {
                 (embedded.columns + embedded.lazyColumns).sortedBy { it.simpleName }
             }
-        }
-    }
-
-    private fun KSType.reflectionSetterName(): String {
-        val rpType = declaration.simpleName.asString()
-        return when (rpType) {
-            "Double" -> "setDouble"
-            "Float" -> "setFloat"
-            "Long" -> "setLong"
-            "Int" -> "setInt"
-            "Short" -> "setShort"
-            "Byte" -> "setByte"
-            "Boolean" -> "setBoolean"
-            "Char" -> "setChar"
-            else -> "set"
         }
     }
 

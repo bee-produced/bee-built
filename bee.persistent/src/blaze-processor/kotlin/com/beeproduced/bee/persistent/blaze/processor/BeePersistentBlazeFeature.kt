@@ -197,6 +197,9 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         val dlsPackageName = input.options
             .getOrDefault(BeePersistentBlazeOptions.subPackageDSL, "dsl")
             .let { "$packageName.$it" }
+        val builderPackageName = input.options
+            .getOrDefault(BeePersistentBlazeOptions.subPackageBuilder, "builder")
+            .let { "$packageName.$it" }
         val depth = input.options
             .getOrDefault(BeePersistentBlazeOptions.depth, "2").toInt()
 
@@ -205,7 +208,8 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
             depth,
             viewPackageName,
             repositoryPackageName,
-            dlsPackageName
+            dlsPackageName,
+            builderPackageName,
         )
         val resources = ResourcesCodegen(input.codeGenerator)
 
@@ -242,6 +246,16 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         for (repo in repos) {
             repoCodeGen.processRepo(repo)
         }
+
+        val builderCodegen = BeePersistentBuilderCodegen(
+            input.codeGenerator,
+            input.dependencies,
+            input.logger,
+            views,
+            inheritedEntities,
+            config
+        )
+        builderCodegen.processRepoBuilder(repos)
 
         val dslCodegen = BeePersistentDSLCodegen(
             input.codeGenerator,

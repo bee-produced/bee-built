@@ -12,6 +12,7 @@ object BeePersistentBlazeOptions {
     const val subPackageRepository = "persistentSubPackageRepository"
     const val subPackageView = "persistentSubPackageView"
     const val subPackageDSL = "persistentSubPackageDSL"
+    const val subPackageBuilder = "persistentSubPackageBuilder"
 }
 
 data class BeePersistentBlazeConfig(
@@ -19,5 +20,6 @@ data class BeePersistentBlazeConfig(
     val depth: Int,
     val viewPackageName: String,
     val repositoryPackageName: String,
-    val dslPackageName: String
+    val dslPackageName: String,
+    val builderPackageName: String
 )
