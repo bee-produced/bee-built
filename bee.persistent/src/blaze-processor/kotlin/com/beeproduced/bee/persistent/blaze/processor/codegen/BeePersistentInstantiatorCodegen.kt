@@ -81,7 +81,13 @@ class BeePersistentInstantiatorCodegen(
     }
 
     fun processViews(views: ViewInfo, entities: List<EntityInfo>) {
-        val file = FileSpec.builder(packageName, fileName)
+        val file = FileSpec
+            .builder(packageName, fileName)
+            .addAnnotation(
+                AnnotationSpec.builder(ClassName("", "Suppress"))
+                    .addMember("%S", "UNCHECKED_CAST")
+                    .build()
+            )
 
         for (entity in entities) {
             // Do not generate info for super classes

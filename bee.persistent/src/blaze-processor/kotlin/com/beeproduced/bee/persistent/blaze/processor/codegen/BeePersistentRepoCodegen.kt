@@ -253,9 +253,12 @@ class BeePersistentRepoCodegen(
     }
 
     private fun TypeSpec.Builder.buildPersist(): TypeSpec.Builder = apply {
-        // TODO: On inheritance generic T?
+        val typeVariable = TypeVariableName("E", poetMap.classMapping(CLAZZ))
         val persistFun = FunSpec.builder("persist")
-            .addParameter("entity", poetMap.classMapping(CLAZZ))
+            .addModifiers(KModifier.OVERRIDE)
+            .addTypeVariable(typeVariable)
+            .addParameter("entity", typeVariable)
+            .returns(typeVariable)
         val idLiteral = entity.defaultIdLiteral()
 
         if (entity.subClasses == null) {
@@ -270,6 +273,7 @@ class BeePersistentRepoCodegen(
                 persistFun.buildPersistBlock(subEntity, idLiteral, padding = "  ")
                 persistFun.addStatement("}")
             }
+            persistFun.addStatement("throw Exception(\"Unknown entity [\${entity.javaClass.canonicalName}]\")")
         }
         persistFun.apply {
 
@@ -294,9 +298,10 @@ class BeePersistentRepoCodegen(
         addNamedStmt("${padding}em.persist(e)")
         addNamedStmt("${padding}em.flush()")
         addNamedStmt("${padding}em.clear()")
+        addNamedStmt("${padding}@Suppress(\"UNCHECKED_CAST\")")
 
         if (e.relations.isEmpty()) {
-            addStatement("${padding}return e")
+            addStatement("${padding}return e as E")
             return@apply
         }
 
@@ -304,7 +309,7 @@ class BeePersistentRepoCodegen(
         for (relation in e.relations) {
             addStatement("$padding  ${relation.simpleName}=null")
         }
-        addStatement("$padding}")
+        addStatement("$padding} as E")
     }
 
     private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {

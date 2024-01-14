@@ -18,6 +18,8 @@ interface BeeBlazeRepository<T : Any, ID: Any> {
     val cbf: CriteriaBuilderFactory
     val evm: EntityViewManager
 
+    fun <E: T> persist(entity: E): E
+
     fun select(
         selection: BeeSelection = BeeSelection.empty(),
         dsl: SelectQuery<T>.() -> Selection<T> = { this }
