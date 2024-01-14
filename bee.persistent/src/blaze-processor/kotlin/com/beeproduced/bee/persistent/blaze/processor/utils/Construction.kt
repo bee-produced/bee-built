@@ -104,7 +104,7 @@ fun KSType.reflectionSetterName(): String {
     }
 }
 
-fun KSType.reflectionGettterName(): String {
+fun KSType.reflectionGetterName(): String {
     val rpType = declaration.simpleName.asString()
     return when (rpType) {
         "Double" -> "getDouble"

@@ -20,6 +20,8 @@ interface BeeBlazeRepository<T : Any, ID: Any> {
 
     fun <E: T> persist(entity: E): E
 
+    fun <E: T> update(entity: E): E
+
     fun select(
         selection: BeeSelection = BeeSelection.empty(),
         dsl: SelectQuery<T>.() -> Selection<T> = { this }

@@ -9,7 +9,6 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuild
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.FIELD
 import com.beeproduced.bee.persistent.blaze.processor.info.AbstractProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
-import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
 import com.beeproduced.bee.persistent.blaze.processor.utils.*
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -130,7 +129,7 @@ class BeePersistentBuilderCodegen(
         val infoObjName = entity.infoName()
         for (prop in accessInfo.reflectionProps) {
             val propType = prop.type.toTypeName()
-            val getterName = prop.type.reflectionGettterName()
+            val getterName = prop.type.reflectionGetterName()
             val builderProperty = PropertySpec.builder(prop.simpleName, propType)
                 .initializer("${infoObjName}.${prop.infoField()}.${getterName}(instance) as %T", propType)
                 .mutable(true)

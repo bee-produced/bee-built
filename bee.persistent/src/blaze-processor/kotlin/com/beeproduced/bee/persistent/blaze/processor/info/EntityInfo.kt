@@ -77,6 +77,13 @@ interface AbstractProperty {
     val annotations: List<ResolvedAnnotation>
     val simpleName: String get() = declaration.simpleName.asString()
     val qualifiedName: String? get() = nonCollectionType.declaration.qualifiedName?.asString()
+
+    fun isAccessible(): Boolean {
+        val modifiers = declaration.modifiers
+        return !(modifiers.contains(Modifier.PRIVATE) ||
+            modifiers.contains(Modifier.PROTECTED) ||
+            modifiers.contains(Modifier.INTERNAL))
+    }
 }
 
 interface ValueClassProperty {

@@ -5,7 +5,6 @@ import com.beeproduced.bee.generative.util.PoetMap.Companion.addNStatementBuilde
 import com.beeproduced.bee.generative.util.toPoetClassName
 import com.beeproduced.bee.persistent.blaze.processor.FullyQualifiedName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
-import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.Companion.builderName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.Companion.infoField
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.Companion.infoName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.AUTOWIRED
@@ -33,8 +32,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._VIEW_CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
 import com.beeproduced.bee.persistent.blaze.processor.info.*
-import com.beeproduced.bee.persistent.blaze.processor.utils.accessInfo
-import com.beeproduced.bee.persistent.blaze.processor.utils.reflectionSetterName
+import com.beeproduced.bee.persistent.blaze.processor.utils.reflectionGetterName
 import com.beeproduced.bee.persistent.blaze.processor.utils.viewLazyColumnsWithSubclasses
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -152,6 +150,7 @@ class BeePersistentRepoCodegen(
                 .buildConstructor()
                 .addRepoProperties()
                 .buildPersist()
+                .buildUpdate()
                 .buildSelect()
                 .buildSelectionInfo()
                 .build()
@@ -287,6 +286,7 @@ class BeePersistentRepoCodegen(
     private fun TypeSpec.Builder.buildDefault(e: EntityInfo, idLiteral: String) {
         if (!idLiteral.startsWith("default.")) return
         val defaultProperty = PropertySpec.builder("default", poetMap.classMapping(CLAZZ))
+            .addModifiers(KModifier.PROTECTED)
             .initializer("%T::class.java.getConstructor().newInstance()", e.declaration.toClassName())
         addProperty(defaultProperty.build())
     }
@@ -320,6 +320,60 @@ class BeePersistentRepoCodegen(
             addStatement("$padding  ${relation.simpleName}=null")
         }
         addStatement("$padding} as E")
+    }
+
+    private fun TypeSpec.Builder.buildUpdate(): TypeSpec.Builder = apply {
+        val typeVariable = TypeVariableName("E", poetMap.classMapping(CLAZZ))
+        val persistFun = FunSpec.builder("update")
+            .addModifiers(KModifier.OVERRIDE)
+            .addTypeVariable(typeVariable)
+            .addParameter("entity", typeVariable)
+            .returns(typeVariable)
+        if (entity.subClasses == null) {
+            persistFun.buildUpdateBlock(entity)
+        }
+        else {
+            val subEntities = entity.subClasses!!.map { entities.getValue(it) }
+            for (subEntity in subEntities) {
+                persistFun.addStatement("if (entity is %T) {", subEntity.declaration.toClassName())
+                persistFun.buildUpdateBlock(subEntity, padding = "  ")
+                persistFun.addStatement("}")
+            }
+            persistFun.addStatement("throw Exception(\"Unknown entity [\${entity.javaClass.canonicalName}]\")")
+        }
+        persistFun.apply {
+
+        }
+        addFunction(persistFun.build())
+    }
+
+    private fun FunSpec.Builder.buildUpdateBlock(
+        e: EntityInfo,
+        padding: String = ""
+    ) = apply {
+        val eClassName = e.declaration.toClassName()
+        val columns = e.columns + e.lazyColumns
+        if (columns.isEmpty()) {
+            addStatement("${padding}return entity")
+            return@apply
+        }
+        addStatement("${padding}cbf.update(em, %T::class.java)", eClassName)
+        val infoObjName = e.infoName()
+        val infoObjClass = ClassName(config.builderPackageName, infoObjName)
+        for (column in columns) {
+            val simpleName = column.simpleName
+            if (column.isAccessible()) {
+                addStatement("$padding  .set(\"$simpleName\", entity.$simpleName)")
+            } else {
+                val infoField = column.infoField()
+                val getterName = column.type.reflectionGetterName()
+                addStatement("$padding  .set(\"$simpleName\", %T.${infoField}.${getterName}(entity))", infoObjClass)
+            }
+        }
+        val idSimpleName = e.id.simpleName
+        addStatement("$padding  .where(\"$idSimpleName\").eq(entity.$idSimpleName)")
+        addStatement("$padding  .executeUpdate()")
+        addStatement("${padding}return entity")
     }
 
     private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {
