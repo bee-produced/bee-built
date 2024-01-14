@@ -29,6 +29,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._EVM_PROP
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._FETCH_SELECTION_FN
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._SELECTION_INFO_VAL
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._UNWRAP_FN
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants._VIEW_CLAZZ_PROPERTY
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
 import com.beeproduced.bee.persistent.blaze.processor.info.*
@@ -41,6 +42,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
+import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 
 /**
@@ -99,6 +101,7 @@ class BeePersistentRepoCodegen(
         const val SELECT_QUERY_BUILDER = "%select_query_builder:T"
         const val SELECTION = "%selection:T"
         const val _BEE_CLONE_FN = "%beeclone:M"
+        const val _UNWRAP_FN = "%unwrap:M"
     }
 
     init {
@@ -122,6 +125,7 @@ class BeePersistentRepoCodegen(
         poetMap.addMapping(SELECT_QUERY_BUILDER, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "SelectQueryBuilder"))
         poetMap.addMapping(SELECTION, ClassName("com.beeproduced.bee.persistent.blaze.dsl.select", "Selection"))
         poetMap.addMapping(_BEE_CLONE_FN, MemberName(config.builderPackageName, "beeClone", isExtension = true))
+        poetMap.addMapping(_UNWRAP_FN, MemberName(ClassName("com.beeproduced.bee.persistent.blaze.meta.dsl", "InlineValueUnwrappers"), "unwrap"))
     }
 
     fun processRepo(repo: RepoInfo) {
@@ -363,7 +367,18 @@ class BeePersistentRepoCodegen(
         for (column in columns) {
             val simpleName = column.simpleName
             if (column.isAccessible()) {
-                addStatement("$padding  .set(\"$simpleName\", entity.$simpleName)")
+                val inner = column.innerValue
+                if (inner == null) addStatement("$padding  .set(\"$simpleName\", entity.$simpleName)")
+                else {
+                    val qualifiedName = column.qualifiedName
+                    val unwrapFn = poetMap.mappings.getValue(_UNWRAP_FN)
+                    val columnType = column.type.toTypeName()
+                    val innerType = inner.type.toTypeName()
+                    addStatement(
+                        "$padding  .set(\"$simpleName\", %M<%T, %T>(entity.$simpleName, \"$qualifiedName\"))",
+                        unwrapFn, columnType, innerType
+                    )
+                }
             } else {
                 val infoField = column.infoField()
                 val getterName = column.type.reflectionGetterName()

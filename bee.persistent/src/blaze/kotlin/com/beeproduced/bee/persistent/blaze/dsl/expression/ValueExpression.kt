@@ -22,10 +22,5 @@ interface ValueExpression<V : Any, T : Any> : Expression<T> {
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun <V : Any, T: Any> ValueExpression<V, T>.unwrap(value: V?): T? {
-    return if (value != null) {
-        InlineValueUnwrappers
-            .unwrappers.getValue(unwrapKey())
-            .unwrap(value) as T
-    } else null
-}
+private fun <V : Any, T: Any> ValueExpression<V, T>.unwrap(value: V?): T?
+    = InlineValueUnwrappers.unwrap(value, unwrapKey())

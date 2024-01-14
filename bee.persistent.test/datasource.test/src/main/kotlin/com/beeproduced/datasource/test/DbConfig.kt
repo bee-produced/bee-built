@@ -41,15 +41,15 @@ import javax.sql.DataSource
     entityManagerFactoryRef = "testEM",
     transactionManagerRef = "testTM"
 )
-class DbConfigB(val env: Environment) {
+class DbConfigTest(val env: Environment) {
     @Bean(name = ["testDataSource"])
     @ConfigurationProperties(prefix = "spring.datasource-test")
-    fun aDataSource(): DataSource {
+    fun testDataSource(): DataSource {
         return DataSourceBuilder.create().build()
     }
 
     @Bean(name = ["testEM"])
-    fun aEntityManager(@Qualifier("testDataSource") dataSource: DataSource): LocalContainerEntityManagerFactoryBean {
+    fun testtEntityManager(@Qualifier("testDataSource") dataSource: DataSource): LocalContainerEntityManagerFactoryBean {
         val em = LocalContainerEntityManagerFactoryBean()
         em.setDataSource(dataSource)
         em.setPackagesToScan("com.beeproduced.datasource.test")
@@ -63,7 +63,7 @@ class DbConfigB(val env: Environment) {
     }
 
     @Bean(name = ["testTM"])
-    fun aTransactionManager(@Qualifier("testEM") bEntityManager: AbstractEntityManagerFactoryBean): PlatformTransactionManager {
+    fun testTransactionManager(@Qualifier("testEM") bEntityManager: AbstractEntityManagerFactoryBean): PlatformTransactionManager {
         val transactionManager = JpaTransactionManager()
         transactionManager.entityManagerFactory = bEntityManager.getObject()
         return transactionManager
@@ -72,7 +72,7 @@ class DbConfigB(val env: Environment) {
     @Bean(name = ["testCBF"])
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
     @Lazy(false)
-    fun aCriteriaBuilderFactory(
+    fun testCriteriaBuilderFactory(
         @Qualifier("testEM") bEntityManager: EntityManagerFactory
     ): CriteriaBuilderFactory {
         val config: CriteriaBuilderConfiguration = Criteria.getDefault()
@@ -82,7 +82,7 @@ class DbConfigB(val env: Environment) {
     @Bean(name = ["testEVM"])
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
     @Lazy(false)
-    fun aEntityViewManager(
+    fun testEntityViewManager(
         @Qualifier("testCBF") cbf: CriteriaBuilderFactory,
         @Qualifier("testTM") transactionManager: PlatformTransactionManager,
         resourceLoader: ResourceLoader,

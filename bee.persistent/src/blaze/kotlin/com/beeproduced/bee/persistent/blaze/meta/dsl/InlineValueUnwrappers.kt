@@ -1,5 +1,6 @@
 package com.beeproduced.bee.persistent.blaze.meta.dsl
 
+import com.beeproduced.bee.persistent.blaze.dsl.expression.ValueExpression
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -31,5 +32,11 @@ object InlineValueUnwrappers {
         ).target.invokeExact() as InlineValueUnwrapper
 
         unwrappers[inlineValueClass.canonicalName] = unwrap
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <V : Any, T: Any> unwrap(value: V?, unwrapKey: String): T? {
+        return if (value == null) null
+        else unwrappers.getValue(unwrapKey).unwrap(value) as T
     }
 }
