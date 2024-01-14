@@ -58,6 +58,7 @@ dependencies {
     // data sources
     implementation(project(":datasource.a"))
     implementation(project(":datasource.b"))
+    implementation(project(":datasource.test"))
     // in-house libraries
     /* implementation("com.beeproduced:bee.buzz")
     implementation("com.beeproduced:bee.buzz") {
