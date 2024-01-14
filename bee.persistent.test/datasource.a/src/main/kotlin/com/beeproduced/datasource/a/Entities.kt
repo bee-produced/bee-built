@@ -183,6 +183,9 @@ data class GeneratedObjectId(
     val id: UUID = UUID.randomUUID()
 )
 
+@BeeRepository
+interface GeneratedObjectIdRepository : BeeBlazeRepository<GeneratedObjectId, UUID>
+
 @Entity
 data class GeneratedPrimitiveId(
     @GeneratedValue

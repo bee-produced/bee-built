@@ -49,6 +49,10 @@ class BeePersistentTestA(
     val circularRepository: CircularRepository,
     @Autowired
     val semiCircular1Repository: SemiCircular1Repository,
+    @Autowired
+    val generatedObjectIdRepository: GeneratedObjectIdRepository,
+    @Autowired
+    val generatedPrimitiveIdRepository: GeneratedPrimitiveIdRepository
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
@@ -723,6 +727,31 @@ class BeePersistentTestA(
                 .newInstance()
             val primitiveId3 = GeneratedPrimitiveId().copy(id = -42)
             val pstPrimitiveId3 = em.beePersist(primitiveId3.copy(id = default.id))
+            assertNotNull(pstPrimitiveId3.id)
+        }
+    }
+
+
+    @Test
+    fun `test persist`() {
+        transaction.executeWithoutResult {
+            val objectId = GeneratedObjectId()
+            val pstObjectId = generatedObjectIdRepository.persist(objectId)
+            assertNotNull(pstObjectId.id)
+
+            val primitiveId = GeneratedPrimitiveId()
+            val pstPrimitiveId = generatedPrimitiveIdRepository.persist(primitiveId)
+            assertNotNull(pstPrimitiveId.id)
+
+            val primitiveId2 = GeneratedPrimitiveId().copy(id = -42)
+            val pstPrimitiveId2 = generatedPrimitiveIdRepository.persist(primitiveId2)
+            assertNotNull(pstPrimitiveId2.id)
+
+            val default = GeneratedPrimitiveId::class.java
+                .getConstructor()
+                .newInstance()
+            val primitiveId3 = GeneratedPrimitiveId().copy(id = -42)
+            val pstPrimitiveId3 = generatedPrimitiveIdRepository.persist(primitiveId3.copy(id = default.id))
             assertNotNull(pstPrimitiveId3.id)
         }
     }

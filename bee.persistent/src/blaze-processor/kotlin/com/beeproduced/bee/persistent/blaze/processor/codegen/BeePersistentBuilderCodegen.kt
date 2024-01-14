@@ -7,6 +7,7 @@ import com.beeproduced.bee.persistent.blaze.processor.FullyQualifiedName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.BUILDER
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.CLAZZ
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.PoetConstants.FIELD
+import com.beeproduced.bee.persistent.blaze.processor.info.AbstractProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityInfo
 import com.beeproduced.bee.persistent.blaze.processor.info.EntityProperty
 import com.beeproduced.bee.persistent.blaze.processor.info.RepoInfo
@@ -85,15 +86,19 @@ class BeePersistentBuilderCodegen(
 
     private fun FileSpec.Builder.buildInfo(entity: EntityInfo) = apply {
         val access = entity.accessInfo(false)
-        if (access.reflectionProps.isEmpty()) return@apply
+        val hasPrimitiveId = entity.hasPrimitiveId()
+        if (access.reflectionProps.isEmpty() && hasPrimitiveId) return@apply
 
         val infoObj = TypeSpec.objectBuilder(entity.infoName())
         val entityClassName = entity.declaration.toClassName()
-        for (property in access.reflectionProps) {
+
+        val properties = access.reflectionProps + entity.id
+
+        for (property in properties) {
             val reflectionField = PropertySpec
                 .builder(property.infoField(), poetMap.classMapping(FIELD))
                 .initializer(
-                    "%T::class.java.getDeclaredField(\"${property.simpleName}\").apply { isAccessible = true }",
+                    "%T::class.java.getDeclaredField(\"${property.simpleName}\").apply·{·isAccessible·=·true·}",
                     entityClassName
                 )
             infoObj.addProperty(reflectionField.build())
@@ -166,10 +171,24 @@ class BeePersistentBuilderCodegen(
 
     companion object {
         fun EntityInfo.builderName(): String = "${uniqueName}Builder"
+
+        fun EntityInfo.infoName(): String = "${uniqueName}BuilderInfo"
+
+        fun AbstractProperty.infoField(): String = "${simpleName}Field"
+
+        fun EntityInfo.hasPrimitiveId(): Boolean {
+            val type = id.type
+            if (type.isMarkedNullable) return false
+            val typeName = type.declaration.simpleName.asString()
+            return when (typeName) {
+                "Double" -> true
+                "Float" -> true
+                "Long" -> true
+                "Int", "Short", "Byte" -> true
+                "Boolean" -> true
+                "Char" -> true
+                else -> false
+            }
+        }
     }
-
-    private fun EntityInfo.infoName(): String = "${uniqueName}BuilderInfo"
-
-    private fun EntityProperty.infoField(): String = "${simpleName}Field"
-
 }

@@ -6,6 +6,8 @@ import com.beeproduced.bee.generative.util.toPoetClassName
 import com.beeproduced.bee.persistent.blaze.processor.FullyQualifiedName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentAnalyser.Companion.viewName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.Companion.builderName
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.Companion.infoField
+import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentBuilderCodegen.Companion.infoName
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.AUTOWIRED
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.BEE_SELECTION
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.CLAZZ
@@ -32,6 +34,7 @@ import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoC
 import com.beeproduced.bee.persistent.blaze.processor.codegen.BeePersistentRepoCodegen.PoetConstants.__SELECTION_INFO_NAME
 import com.beeproduced.bee.persistent.blaze.processor.info.*
 import com.beeproduced.bee.persistent.blaze.processor.utils.accessInfo
+import com.beeproduced.bee.persistent.blaze.processor.utils.reflectionSetterName
 import com.beeproduced.bee.persistent.blaze.processor.utils.viewLazyColumnsWithSubclasses
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -293,8 +296,15 @@ class BeePersistentRepoCodegen(
         idLiteral: String,
         padding: String = ""
     ) = apply {
-        val idAssignment = if (idLiteral.isEmpty()) "" else "${e.id.simpleName}=$idLiteral"
+        val idAssignment = if (idLiteral.startsWith("default.")) "${e.id.simpleName}=$idLiteral" else ""
         addNamedStmt("${padding}val e = entity.$_BEE_CLONE_FN { $idAssignment }")
+        // TODO: Integrate into builder breaking nullability rules?
+        if (idLiteral == "null") {
+            val infoObjName = e.infoName()
+            val infoField = e.id.infoField()
+            val infoObjClass = ClassName(config.builderPackageName, infoObjName)
+            addStatement("${padding}%T.${infoField}.set(e, null)", infoObjClass)
+        }
         addNamedStmt("${padding}em.persist(e)")
         addNamedStmt("${padding}em.flush()")
         addNamedStmt("${padding}em.clear()")
