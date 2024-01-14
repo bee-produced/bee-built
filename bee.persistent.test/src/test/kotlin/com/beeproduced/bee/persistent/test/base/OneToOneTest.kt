@@ -172,6 +172,81 @@ class OneToOneTest(
 
     @Test
     fun `select recursive selection`() {
+        var rootId: Long = -1
+        var branchAId: Long = -1
+        var branchBId: Long = -1
+        var branchABId: Long = -1
+        transaction.executeWithoutResult {
+            val root = rootRepo.persist(Root())
+            rootId = root.id
+            val branchA = branchRepo.persist(Branch())
+            branchAId = branchA.id
+            branchBId = branchRepo.persist(Branch()).id
+            branchABId = branchRepo.persist(Branch()).id
 
+            rootRepo.update(
+                root.copy(branchAKey = branchAId, branchBKey = branchBId)
+            )
+            // Reference to itself on "branchA"!
+            branchRepo.update(
+                branchA.copy(branchAKey = branchAId, branchBKey = branchABId)
+            )
+        }
+
+        transaction.executeWithoutResult {
+            val selection = RootDSL.select {
+                this.branchA {
+                    this.branchA {
+                        this.branchA { }
+                        this.branchB {  }
+                    }
+                    this.branchB {
+                        this.branchA {  }
+                        this.branchB {  }
+                    }
+                }
+                this.branchB {
+                    this.branchA {
+                        this.branchA { }
+                        this.branchB {  }
+                    }
+                    this.branchB {
+                        this.branchA {  }
+                        this.branchB {  }
+                    }
+                }
+            }
+
+            // TODO: Replace with selectById
+            val root = rootRepo.select(selection) {
+                where(RootDSL.id.eq(rootId))
+            }.firstOrNull()
+
+            assertNotNull(root)
+            assertEquals(rootId, root.id)
+            val branchA = root.branchA
+            assertNotNull(branchA)
+            assertEquals(branchAId, branchA.id)
+            val branchAA = branchA.branchA
+            assertNotNull(branchAA)
+            assertEquals(branchAId, branchAA.id)
+            val branchAAA = branchAA.branchA
+            assertNotNull(branchAAA)
+            assertEquals(branchAId, branchAAA.id)
+            assertNull(branchAAA.branchA)
+            assertNull(branchAAA.branchB)
+
+            val branchAB = branchA.branchB
+            assertNotNull(branchAB)
+            assertEquals(branchABId, branchAB.id)
+            assertNull(branchAB.branchA)
+            assertNull(branchAB.branchB)
+
+            val branchB = root.branchB
+            assertNotNull(branchB)
+            assertEquals(branchBId, branchB.id)
+            assertNull(branchB.branchA)
+            assertNull(branchB.branchB)
+        }
     }
 }
