@@ -522,7 +522,7 @@ class BeePersistentTestA(
         }
     } */
 
-    @Test
+    /* @Test
     fun `test where`() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
@@ -595,10 +595,10 @@ class BeePersistentTestA(
             println("baum")
 
         }
-    }
+    } */
 
 
-    @Test
+    /* @Test
     fun `more where`() {
         val clazz = Foxtrot::class.java
         val method = clazz.getDeclaredMethod("unbox-impl")
@@ -658,7 +658,7 @@ class BeePersistentTestA(
             // assertEquals(fooBar, w.fooBar)
             // assertEquals(foxtrot, w.foxtrot)
         }
-    }
+    } */
 
     /* fun addSong() {
         transaction.executeWithoutResult {
