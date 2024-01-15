@@ -1,6 +1,7 @@
 package com.beeproduced.bee.persistent.test.base
 
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
+import com.beeproduced.bee.persistent.test.config.BaseTestConfig
 import com.beeproduced.datasource.test.dsl.WorkCollectionDSL
 import com.beeproduced.datasource.test.dsl.WorkDSL
 import com.beeproduced.datasource.test.onetomany.*

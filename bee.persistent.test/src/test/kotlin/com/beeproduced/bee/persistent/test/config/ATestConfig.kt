@@ -1,4 +1,4 @@
-package com.beeproduced.bee.persistent.test.base
+package com.beeproduced.bee.persistent.test.config
 
 import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration
 import com.netflix.graphql.dgs.subscriptions.websockets.DgsWebSocketAutoConfig
@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * @version 2024-01-14
  */
 @SpringBootApplication(
-    scanBasePackages = ["com.beeproduced.datasource.test"],
+    scanBasePackages = ["com.beeproduced.datasource.a"],
     exclude = [
         DgsAutoConfiguration::class,
         DgsWebMvcAutoConfiguration::class,
@@ -21,4 +21,4 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
     ]
 )
 @EnableConfigurationProperties
-class BaseTestConfig
+class ATestConfig

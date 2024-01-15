@@ -1,6 +1,6 @@
 package com.beeproduced.bee.persistent.test.persist
 
-import com.beeproduced.bee.persistent.test.base.BaseTestConfig
+import com.beeproduced.bee.persistent.test.config.BaseTestConfig
 import com.beeproduced.bee.persistent.test.beePersist
 import com.beeproduced.datasource.test.persist.*
 import jakarta.persistence.EntityManager

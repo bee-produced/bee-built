@@ -19,8 +19,8 @@ import java.util.*
 @Table(name = "songs")
 data class Song(
     @Id
-    // @GeneratedValue // TODO: persist
-    val id: UUID,
+    @GeneratedValue
+    val id: UUID = UUID.randomUUID(),
     val name: String,
     @Column(name = "interpret_id")
     val interpretId: UUID,
@@ -46,8 +46,8 @@ interface SongRepository : BeeBlazeRepository<Song, UUID>
 @Table(name = "persons")
 data class Person(
     @Id
-    // @GeneratedValue // TODO: persist
-    val id: UUID,
+    @GeneratedValue
+    val id: UUID = UUID.randomUUID(),
     val firstname: String,
     val lastname: String,
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "person")
@@ -58,23 +58,33 @@ data class Person(
     val address: Address? = null
 )
 
+@BeeRepository
+interface PersonRepository : BeeBlazeRepository<Person, UUID>
+
 @Entity
 @Table(name = "addresses")
 data class Address(
     @Id
-    val id: UUID,
+    @GeneratedValue
+    val id: UUID = UUID.randomUUID(),
     val street: String
 )
+
+@BeeRepository
+interface AddressRepository : BeeBlazeRepository<Address, UUID>
 
 @Entity
 @Table(name = "companies")
 data class Company(
     @Id
-    // @GeneratedValue // TODO: persist
-    val id: UUID,
+    @GeneratedValue
+    val id: UUID = UUID.randomUUID(),
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "company")
     val employees: Set<CompanyPerson>?
 )
+
+@BeeRepository
+interface CompanyRepository : BeeBlazeRepository<Company, UUID>
 
 @Embeddable
 data class CompanyPersonId(
@@ -96,6 +106,9 @@ data class CompanyPerson(
     @JoinColumn(name = "person_id", referencedColumnName = "id", insertable = false, updatable = false)
     val person: Person?,
 )
+
+@BeeRepository
+interface CompanyPersonRepository : BeeBlazeRepository<CompanyPerson, CompanyPersonId>
 
 data class FooBar(
     val foo: String,

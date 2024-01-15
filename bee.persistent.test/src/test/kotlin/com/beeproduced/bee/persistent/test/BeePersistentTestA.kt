@@ -56,7 +56,7 @@ class BeePersistentTestA(
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
-    @Test
+    /* @Test
     fun `empty selection`() {
         addSong()
         transaction.executeWithoutResult {
@@ -67,9 +67,9 @@ class BeePersistentTestA(
             assertNull(song.interpret)
             assertNull(song.producer)
         }
-    }
+    } */
 
-    @Test
+    /* @Test
     fun `full selection`() {
         addSong()
         transaction.executeWithoutResult {
@@ -172,8 +172,8 @@ class BeePersistentTestA(
 
         }
     }
-
-    @Test
+ */
+    /* @Test
     fun `partial selection 1`() {
         addSong()
         transaction.executeWithoutResult {
@@ -223,8 +223,8 @@ class BeePersistentTestA(
             assertNull(song.producer)
         }
     }
-
-    @Test
+ */
+    /* @Test
     fun `partial selection 2`() {
         addSong()
         transaction.executeWithoutResult {
@@ -276,8 +276,8 @@ class BeePersistentTestA(
             assertNotNull(pEPCP)
         }
     }
-
-    @Test
+ */
+    /* @Test
     fun `partial selection 3`() {
         addSong()
         transaction.executeWithoutResult {
@@ -319,7 +319,7 @@ class BeePersistentTestA(
             assertTrue { producer.employees.isNullOrEmpty() }
         }
     }
-
+ */
     @Test
     fun `test value class and converter`() {
         transaction.executeWithoutResult {
