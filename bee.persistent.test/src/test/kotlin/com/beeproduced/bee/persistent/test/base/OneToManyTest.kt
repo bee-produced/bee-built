@@ -2,6 +2,7 @@ package com.beeproduced.bee.persistent.test.base
 
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.beeproduced.datasource.test.dsl.WorkCollectionDSL
+import com.beeproduced.datasource.test.dsl.WorkDSL
 import com.beeproduced.datasource.test.onetomany.*
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.AfterEach
@@ -81,7 +82,7 @@ class OneToManyTest(
             }.firstOrNull()
 
             assertNotNull(collection)
-            assertWorkCollection(collection, collectionId, setOf(workId1, workId2), 2)
+            assertWorkCollection(collection, collectionId, setOf(workId1, workId2), 3)
         }
     }
 
@@ -142,7 +143,7 @@ class OneToManyTest(
             }.firstOrNull()
 
             assertNotNull(collection)
-            assertWorkCollection(collection, collectionId2, setOf(workId2), 2)
+            assertWorkCollection(collection, collectionId2, setOf(workId2), 3)
         }
     }
 
@@ -180,10 +181,81 @@ class OneToManyTest(
             assertEquals(2, collections.count())
             val collection1 = collections.first { it.id == collectionId1 }
             val collection2 = collections.first { it.id == collectionId2 }
-            assertWorkCollection(collection1, collectionId1, setOf(workId1), 2)
-            assertWorkCollection(collection2, collectionId2, setOf(workId2), 2)
+            assertWorkCollection(collection1, collectionId1, setOf(workId1), 3)
+            assertWorkCollection(collection2, collectionId2, setOf(workId2), 3)
         }
     }
+
+    @Test
+    fun `persist all and select with relation loaded`() {
+        // Note: `persistAllAndSelect` will not be implemented for `bee.persistent.blaze`
+        var collectionId1: Long = -1
+        var collectionId2: Long = -1
+        var workId1 = WorkId()
+        var workId2 = WorkId()
+
+        transaction.executeWithoutResult {
+            val collection1 = collectionRepo.persist(WorkCollection())
+            collectionId1 = collection1.id
+            val collection2 = collectionRepo.persist(WorkCollection())
+            collectionId2 = collection2.id
+            val work1 = workRepo.persist(Work(WorkId(++workIdCount, collectionId1), "Hey!"))
+            workId1 = work1.id
+            val work2 = workRepo.persist(Work(WorkId(++workIdCount, collectionId2), "Moin!"))
+            workId2 = work2.id
+
+            val selection = WorkDSL.select {
+                this.workCollection { this.works { this.workCollection { } } }
+            }
+
+            val pstWorks = listOf(work1, work2).map {
+                workRepo.select(selection) {
+                    where(WorkDSL.id.eq(it.id))
+                }.first()
+            }
+
+            val pstWork1 = pstWorks.first { it.id == workId1 }
+            val pstWork2 = pstWorks.first { it.id == workId2 }
+            assertWork(pstWork1, collectionId1, setOf(workId1), 3)
+            assertWork(pstWork2, collectionId2, setOf(workId2), 3)
+        }
+    }
+
+    @Test
+    // Note: This test cases does not work with `bee.persistent.jpa`!
+    // Single relations are loaded eagerly since Hibernate 6
+    fun `persist all and select with relation not loaded`() {
+        // Note: `persistAllAndSelect` will not be implemented for `bee.persistent.blaze`
+        var collectionId1: Long = -1
+        var collectionId2: Long = -1
+        var workId1 = WorkId()
+        var workId2 = WorkId()
+
+        transaction.executeWithoutResult {
+            val collection1 = collectionRepo.persist(WorkCollection())
+            collectionId1 = collection1.id
+            val collection2 = collectionRepo.persist(WorkCollection())
+            collectionId2 = collection2.id
+            val work1 = workRepo.persist(Work(WorkId(++workIdCount, collectionId1), "Hey!"))
+            workId1 = work1.id
+            val work2 = workRepo.persist(Work(WorkId(++workIdCount, collectionId2), "Moin!"))
+            workId2 = work2.id
+
+            val selection = BeeSelection.empty()
+
+            val pstWorks = listOf(work1, work2).map {
+                workRepo.select(selection) {
+                    where(WorkDSL.id.eq(it.id))
+                }.first()
+            }
+
+            val pstWork1 = pstWorks.first { it.id == workId1 }
+            val pstWork2 = pstWorks.first { it.id == workId2 }
+            assertWork(pstWork1, collectionId1, setOf(workId1), 0)
+            assertWork(pstWork2, collectionId2, setOf(workId2), 0)
+        }
+    }
+
 
     private fun assertWorkCollection(
         workCollection: WorkCollection,
@@ -200,18 +272,33 @@ class OneToManyTest(
         assertNotNull(works)
         assertEquals(workIds.count(), works.count())
         for (work in works) {
-            workIds.contains(work.id)
-            val newDepth = depth - 1
-            val newWorkCollection = work.workCollection
-            if (newDepth != 0) {
-                assertNotNull(newWorkCollection)
-                assertWorkCollection(newWorkCollection, collectionId, workIds, newDepth)
-            } else {
-                assertNull(newWorkCollection)
-            }
+            // assertTrue { workIds.contains(work.id) }
+            assertWork(work, collectionId, workIds, depth - 1)
 
+            // val newDepth = depth - 1
+            // val newWorkCollection = work.workCollection
+            // if (newDepth != 0) {
+            //     assertNotNull(newWorkCollection)
+            //     assertWorkCollection(newWorkCollection, collectionId, workIds, newDepth)
+            // } else {
+            //     assertNull(newWorkCollection)
+            // }
         }
     }
 
+    private fun assertWork(
+        work: Work,
+        collectionId: Long, workIds: Set<WorkId>, depth: Int
+    ) {
+        assertTrue { workIds.contains(work.id) }
+        val collection = work.workCollection
+        if (depth == 0) {
+            assertNull(collection)
+            return
+        }
+
+        assertNotNull(collection)
+        assertWorkCollection(collection, collectionId, workIds, depth - 1)
+    }
 
 }
