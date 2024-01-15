@@ -1,14 +1,10 @@
 package com.beeproduced.bee.persistent.test.select
 
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
-import com.beeproduced.bee.persistent.test.beePersist
 import com.beeproduced.bee.persistent.test.config.BTestConfig
-import com.beeproduced.bee.persistent.test.config.BaseTestConfig
 import com.beeproduced.datasource.b.*
 import com.beeproduced.datasource.b.dsl.ComposerContainerDSL
 import com.beeproduced.datasource.b.dsl.ComposerDSL
-import com.beeproduced.datasource.test.onetoone.Branch
-import com.beeproduced.datasource.test.onetoone.Root
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
