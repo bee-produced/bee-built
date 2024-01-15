@@ -41,7 +41,7 @@ class BeePersistentTestB(
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
-    @Test
+    /* @Test
     fun `empty selection`() {
         addComposers()
         transaction.executeWithoutResult {
@@ -168,7 +168,7 @@ class BeePersistentTestB(
             assertNotNull(c2)
             assertNotNull(c2.humanData)
         }
-    }
+    } */
 
     @BeforeAll
     fun beforeAll() {

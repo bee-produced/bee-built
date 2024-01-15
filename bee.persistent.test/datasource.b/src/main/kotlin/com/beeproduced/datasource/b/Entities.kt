@@ -44,6 +44,9 @@ data class AiData(
     val data: String
 )
 
+@BeeRepository
+interface AiDataRepository : BeeBlazeRepository<AiData, UUID>
+
 @Embeddable
 data class AiParams(
     val z1: String,
@@ -68,6 +71,9 @@ data class HumanData(
     val id: UUID,
     val data: String
 )
+
+@BeeRepository
+interface HumanDataRepository : BeeBlazeRepository<HumanData, UUID>
 
 @Entity
 data class ComposerContainer(
