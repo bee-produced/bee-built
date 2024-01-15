@@ -1,6 +1,6 @@
 package com.beeproduced.bee.persistent.test.base
 
-import com.beeproduced.datasource.a.FooBar
+import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.beeproduced.datasource.test.dsl.BarDSL
 import com.beeproduced.datasource.test.dsl.FooDSL
 import com.beeproduced.datasource.test.manytomany.*
@@ -126,6 +126,143 @@ class ManyToManyTest(
             }.firstOrNull()
             assertNotNull(foo2)
             assertFoo(foo2, setOf(foo2Id, foo1Id), setOf(barId), 3)
+        }
+    }
+
+    @Test
+    fun `select with relations not loaded`() {
+        var barId: Long = -1
+        var foo1Id: Long = -1
+        var foo2Id: Long = -1
+        var foo3Id: Long = -1
+
+        transaction.executeWithoutResult {
+            val bar = barRepo.persist(Bar())
+            barId = bar.id
+            val foo1 = fooRepo.persist(Foo())
+            foo1Id = foo1.id
+            val foo2 = fooRepo.persist(Foo())
+            foo2Id = foo2.id
+            val foo3 = fooRepo.persist(Foo())
+            foo3Id = foo3.id
+        }
+
+        transaction.executeWithoutResult {
+            val bars = barRepo.select()
+            assertEquals(1, bars.count())
+            val foos = fooRepo.select()
+            assertEquals(3, foos.count())
+        }
+
+        transaction.executeWithoutResult {
+            fooBarRepo.persist(FooBarRelation(FooBarId(foo1Id, barId)))
+        }
+
+        val barSelection = BeeSelection.empty()
+        val fooSelection = BeeSelection.empty()
+        transaction.executeWithoutResult {
+            val bar = barRepo.select(barSelection) {
+                where(BarDSL.id.eq(barId))
+            }.firstOrNull()
+            assertNotNull(bar)
+            assertBar(bar, setOf(barId), setOf(foo1Id), 0)
+            val foo1 = fooRepo.select(fooSelection) {
+                where(FooDSL.id.eq(foo1Id))
+            }.firstOrNull()
+            assertNotNull(foo1)
+            assertFoo(foo1, setOf(foo1Id), setOf(barId), 0)
+            val foo2 = fooRepo.select(fooSelection) {
+                where(FooDSL.id.eq(foo2Id))
+            }.firstOrNull()
+            assertNotNull(foo2)
+            assertFoo(foo2, setOf(foo2Id), emptySet(), 0)
+        }
+
+        transaction.executeWithoutResult {
+            fooBarRepo.persist(FooBarRelation(FooBarId(foo2Id, barId)))
+        }
+
+        transaction.executeWithoutResult {
+            val bar = barRepo.select(barSelection) {
+                where(BarDSL.id.eq(barId))
+            }.firstOrNull()
+            assertNotNull(bar)
+            assertBar(bar, setOf(barId), setOf(foo1Id, foo2Id), 0)
+            val foo1 = fooRepo.select(fooSelection) {
+                where(FooDSL.id.eq(foo1Id))
+            }.firstOrNull()
+            assertNotNull(foo1)
+            assertFoo(foo1, setOf(foo1Id, foo2Id), setOf(barId), 0)
+            val foo2 = fooRepo.select(fooSelection) {
+                where(FooDSL.id.eq(foo2Id))
+            }.firstOrNull()
+            assertNotNull(foo2)
+            assertFoo(foo2, setOf(foo2Id, foo1Id), setOf(barId), 0)
+        }
+    }
+
+    @Test
+    fun `delete relation`() {
+        var barId: Long = -1
+        var foo1Id: Long = -1
+        var foo2Id: Long = -1
+        var foo3Id: Long = -1
+
+        transaction.executeWithoutResult {
+            val bar = barRepo.persist(Bar())
+            barId = bar.id
+            val foo1 = fooRepo.persist(Foo())
+            foo1Id = foo1.id
+            val foo2 = fooRepo.persist(Foo())
+            foo2Id = foo2.id
+            val foo3 = fooRepo.persist(Foo())
+            foo3Id = foo3.id
+        }
+
+        transaction.executeWithoutResult {
+            val bars = barRepo.select()
+            assertEquals(1, bars.count())
+            val foos = fooRepo.select()
+            assertEquals(3, foos.count())
+        }
+
+        transaction.executeWithoutResult {
+            fooBarRepo.persist(FooBarRelation(FooBarId(foo1Id, barId)))
+        }
+
+        val barSelection = BarDSL.select { this.foos { this.bars { this.foos { } } } }
+        val fooSelection = FooDSL.select { this.bars { this.foos { this.bars { } } } }
+        transaction.executeWithoutResult {
+            val bar = barRepo.select(barSelection) {
+                where(BarDSL.id.eq(barId))
+            }.firstOrNull()
+            assertNotNull(bar)
+            assertBar(bar, setOf(barId), setOf(foo1Id), 3)
+            val foo1 = fooRepo.select(fooSelection) {
+                where(FooDSL.id.eq(foo1Id))
+            }.firstOrNull()
+            assertNotNull(foo1)
+            assertFoo(foo1, setOf(foo1Id), setOf(barId), 3)
+        }
+
+        transaction.executeWithoutResult {
+            // TODO: Replace with delete
+            fooBarRepo.cbf.delete(em, FooBarRelation::class.java)
+                .where("id.bar").eq(barId)
+                .executeUpdate()
+        }
+
+        transaction.executeWithoutResult {
+            val bar = barRepo.select(barSelection) {
+                where(BarDSL.id.eq(barId))
+            }.firstOrNull()
+            assertNotNull(bar)
+            assertBar(bar, setOf(barId), emptySet(), 3)
+            val foo1 = fooRepo.select(fooSelection) {
+                where(FooDSL.id.eq(foo1Id))
+            }.firstOrNull()
+            assertNotNull(foo1)
+            assertFoo(foo1, setOf(foo1Id, foo2Id), emptySet(), 3)
         }
     }
 
