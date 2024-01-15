@@ -242,6 +242,7 @@ class OneToOneTest(
             assertNull(branchAB.branchA)
             assertNull(branchAB.branchB)
 
+            // TODO: Investigate in the future: Not set branch keys are 0 instead of `null`
             val branchB = root.branchB
             assertNotNull(branchB)
             assertEquals(branchBId, branchB.id)
