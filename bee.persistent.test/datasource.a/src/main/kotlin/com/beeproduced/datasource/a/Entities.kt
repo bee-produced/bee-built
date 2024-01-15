@@ -188,3 +188,6 @@ data class SemiCircular2(
 @BeeRepository
 interface SemiCircular1Repository : BeeBlazeRepository<SemiCircular1, UUID>
 
+@BeeRepository
+interface SemiCircular2Repository : BeeBlazeRepository<SemiCircular2, UUID>
+

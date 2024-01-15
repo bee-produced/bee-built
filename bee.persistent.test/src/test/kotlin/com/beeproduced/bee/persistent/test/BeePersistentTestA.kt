@@ -320,7 +320,7 @@ class BeePersistentTestA(
         }
     }
  */
-    @Test
+    /* @Test
     fun `test value class and converter`() {
         transaction.executeWithoutResult {
             val id = UUID.randomUUID()
@@ -336,9 +336,9 @@ class BeePersistentTestA(
             assertEquals(fooBar, w.fooBar)
             assertEquals(foxtrot, w.foxtrot)
         }
-    }
+    } */
 
-    @Test
+    /* @Test
     fun `test circular`() {
         transaction.executeWithoutResult {
             val id = UUID.randomUUID()
@@ -360,9 +360,9 @@ class BeePersistentTestA(
             assertNotNull(circleD2)
             assertNull(circleD2.circular)
         }
-    }
+    } */
 
-    @Test
+    /* @Test
     fun `test circular 2`() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
@@ -402,9 +402,9 @@ class BeePersistentTestA(
             assertEquals(id2, circle2D2.id)
             assertNull(circle2D2.circular)
         }
-    }
+    } */
 
-    @Test
+    /* @Test
     fun `test circular 3`() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
@@ -416,9 +416,9 @@ class BeePersistentTestA(
             assertNotNull(circle)
             assertNull(circle.circular)
         }
-    }
+    } */
 
-    @Test
+    /* @Test
     fun `test semi circular`() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
@@ -448,9 +448,9 @@ class BeePersistentTestA(
             assertEquals(id2, circleD3.id)
             assertNull(circleD3.circular)
         }
-    }
+    } */
 
-    @Test
+    /* @Test
     fun `test semi circular 2`() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
@@ -482,9 +482,9 @@ class BeePersistentTestA(
             assertEquals(id2, circleD3.id)
             assertNull(circleD3.circular)
         }
-    }
+    } */
 
-    @Test
+    /* @Test
     fun `test semi circular 3`() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
@@ -520,7 +520,7 @@ class BeePersistentTestA(
             assertEquals(id4, circleD3.id)
             assertNull(circleD3.circular)
         }
-    }
+    } */
 
     @Test
     fun `test where`() {

@@ -18,6 +18,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 import java.util.*
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -46,7 +47,9 @@ class SelectionATest(
     @Autowired
     val companyRepo: CompanyRepository,
     @Autowired
-    val addressRepo: AddressRepository
+    val addressRepo: AddressRepository,
+    @Autowired
+    val weirdClassRepo: WeirdClassRepository
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
@@ -62,6 +65,7 @@ class SelectionATest(
             companyPersonRepo.cbf.delete(em, CompanyPerson::class.java).executeUpdate()
             personRepo.cbf.delete(em, Person::class.java).executeUpdate()
             companyRepo.cbf.delete(em, Company::class.java).executeUpdate()
+            weirdClassRepo.cbf.delete(em, WeirdClass::class.java).executeUpdate()
         }
     }
 
@@ -187,6 +191,23 @@ class SelectionATest(
             val song = songRepo.select(selection).firstOrNull()
             assertNotNull(song)
             assertSong(song, selection)
+        }
+    }
+
+    @Test
+    fun `inline value class and converter`() {
+        transaction.executeWithoutResult {
+            val id = UUID.randomUUID()
+            val fooBar = FooBar("foo", "bar")
+            val foxtrot = Foxtrot("foxtrot")
+            weirdClassRepo.persist(WeirdClass(id, fooBar, foxtrot))
+
+            val w = weirdClassRepo.select().firstOrNull()
+
+            assertNotNull(w)
+            assertEquals(id, w.id)
+            assertEquals(fooBar, w.fooBar)
+            assertEquals(foxtrot, w.foxtrot)
         }
     }
 
