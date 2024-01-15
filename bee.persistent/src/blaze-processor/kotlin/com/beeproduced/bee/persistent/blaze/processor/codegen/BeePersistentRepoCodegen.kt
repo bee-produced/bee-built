@@ -246,7 +246,8 @@ class BeePersistentRepoCodegen(
         if (!id.isGenerated) return ""
         val type = id.type
         if (type.isMarkedNullable) return "null"
-        val typeName = type.declaration.simpleName.asString()
+        val typeName = if (id.innerValue != null) id.innerValue.type.declaration.simpleName.asString()
+        else type.declaration.simpleName.asString()
         return when (typeName) {
             "Double" -> "default.${id.simpleName}"
             "Float" -> "default.${id.simpleName}"

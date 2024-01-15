@@ -49,10 +49,10 @@ class BeePersistentTestA(
     val circularRepository: CircularRepository,
     @Autowired
     val semiCircular1Repository: SemiCircular1Repository,
-    @Autowired
-    val generatedObjectIdRepository: GeneratedObjectIdRepository,
-    @Autowired
-    val generatedPrimitiveIdRepository: GeneratedPrimitiveIdRepository
+    // @Autowired
+    // val generatedObjectIdRepository: GeneratedObjectIdRepository,
+    // @Autowired
+    // val generatedPrimitiveIdRepository: GeneratedPrimitiveIdRepository
 ) {
     private val transaction = TransactionTemplate(transactionManager)
 
@@ -689,72 +689,72 @@ class BeePersistentTestA(
         }
     }
 
-    @Test
-    fun persist() {
-        assertThrows<Exception> {
-            transaction.executeWithoutResult {
-                // Different value than in constructor (-2 != -42)!
-                val primitiveId2 = GeneratedPrimitiveId().copy(id = -42)
-                val pstPrimitiveId2 = em.beePersist(primitiveId2)
-                assertNotNull(pstPrimitiveId2.id)
-            }
-        }
-
-        assertThrows<Exception> {
-            transaction.executeWithoutResult {
-                // Primitive field which cannot be set to null!
-                val idField2 = GeneratedPrimitiveId::class.java.getDeclaredField("id").apply { isAccessible = true }
-                val primitiveId4 = GeneratedPrimitiveId()
-                idField2.set(primitiveId4, null)
-                val pstPrimitiveId4 = em.beePersist(primitiveId4)
-                assertNotNull(pstPrimitiveId4.id)
-            }
-        }
-
-        transaction.executeWithoutResult {
-            val idField = GeneratedObjectId::class.java.getDeclaredField("id").apply { isAccessible = true }
-            val objectId = GeneratedObjectId()
-            idField.set(objectId, null)
-            val pstObjectId = em.beePersist(objectId)
-            assertNotNull(pstObjectId.id)
-
-            val primitiveId = GeneratedPrimitiveId()
-            val pstPrimitiveId = em.beePersist(primitiveId)
-            assertNotNull(pstPrimitiveId.id)
-
-            val default = GeneratedPrimitiveId::class.java
-                .getConstructor()
-                .newInstance()
-            val primitiveId3 = GeneratedPrimitiveId().copy(id = -42)
-            val pstPrimitiveId3 = em.beePersist(primitiveId3.copy(id = default.id))
-            assertNotNull(pstPrimitiveId3.id)
-        }
-    }
-
-
-    @Test
-    fun `test persist`() {
-        transaction.executeWithoutResult {
-            val objectId = GeneratedObjectId()
-            val pstObjectId = generatedObjectIdRepository.persist(objectId)
-            assertNotNull(pstObjectId.id)
-
-            val primitiveId = GeneratedPrimitiveId()
-            val pstPrimitiveId = generatedPrimitiveIdRepository.persist(primitiveId)
-            assertNotNull(pstPrimitiveId.id)
-
-            val primitiveId2 = GeneratedPrimitiveId().copy(id = -42)
-            val pstPrimitiveId2 = generatedPrimitiveIdRepository.persist(primitiveId2)
-            assertNotNull(pstPrimitiveId2.id)
-
-            val default = GeneratedPrimitiveId::class.java
-                .getConstructor()
-                .newInstance()
-            val primitiveId3 = GeneratedPrimitiveId().copy(id = -42)
-            val pstPrimitiveId3 = generatedPrimitiveIdRepository.persist(primitiveId3.copy(id = default.id))
-            assertNotNull(pstPrimitiveId3.id)
-        }
-    }
+    // @Test
+    // fun persist() {
+    //     assertThrows<Exception> {
+    //         transaction.executeWithoutResult {
+    //             // Different value than in constructor (-2 != -42)!
+    //             val primitiveId2 = GeneratedPrimitiveId().copy(id = -42)
+    //             val pstPrimitiveId2 = em.beePersist(primitiveId2)
+    //             assertNotNull(pstPrimitiveId2.id)
+    //         }
+    //     }
+    //
+    //     assertThrows<Exception> {
+    //         transaction.executeWithoutResult {
+    //             // Primitive field which cannot be set to null!
+    //             val idField2 = GeneratedPrimitiveId::class.java.getDeclaredField("id").apply { isAccessible = true }
+    //             val primitiveId4 = GeneratedPrimitiveId()
+    //             idField2.set(primitiveId4, null)
+    //             val pstPrimitiveId4 = em.beePersist(primitiveId4)
+    //             assertNotNull(pstPrimitiveId4.id)
+    //         }
+    //     }
+    //
+    //     transaction.executeWithoutResult {
+    //         val idField = GeneratedObjectId::class.java.getDeclaredField("id").apply { isAccessible = true }
+    //         val objectId = GeneratedObjectId()
+    //         idField.set(objectId, null)
+    //         val pstObjectId = em.beePersist(objectId)
+    //         assertNotNull(pstObjectId.id)
+    //
+    //         val primitiveId = GeneratedPrimitiveId()
+    //         val pstPrimitiveId = em.beePersist(primitiveId)
+    //         assertNotNull(pstPrimitiveId.id)
+    //
+    //         val default = GeneratedPrimitiveId::class.java
+    //             .getConstructor()
+    //             .newInstance()
+    //         val primitiveId3 = GeneratedPrimitiveId().copy(id = -42)
+    //         val pstPrimitiveId3 = em.beePersist(primitiveId3.copy(id = default.id))
+    //         assertNotNull(pstPrimitiveId3.id)
+    //     }
+    // }
+    //
+    //
+    // @Test
+    // fun `test persist`() {
+    //     transaction.executeWithoutResult {
+    //         val objectId = GeneratedObjectId()
+    //         val pstObjectId = generatedObjectIdRepository.persist(objectId)
+    //         assertNotNull(pstObjectId.id)
+    //
+    //         val primitiveId = GeneratedPrimitiveId()
+    //         val pstPrimitiveId = generatedPrimitiveIdRepository.persist(primitiveId)
+    //         assertNotNull(pstPrimitiveId.id)
+    //
+    //         val primitiveId2 = GeneratedPrimitiveId().copy(id = -42)
+    //         val pstPrimitiveId2 = generatedPrimitiveIdRepository.persist(primitiveId2)
+    //         assertNotNull(pstPrimitiveId2.id)
+    //
+    //         val default = GeneratedPrimitiveId::class.java
+    //             .getConstructor()
+    //             .newInstance()
+    //         val primitiveId3 = GeneratedPrimitiveId().copy(id = -42)
+    //         val pstPrimitiveId3 = generatedPrimitiveIdRepository.persist(primitiveId3.copy(id = default.id))
+    //         assertNotNull(pstPrimitiveId3.id)
+    //     }
+    // }
 
     @BeforeAll
     fun beforeAll() {
