@@ -256,6 +256,121 @@ class OneToManyTest(
         }
     }
 
+    @Test
+    @Ignore("Not implemented yet")
+    fun exists() {
+        // TODO: Implement exists for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `exists with composite key`() {
+        // TODO: Implement exists for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `exists with multiple ids`() {
+        // TODO: Implement exists for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `exists with multiple composite keys`() {
+        // TODO: Implement exists for BeeBlazeRepository
+    }
+
+    @Test
+    fun `update field`() {
+        var collectionId1: Long = -1
+        var workId1 = WorkId()
+
+        transaction.executeWithoutResult {
+            val collection1 = collectionRepo.persist(WorkCollection())
+            collectionId1 = collection1.id
+            val work1 = workRepo.persist(Work(WorkId(++workIdCount, collectionId1), "Hey!"))
+            workId1 = work1.id
+        }
+
+        transaction.executeWithoutResult {
+            val work = workRepo.select {
+                where(WorkDSL.id.eq(workId1))
+            }.firstOrNull()
+            assertNotNull(work)
+            val workUpdate = work.copy(txt = "Update!")
+            workRepo.update(workUpdate)
+        }
+
+        transaction.executeWithoutResult {
+            val workUpdate = workRepo.select {
+                where(WorkDSL.id.eq(workId1))
+            }.firstOrNull()
+
+            assertNotNull(workUpdate)
+            assertEquals("Update!", workUpdate.txt)
+        }
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `delete all`() {
+        // TODO: Implement delete for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `delete without where clause`() {
+        // TODO: Implement delete for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `delete by id`() {
+        // TODO: Implement delete for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `delete by id with composite key`() {
+        // TODO: Implement delete for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `delete by ids`() {
+        // TODO: Implement delete for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `delete by ids with composite key`() {
+        // TODO: Implement delete for BeeBlazeRepository
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    fun `delete by ids with some not existing`() {
+        // TODO: Implement delete for BeeBlazeRepository
+    }
+
+    @Test
+    fun rollback()  {
+        var collectionId1: Long = -1
+        var collectionId2: Long = -1
+
+        transaction.executeWithoutResult { tx ->
+            val collection1 = collectionRepo.persist(WorkCollection())
+            collectionId1 = collection1.id
+            val collection2 = collectionRepo.persist(WorkCollection())
+            collectionId2 = collection2.id
+            tx.setRollbackOnly()
+        }
+
+        transaction.executeWithoutResult {
+            val collections = collectionRepo.select()
+            assertEquals(0, collections.count())
+        }
+    }
 
     private fun assertWorkCollection(
         workCollection: WorkCollection,
@@ -272,17 +387,7 @@ class OneToManyTest(
         assertNotNull(works)
         assertEquals(workIds.count(), works.count())
         for (work in works) {
-            // assertTrue { workIds.contains(work.id) }
             assertWork(work, collectionId, workIds, depth - 1)
-
-            // val newDepth = depth - 1
-            // val newWorkCollection = work.workCollection
-            // if (newDepth != 0) {
-            //     assertNotNull(newWorkCollection)
-            //     assertWorkCollection(newWorkCollection, collectionId, workIds, newDepth)
-            // } else {
-            //     assertNull(newWorkCollection)
-            // }
         }
     }
 
