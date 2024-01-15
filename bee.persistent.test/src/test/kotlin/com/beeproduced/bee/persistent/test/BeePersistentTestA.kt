@@ -660,7 +660,7 @@ class BeePersistentTestA(
         }
     }
 
-    fun addSong() {
+    /* fun addSong() {
         transaction.executeWithoutResult {
             val address1 = em.beePersist(Address(UUID.randomUUID(), "Street 1"))
             val address2 = em.beePersist(Address(UUID.randomUUID(), "Street 2"))
@@ -687,7 +687,7 @@ class BeePersistentTestA(
                 )
             )
         }
-    }
+    } */
 
     // @Test
     // fun persist() {
