@@ -146,6 +146,44 @@ class OneToManyTest(
         }
     }
 
+    @Test
+    fun `select by ids with relation loaded`() {
+        var collectionId1: Long = -1
+        var collectionId2: Long = -1
+        var workId1 = WorkId()
+        var workId2 = WorkId()
+
+        transaction.executeWithoutResult {
+            val collection1 = collectionRepo.persist(WorkCollection())
+            collectionId1 = collection1.id
+            val collection2 = collectionRepo.persist(WorkCollection())
+            collectionId2 = collection2.id
+            val work1 = workRepo.persist(Work(WorkId(++workIdCount, collectionId1), "Hey!"))
+            workId1 = work1.id
+            val work2 = workRepo.persist(Work(WorkId(++workIdCount, collectionId2), "Moin!"))
+            workId2 = work2.id
+        }
+
+        transaction.executeWithoutResult {
+            val selection = WorkCollectionDSL.select {
+                this.works { this.workCollection { this.works {  } } }
+            }
+
+            // TODO: Replace with selectByIds
+            val collections = collectionRepo.select(selection) {
+                whereOr(
+                    WorkCollectionDSL.id.eq(collectionId1),
+                    WorkCollectionDSL.id.eq(collectionId2)
+                )
+            }
+
+            assertEquals(2, collections.count())
+            val collection1 = collections.first { it.id == collectionId1 }
+            val collection2 = collections.first { it.id == collectionId2 }
+            assertWorkCollection(collection1, collectionId1, setOf(workId1), 2)
+            assertWorkCollection(collection2, collectionId2, setOf(workId2), 2)
+        }
+    }
 
     private fun assertWorkCollection(
         workCollection: WorkCollection,
