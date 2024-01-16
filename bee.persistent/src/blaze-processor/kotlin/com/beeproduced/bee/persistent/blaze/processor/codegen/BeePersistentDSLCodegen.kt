@@ -35,6 +35,7 @@ import com.squareup.kotlinpoet.ksp.writeTo
 import org.gradle.configurationcache.extensions.capitalized
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
 
 /**
  *
@@ -312,16 +313,17 @@ class BeePersistentDSLCodegen(
         sort: Boolean = false,
     ): TypeSpec.Builder {
 
+        val entitySimpleName = entityView.entity.simpleName
         val (allRelations, allColumns)
             = viewColumnsWithSubclasses(entityView, views)
 
         val (columns, embedded) = allColumns.partition { !it.property.isEmbedded }
         for (column in columns) {
-            viewDSL.addPath(column, path, sort)
+            viewDSL.addPath(column, path, entitySimpleName, sort)
         }
 
         for (column in embedded) {
-            viewDSL.addPath(column, path, sort)
+            viewDSL.addPath(column, path, entitySimpleName, sort)
         }
 
         for ((simpleName, subRelation) in allRelations) {
@@ -330,7 +332,9 @@ class BeePersistentDSLCodegen(
 
             val whereDSLName = "${innerView.name}__Where"
             val innerDSL = TypeSpec.objectBuilder(whereDSLName)
-            val newPath = buildPath(path, simpleName, subRelation.subView)
+            val subViewMapping = if (subRelation.subView == null) null
+            else SubViewMapping(entitySimpleName, subRelation.subView)
+            val newPath = buildPath(path, simpleName, subViewMapping)
 
             val relationProperty = PropertySpec.builder(simpleName, ClassName("", whereDSLName))
                 .initializer("%L",  whereDSLName)
@@ -345,12 +349,14 @@ class BeePersistentDSLCodegen(
     }
 
     private fun TypeSpec.Builder.addPath(
-        subProperty: SubProperty, path: String,
+        subProperty: SubProperty, path: String, entitySimpleName: String,
         sort: Boolean, embeddedPropertyName: String? = null
     ) {
         val column = subProperty.property
         val propertyName = embeddedPropertyName ?: column.simpleName
-        val newPath = buildPath(path, column.simpleName, subProperty.subView)
+        val subViewMapping = if (subProperty.subView == null) null
+        else SubViewMapping(entitySimpleName, subProperty.subView)
+        val newPath = buildPath(path, column.simpleName, subViewMapping)
         val inner = column.innerValue
         if (inner != null) {
             val innerType = inner.type.toTypeName().copy(nullable = false)
@@ -387,18 +393,25 @@ class BeePersistentDSLCodegen(
             val columnProp = ColumnProperty(embeddedColumn.declaration, embeddedColumn.type, embeddedColumn.annotations, null, null)
             val embeddedSubProperty = SubProperty(columnProp)
             val overrideName = "$propertyName${embeddedColumn.simpleName.capitalized()}"
-            addPath(embeddedSubProperty, newPath, sort, overrideName)
+            addPath(embeddedSubProperty, newPath, entitySimpleName, sort, overrideName)
         }
     }
 
-    private fun buildPath(path: String, simpleName: String, subView: String?): String {
+    data class SubViewMapping(val entitySimpleName: String, val subEntitySimpleName: String)
+    private fun buildPath(path: String, simpleName: String, subViewMapping: SubViewMapping?): String {
         return when {
-            path.isEmpty() && subView == null -> { simpleName }
-            path.isEmpty() && subView != null -> { "TREAT(this as $subView).$simpleName" }
-            subView == null -> { "$path.$simpleName" }
-            else -> { "TREAT($path as $subView).$simpleName" }
+            path.isEmpty() && subViewMapping == null -> { simpleName }
+            path.isEmpty() && subViewMapping != null -> {
+                // TREAT alias like CriteriaBuilder<T> create function from blaze: camel cased result of what Class.getSimpleName()
+                val entityCamelCase = subViewMapping.entitySimpleName.aliasCamelCase()
+                "TREAT($entityCamelCase as ${subViewMapping.subEntitySimpleName}).$simpleName"
+            }
+            subViewMapping == null -> { "$path.$simpleName" }
+            else -> { "TREAT($path as ${subViewMapping.subEntitySimpleName}.).$simpleName" }
         }
     }
+
+    private fun String.aliasCamelCase() = replaceFirstChar { it.lowercase(Locale.getDefault()) }
 
     private fun buildRegistration() {
         if (inlineValues.isEmpty()) return
