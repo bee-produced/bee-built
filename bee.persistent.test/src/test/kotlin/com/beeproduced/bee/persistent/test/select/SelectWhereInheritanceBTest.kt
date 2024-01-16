@@ -3,6 +3,7 @@ package com.beeproduced.bee.persistent.test.select
 import com.beeproduced.bee.persistent.blaze.selection.BeeSelection
 import com.beeproduced.bee.persistent.test.config.BTestConfig
 import com.beeproduced.datasource.b.*
+import com.beeproduced.datasource.b.dsl.ComposerContainerDSL
 import com.beeproduced.datasource.b.dsl.ComposerDSL
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.AfterEach
@@ -86,6 +87,7 @@ class SelectWhereInheritanceBTest(
             val composer = composers.first()
             assertEquals(aiComposer2.id, composer.id)
             assertTrue { composer is AiComposer }
+            assertComposer(composer, selection)
         }
     }
 
@@ -117,6 +119,7 @@ class SelectWhereInheritanceBTest(
             val composer = composers.first()
             assertEquals(aiComposer2.id, composer.id)
             assertTrue { composer is AiComposer }
+            assertComposer(composer, selection)
         }
     }
 
@@ -145,6 +148,7 @@ class SelectWhereInheritanceBTest(
             val composer = composers.first()
             assertEquals(aiComposer2.id, composer.id)
             assertTrue { composer is AiComposer }
+            assertComposer(composer, selection)
         }
     }
 
@@ -176,6 +180,7 @@ class SelectWhereInheritanceBTest(
             val composer = composers.first()
             assertEquals(aiComposer2.id, composer.id)
             assertTrue { composer is AiComposer }
+            assertComposer(composer, selection)
         }
     }
 
@@ -207,6 +212,213 @@ class SelectWhereInheritanceBTest(
             val composer = composers.first()
             assertEquals(aiComposer2.id, composer.id)
             assertTrue { composer is AiComposer }
+            assertComposer(composer, selection)
+        }
+    }
+
+    @Test
+    fun `container - where with treat`() {
+        transaction.executeWithoutResult {
+            val aiData1 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data"))
+            val aiComposer1 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(), "AI", "GPT", AiParams("1", "2"), aiData1.id)
+            )
+            val aiData2 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data2"))
+            val aiComposer2 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(),"AI2", "GPT2", AiParams("3", "4"), aiData2.id)
+            )
+            val humanData1 = humanDataRepo.persist(HumanData(UUID.randomUUID(), "Bar"))
+            val humanComposer1 = composerRepo.persist(
+                HumanComposer(UUID.randomUUID(), "Mario", "Mario", humanData1.id)
+            )
+            val container1 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer1.id, null, humanComposer1.id,  null)
+            )
+            val container2 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer2.id, null, humanComposer1.id,  null)
+            )
+
+            val selection = ComposerContainerDSL.select {
+                c1 {
+                    aiData {  }
+                    humanData {  }
+                }
+                c2 {
+                    aiData {  }
+                    humanData {  }
+                }
+            }
+            val containers = containerRepo.select(selection) {
+                where(ComposerContainerDSL.c1.aiDataId.eq(aiData2.id))
+            }
+
+            assertEquals(1, containers.count())
+            val container = containers.first()
+            assertEquals(container2.id, container.id)
+            assertContainer(container, selection)
+        }
+    }
+
+    @Test
+    fun `container - where with treat on relation`() {
+        transaction.executeWithoutResult {
+            val aiData1 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data"))
+            val aiComposer1 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(), "AI", "GPT", AiParams("1", "2"), aiData1.id)
+            )
+            val aiData2 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data2"))
+            val aiComposer2 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(),"AI2", "GPT2", AiParams("3", "4"), aiData2.id)
+            )
+            val humanData1 = humanDataRepo.persist(HumanData(UUID.randomUUID(), "Bar"))
+            val humanComposer1 = composerRepo.persist(
+                HumanComposer(UUID.randomUUID(), "Mario", "Mario", humanData1.id)
+            )
+            val container1 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer1.id, null, humanComposer1.id,  null)
+            )
+            val container2 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer2.id, null, humanComposer1.id,  null)
+            )
+
+            val selection = ComposerContainerDSL.select {
+                c1 {
+                    aiData {  }
+                    humanData {  }
+                }
+                c2 {
+                    aiData {  }
+                    humanData {  }
+                }
+            }
+            val containers = containerRepo.select(selection) {
+                where(ComposerContainerDSL.c1.aiData.data.eq(aiData2.data))
+            }
+
+            assertEquals(1, containers.count())
+            val container = containers.first()
+            assertEquals(container2.id, container.id)
+            assertContainer(container, selection)
+        }
+    }
+
+    @Test
+    fun `container - where with treat on relation (not loaded)`() {
+        transaction.executeWithoutResult {
+            val aiData1 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data"))
+            val aiComposer1 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(), "AI", "GPT", AiParams("1", "2"), aiData1.id)
+            )
+            val aiData2 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data2"))
+            val aiComposer2 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(),"AI2", "GPT2", AiParams("3", "4"), aiData2.id)
+            )
+            val humanData1 = humanDataRepo.persist(HumanData(UUID.randomUUID(), "Bar"))
+            val humanComposer1 = composerRepo.persist(
+                HumanComposer(UUID.randomUUID(), "Mario", "Mario", humanData1.id)
+            )
+            val container1 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer1.id, null, humanComposer1.id,  null)
+            )
+            val container2 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer2.id, null, humanComposer1.id,  null)
+            )
+
+            val selection = BeeSelection.empty()
+            val containers = containerRepo.select(selection) {
+                where(ComposerContainerDSL.c1.aiData.data.eq(aiData2.data))
+            }
+
+            assertEquals(1, containers.count())
+            val container = containers.first()
+            assertEquals(container2.id, container.id)
+            assertContainer(container, selection)
+        }
+    }
+
+    @Test
+    fun `container - where with treat on embedded`() {
+        transaction.executeWithoutResult {
+            val aiData1 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data"))
+            val aiComposer1 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(), "AI", "GPT", AiParams("1", "2"), aiData1.id)
+            )
+            val aiData2 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data2"))
+            val aiComposer2 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(),"AI2", "GPT2", AiParams("3", "4"), aiData2.id)
+            )
+            val humanData1 = humanDataRepo.persist(HumanData(UUID.randomUUID(), "Bar"))
+            val humanComposer1 = composerRepo.persist(
+                HumanComposer(UUID.randomUUID(), "Mario", "Mario", humanData1.id)
+            )
+            val container1 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer1.id, null, humanComposer1.id,  null)
+            )
+            val container2 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer2.id, null, humanComposer1.id,  null)
+            )
+
+            val selection = ComposerContainerDSL.select {
+                c1 {
+                    aiData {  }
+                    humanData {  }
+                }
+                c2 {
+                    aiData {  }
+                    humanData {  }
+                }
+            }
+            val containers = containerRepo.select(selection) {
+                where(ComposerContainerDSL.c1.params.eq(AiParams("3", "4")))
+            }
+
+            assertEquals(1, containers.count())
+            val container = containers.first()
+            assertEquals(container2.id, container.id)
+            assertContainer(container, selection)
+        }
+    }
+
+    @Test
+    fun `container - where with treat on embedded field`() {
+        transaction.executeWithoutResult {
+            val aiData1 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data"))
+            val aiComposer1 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(), "AI", "GPT", AiParams("1", "2"), aiData1.id)
+            )
+            val aiData2 = aiDataRepo.persist(AiData(UUID.randomUUID(), "data2"))
+            val aiComposer2 = composerRepo.persist(
+                AiComposer(UUID.randomUUID(),"AI2", "GPT2", AiParams("3", "4"), aiData2.id)
+            )
+            val humanData1 = humanDataRepo.persist(HumanData(UUID.randomUUID(), "Bar"))
+            val humanComposer1 = composerRepo.persist(
+                HumanComposer(UUID.randomUUID(), "Mario", "Mario", humanData1.id)
+            )
+            val container1 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer1.id, null, humanComposer1.id,  null)
+            )
+            val container2 = containerRepo.persist(
+                ComposerContainer(UUID.randomUUID(), aiComposer2.id, null, humanComposer1.id,  null)
+            )
+
+            val selection = ComposerContainerDSL.select {
+                c1 {
+                    aiData {  }
+                    humanData {  }
+                }
+                c2 {
+                    aiData {  }
+                    humanData {  }
+                }
+            }
+            val containers = containerRepo.select(selection) {
+                where(ComposerContainerDSL.c1.paramsZ1.eq("3"))
+            }
+
+            assertEquals(1, containers.count())
+            val container = containers.first()
+            assertEquals(container2.id, container.id)
+            assertContainer(container, selection)
         }
     }
 

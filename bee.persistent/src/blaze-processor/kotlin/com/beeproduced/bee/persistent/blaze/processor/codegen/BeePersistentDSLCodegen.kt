@@ -407,7 +407,7 @@ class BeePersistentDSLCodegen(
                 "TREAT($entityCamelCase as ${subViewMapping.subEntitySimpleName}).$simpleName"
             }
             subViewMapping == null -> { "$path.$simpleName" }
-            else -> { "TREAT($path as ${subViewMapping.subEntitySimpleName}.).$simpleName" }
+            else -> { "TREAT($path as ${subViewMapping.subEntitySimpleName}).$simpleName" }
         }
     }
 
