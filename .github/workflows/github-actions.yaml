@@ -21,6 +21,7 @@ jobs:
       - name: Make gradlew executable
         run: |
           chmod +x ./bee.persistent/gradlew
+          chmod +x ./bee.persistent.test/gradlew
           chmod +x ./bee.functional/gradlew
           chmod +x ./bee.functional.test/gradlew
           chmod +x ./bee.buzz/gradlew
@@ -30,6 +31,9 @@ jobs:
           chmod +x ./example/application/gradlew
       - name: Build & Test bee.persistent
         working-directory: ./bee.persistent
+        run: ./gradlew build
+      - name: Test bee.persistent.blaze
+        working-directory: ./bee.persistent.test
         run: ./gradlew build
       - name: Build & Test bee.generative
         working-directory: ./bee.generative

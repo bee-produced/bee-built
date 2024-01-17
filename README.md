@@ -14,17 +14,10 @@ An example project showcasing `bee-built` can be found under [example](./example
 
 ### Modules
 
-Extend DGS:
-
-* `bee.fetched`      
-  Automatically generate nested data fetchers for usage with data loaders, [documentation](./bee.fetched/README.md)
-
----
-
-Some changes are currently being made:
-
 * `bee.persistent`      
-  Easier data handling for GraphQL + JPA, [documentation](./bee.persistent/README.md)
+  Easier data handling for GraphQL + JPA, [choose implementation](./bee.persistent/README.md)
+* `bee.fetched`      
+  Automatically generate nested data fetchers for usage with data loaders in DGS, [documentation](./bee.fetched/README.md)
 * `bee.functional`      
   Functional Kotlin bindings, integration with DGS, `bee.persistent` & more,   [documentation](./bee.functional/README.md)    
 * `bee.buzz`       

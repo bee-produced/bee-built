@@ -25,6 +25,7 @@ jakarta-mail-api = "2.0.1"
 jakarta-mail = "2.0.1"
 ksp-base = "1.9.10-1.0.13"
 bytebuddy = "1.14.9"
+blaze = "1.6.9"
 
 [libraries]
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "springboot-base" }
@@ -75,6 +76,11 @@ ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", v
 kotlin-poet = { group = "com.squareup", name = "kotlinpoet-ksp", version = "1.14.2"}
 bytebuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "bytebuddy" }
 bytebuddy-agent = { group = "net.bytebuddy", name = "byte-buddy-agent", version.ref = "bytebuddy" }
+blaze-core-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-core-impl-jakarta", version.ref = "blaze" }
+blaze-integration-hibernate = { group = "com.blazebit", name = "blaze-persistence-integration-hibernate-6.2", version.ref = "blaze" }
+blaze-entity-view-api-jakarta = { group = "com.blazebit", name = "blaze-persistence-entity-view-api-jakarta", version.ref = "blaze" }
+blaze-entity-view-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-entity-view-impl-jakarta", version.ref = "blaze" }
+blaze-integration-spring = { group = "com.blazebit", name = "blaze-persistence-integration-spring-data-3.1", version.ref = "blaze"}
 
 [plugins]
 kotlinter = { id = "org.jmailen.kotlinter", version = "3.13.0" }

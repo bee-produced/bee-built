@@ -1,0 +1,28 @@
+
+type Person {
+    id: ID!
+    firstname: String!
+    lastname: String!
+    memberOf: [Company!]
+    address: Address
+}
+
+type Company {
+    id: ID!
+    name: String!
+    employees: [Person!]
+    address: Address
+}
+
+type Address {
+    id: ID!
+    addressLine1: String!
+    addressLine2: String
+    zipCode: String!
+    city: String!
+}
+
+extend type Query {
+    companies: [Company!]!
+    persons: [Person!]!
+}

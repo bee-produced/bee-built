@@ -30,14 +30,39 @@ open class BeeDependencies(private val dependencies: DependencyHandler) {
         val main = dependencies.add("implementation", dependencyNotation)
         val processorMain = dependencies.add("ksp", dependencyNotation)
         val processorCapability = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
-            val capabilityNotation = if (version != null) {
-                "$group:$name-processor:$version"
-            } else "$group:$name-processor"
+            val capabilityNotation = "$group:$name-processor${versionString(version)}"
             capabilities {
                 requireCapability(capabilityNotation)
             }
         })
         return Triple(main, processorMain, processorCapability)
+    }
+
+    operator fun invoke(dependencyNotation: String, capability: String): Triple<Dependency?, Dependency?, Dependency?> {
+        val capabilityMain = dependencies.add("implementation", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
+            val capabilityNotation = "$group:$name-$capability${versionString(version)}"
+            capabilities {
+                requireCapability(capabilityNotation)
+            }
+        })
+        val processorMain = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
+            val capabilityNotation = "$group:$name-$capability${versionString(version)}"
+            capabilities {
+                requireCapability(capabilityNotation)
+            }
+        })
+        val processorCapability = dependencies.add("ksp", dependencyNotation, closureOf<DefaultExternalModuleDependency> {
+            val capabilityNotation = "$group:$name-$capability-processor${versionString(version)}"
+            capabilities {
+                requireCapability(capabilityNotation)
+            }
+        })
+        return Triple(capabilityMain, processorMain, processorCapability)
+    }
+
+    private fun versionString(version: String?): String {
+        return if (version == null)  ""
+        else ":$version"
     }
 }
 
