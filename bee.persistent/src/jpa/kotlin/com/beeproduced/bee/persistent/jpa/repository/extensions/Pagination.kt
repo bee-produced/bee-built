@@ -21,7 +21,7 @@ class Pagination<V, CV, C, W>(
     private val repository: BaseDataRepository<V, *>,
     private val orderBy: ColumnSpec<CV>,
     private val cursor: Cursor<V, CV, C>,
-    private val where: (W) -> PredicateSpec? = { null },
+    private val where: (W) -> PredicateSpec,
     private val dsl: CriteriaQueryDsl<*>.() -> Unit = {}
 ) where V : DataEntity<V>, CV : Comparable<CV> {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -42,7 +42,7 @@ class Pagination<V, CV, C, W>(
 
     private fun handleQuery(
         limit: Int, cursor: C?, whereValues: W,
-        queryWhere: (W) -> PredicateSpec?,
+        queryWhere: (W) -> PredicateSpec,
         ascending: Boolean,
         selection: DataSelection
     ): PaginationResult<V, C> {
@@ -63,7 +63,7 @@ class Pagination<V, CV, C, W>(
         }
     }
 
-    private fun countElements(direction: PredicateSpec, baseWhereSpec: PredicateSpec?): Long {
+    private fun countElements(direction: PredicateSpec, baseWhereSpec: PredicateSpec): Long {
         return repository.count {
             this.apply(dsl)
             this.whereAnd(
@@ -77,35 +77,34 @@ class Pagination<V, CV, C, W>(
         selectedElementCount: Long,
         limit: Int,
         cursor: C,
-        baseWhereSpec: PredicateSpec?,
+        baseWhereSpec: PredicateSpec,
         ascending: Boolean,
         selection: DataSelection
     ): PaginationResult<V, C> {
         val cursorValue = this.cursor.decode(cursor)
+
         val beforeSpec = LessThanValueSpec(orderBy, cursorValue, false)
         val afterSpec = GreaterThanValueSpec(orderBy, cursorValue, false)
 
-        val elementsBeforeCursor = countElements(beforeSpec, baseWhereSpec)
-        val elementsAfterCursor = countElements(afterSpec, baseWhereSpec)
+        val inclusiveBeforeSpec = beforeSpec.copy(inclusive = ascending)
+        val inclusiveAfterSpec = afterSpec.copy(inclusive = !ascending)
 
-        // Debate if this is still needed
-        /* if (selectedElementCount == (elementsAfterCursor + elementsBeforeCursor)) {
-            logger.warn(
-                "Pivot element was included in the count. Repository: {}, OrderBy: {}",
-                repository::class,
-                orderBy
-            )
-            val pivotField = orderBy.entity.type.getDeclaredField(orderBy.path)
-            if (Temporal::class.java.isAssignableFrom(pivotField.type))
-                logger.warn("Could be due to time-related precision problems")
-        } */
+        val elementsBeforeCursor = countElements(inclusiveBeforeSpec, baseWhereSpec)
+        val elementsAfterCursor = countElements(inclusiveAfterSpec, baseWhereSpec)
 
         // Check if query with given cursor was valid
-        // If so, pivot element should not be included in before/after cursor queries
-        // resulting in being one element lower from all elements
-        val elementsToQuery =
-            (selectedElementCount - elementsBeforeCursor - elementsAfterCursor) == 1L
-        if (!elementsToQuery)
+        // If so, pivot element should be included in either before/after cursor queries
+        // resulting in being the same amount as all elements
+        // Why include pivot?
+        // When querying one element with the cursor of the first element
+        // the before count would be 0 in ascending order
+        // In this case, it is impossible to determine if there is a previous page or not!
+        val elementsToQuery = (selectedElementCount - elementsBeforeCursor - elementsAfterCursor) == 0L
+        if (!elementsToQuery) return PaginationResult()
+
+        // Also, disallow using cursor pagination before first or last element depending on order
+        // Can only happen if cursor is manually created (e.g., encoding lower timestamp than first element)
+        if ((ascending && elementsBeforeCursor == 0L) || (!ascending && elementsAfterCursor == 0L))
             return PaginationResult()
 
         val queriedElements = repository.select(selection) {
@@ -121,12 +120,11 @@ class Pagination<V, CV, C, W>(
             Edge(entity, this.cursor.encode(entity))
         }
 
-        // Lower-equal should be used in page determination because of pivot element
         val pageInfo = PageInfo(
             startCursor = queriedElements.firstOrNull()?.cursor,
             endCursor = queriedElements.lastOrNull()?.cursor,
-            hasPreviousPage = if (ascending) elementsBeforeCursor >= 0 else elementsBeforeCursor > limit,
-            hasNextPage = if (ascending) elementsAfterCursor > limit else elementsAfterCursor >= 0
+            hasPreviousPage = if (ascending) elementsBeforeCursor > 0 else elementsBeforeCursor > limit,
+            hasNextPage = if (ascending) elementsAfterCursor > limit else elementsAfterCursor > 0
         )
 
         return PaginationResult(queriedElements, pageInfo)
@@ -135,7 +133,7 @@ class Pagination<V, CV, C, W>(
     private fun initialQuery(
         totalElementCount: Long,
         limit: Int,
-        baseWhereSpec: PredicateSpec?,
+        baseWhereSpec: PredicateSpec,
         ascending: Boolean,
         selection: DataSelection
     ): PaginationResult<V, C> {

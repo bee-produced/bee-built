@@ -43,14 +43,16 @@ class DummyCriteriaQueryDsl : CriteriaQueryDsl<Any> {
         right: EntitySpec<R>,
         relation: Relation<T, R?>,
         joinType: JoinType
-    ) {}
+    ) {
+    }
 
     override fun <T, R> fetch(
         left: EntitySpec<T>,
         right: EntitySpec<R>,
         relation: Relation<T, R?>,
         joinType: JoinType
-    ) {}
+    ) {
+    }
 
     override fun from(entity: EntitySpec<*>) {}
 
@@ -60,11 +62,26 @@ class DummyCriteriaQueryDsl : CriteriaQueryDsl<Any> {
 
     override fun hints(hints: Map<String, Any>) {}
 
-    override fun <T, R> join(left: EntitySpec<T>, right: EntitySpec<R>, relation: Relation<T, R?>, joinType: JoinType) {}
+    override fun <T, R> join(
+        left: EntitySpec<T>,
+        right: EntitySpec<R>,
+        relation: Relation<T, R?>,
+        joinType: JoinType
+    ) {
+    }
 
     override fun <T> join(entity: EntitySpec<T>, predicate: PredicateSpec) {}
 
-    override fun orderBy(orders: List<OrderSpec>) {}
+    private val orderByClauses = mutableListOf<OrderSpec>()
+
+    val hasOrderByClause get() = orderByClauses.isNotEmpty()
+
+    val orders: List<OrderSpec> get() = orderByClauses
+    fun orderByColumns() = orderByClauses.map { it.getColumnSpec() }
+
+    override fun orderBy(orders: List<OrderSpec>) {
+        orderByClauses.addAll(orders)
+    }
 
     override fun select(distinct: Boolean, expression: ExpressionSpec<Any>): SingleSelectClause<Any> {
         throw IllegalAccessException("Should not be invoked")
@@ -81,7 +98,8 @@ class DummyCriteriaQueryDsl : CriteriaQueryDsl<Any> {
         parent: EntitySpec<P>,
         child: EntitySpec<C>,
         parentJoinType: JoinType
-    ) {}
+    ) {
+    }
 
     override fun where(predicate: PredicateSpec?) {}
 

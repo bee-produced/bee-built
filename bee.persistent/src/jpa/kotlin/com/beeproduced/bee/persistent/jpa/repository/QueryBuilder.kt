@@ -53,7 +53,7 @@ object QueryBuilder {
      */
     fun whereClauseFromId(
         entityType: Class<*>,
-        compositeKeyMapping: Set<EntityInfo.EntityToIdField>?,
+        compositeKeyMapping: List<EntityInfo.EntityToIdField>?,
         id: Any,
         idInfo: Ids
     ): PredicateSpec? {
@@ -82,9 +82,10 @@ object QueryBuilder {
      */
     private fun whereClauseFromCompositeKey(
         entityType: Class<*>,
-        compositeKeyMapping: Set<EntityInfo.EntityToIdField>,
+        compositeKeyMapping: List<EntityInfo.EntityToIdField>,
         idInfo: Any,
     ): PredicateSpec? {
+        if (idInfo is List<*>) return whereClauseFromCompositeKeyList(entityType, compositeKeyMapping, idInfo)
         var whereClause: PredicateSpec? = null
         for ((entityField, idField) in compositeKeyMapping) {
             val entitySpec = EntitySpec(entityType)
@@ -101,10 +102,33 @@ object QueryBuilder {
         return whereClause
     }
 
+    private fun whereClauseFromCompositeKeyList(
+        entityType: Class<*>,
+        compositeKeyMapping: List<EntityInfo.EntityToIdField>,
+        idInfo: List<*>,
+    ): PredicateSpec? {
+        var whereClause: PredicateSpec? = null
+        var i = 0
+        for ((entityField) in compositeKeyMapping) {
+            val entitySpec = EntitySpec(entityType)
+            val columnSpec = ColumnSpec<Any?>(entitySpec, entityField.name)
+            val idValue = requireNotNull(idInfo[i])
+            val equalSpec = EqualValueSpec(columnSpec, idValue)
+
+            whereClause = if (whereClause == null) {
+                equalSpec
+            } else {
+                AndSpec(listOf(whereClause, equalSpec))
+            }
+            i++
+        }
+        return whereClause
+    }
+
 
     fun whereClauseFromIds(
         entityType: Class<*>,
-        compositeKeyMapping: Set<EntityInfo.EntityToIdField>?,
+        compositeKeyMapping: List<EntityInfo.EntityToIdField>?,
         ids: Collection<Any>,
         idInfo: Ids
     ): PredicateSpec? {
@@ -125,7 +149,7 @@ object QueryBuilder {
 
     private fun whereClauseFromCompositeKeys(
         entityType: Class<*>,
-        compositeKeyMapping: Set<EntityInfo.EntityToIdField>,
+        compositeKeyMapping: List<EntityInfo.EntityToIdField>,
         ids: Collection<Any>,
     ): PredicateSpec {
         // TODO: Optimize? Is there are way to use `IN` instead of joining `AND` statements with `OR`
@@ -164,7 +188,7 @@ object QueryBuilder {
     //
     // }
 
-    fun selectIdsFromEntity(
+    fun selectDistinctIdsFromEntity(
         entityType: Class<*>,
         ids: Ids
     ): CriteriaQueryDsl<Any>.() -> Unit {
@@ -183,7 +207,7 @@ object QueryBuilder {
             val column: ExpressionSpec<Any> = ColumnSpec(entitySpec, member.name)
             val singleSelectQuery: CriteriaQueryDsl<Any>.() -> Unit = {
                 // dsl.select(ColumnSpec<Any?>(entitySpec, member.name))
-                this.select(column)
+                this.selectDistinct(column)
             }
             singleSelectQuery
         } else {
@@ -193,7 +217,42 @@ object QueryBuilder {
                 ColumnSpec<Any>(entitySpec, member.name)
             }
             val multiSelectQuery: CriteriaQueryDsl<*>.() -> Unit = {
-                this.select(columns)
+                this.selectDistinct(columns)
+            }
+            multiSelectQuery
+        }
+    }
+
+    fun selectDistinctIdAndOrderColumnsFromEntity(
+        entityType: Class<*>,
+        ids: Ids
+    ): CriteriaQueryDsl<Any>.(orderBy: List<ColumnSpec<*>>) -> Unit {
+        // Return correct corresponding select statement
+        // If entity does not have a composite key
+        // use CriteriaQueryDsl's SingleSelectClause
+        // If entity has a composite key
+        // use CriteriaQueryDsl's MultiSelectClause
+        // Why? Using only MultiSelectClause can result in not found constructors
+        // E.g., the UUID constructor cannot be invoked with a list
+        return if (ids.values.count() == 1) {
+            val id = ids.values.first()
+            val member = id.field
+            val entitySpec = EntitySpec(entityType)
+            // SingleSelectClause(idType, false, ColumnSpec(entitySpec, member.name))
+            val column: ExpressionSpec<Any> = ColumnSpec(entitySpec, member.name)
+            val singleSelectQuery: CriteriaQueryDsl<Any>.(List<ColumnSpec<*>>) -> Unit = {
+                // dsl.select(ColumnSpec<Any?>(entitySpec, member.name))
+                this.selectDistinct(listOf(column) + it)
+            }
+            singleSelectQuery
+        } else {
+            val columns = ids.values.map { id ->
+                val member = id.field
+                val entitySpec = EntitySpec(entityType)
+                ColumnSpec<Any>(entitySpec, member.name)
+            }
+            val multiSelectQuery: CriteriaQueryDsl<*>.(List<ColumnSpec<*>>) -> Unit = {
+                this.selectDistinct(columns + it)
             }
             multiSelectQuery
         }
@@ -201,15 +260,15 @@ object QueryBuilder {
 
     fun selectCount(
         entityType: Class<*>,
-        ids: Ids
-    ): CriteriaQueryDsl<Long>.() -> Unit {
+        ids: Ids,
+    ): CriteriaQueryDsl<Long>.(forceDistinct: Boolean) -> Unit {
         val id = ids.values.first()
         val member = id.field
         val entitySpec = EntitySpec(entityType)
         val column: ExpressionSpec<Any> = ColumnSpec(entitySpec, member.name)
-        val singleSelectQuery: CriteriaQueryDsl<Long>.() -> Unit = {
-            // dsl.select(ColumnSpec<Any?>(entitySpec, member.name))
-            this.select(listOf(count(column)))
+        val singleSelectQuery: CriteriaQueryDsl<Long>.(Boolean) -> Unit = { forceDistinct ->
+            if (!forceDistinct) this.select(listOf(count(column)))
+            else this.select(listOf(countDistinct(column)))
         }
         return singleSelectQuery
     }

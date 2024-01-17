@@ -1,10 +1,14 @@
 package com.beeproduced.bee.persistent
 
 import com.beeproduced.bee.persistent.selection.EmptySelection
+import com.beeproduced.bee.persistent.selection.SimpleSelection
+import com.beeproduced.bee.persistent.selection.SimpleSelection.FieldNode
 import com.beeproduced.bee.persistent.config.DummyApplication
 import com.beeproduced.bee.persistent.config.PaginationTestConfiguration
-import com.beeproduced.bee.persistent.pagination.PaginatedFoo
-import com.beeproduced.bee.persistent.pagination.PaginatedFooRepository
+import com.beeproduced.bee.persistent.pagination.FoxtrotInfo
+import com.beeproduced.bee.persistent.pagination.FoxtrotInfoRepository
+import com.beeproduced.bee.persistent.pagination.PaginatedFoxtrot
+import com.beeproduced.bee.persistent.pagination.PaginatedFoxtrotRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -17,10 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.random.Random
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * Testing pagination info according to specification
@@ -30,10 +31,13 @@ import kotlin.test.assertTrue
     classes = [DummyApplication::class, PaginationTestConfiguration::class]
 )
 @TestPropertySource("classpath:application.properties")
-class PaginationTest {
+class PaginationJoinTest {
 
     @Autowired
-    lateinit var paginatedFooRepository: PaginatedFooRepository
+    lateinit var paginatedFoxtrot: PaginatedFoxtrotRepository
+
+    @Autowired
+    lateinit var info: FoxtrotInfoRepository
 
     @Qualifier("orderTransactionManager")
     @Autowired
@@ -43,21 +47,31 @@ class PaginationTest {
 
     private val hansCount = 25
 
-    private fun generateData(): List<PaginatedFoo> {
-        val createdBy = listOf("Hans", "Peter", "Alexander")
-        val created = mutableListOf<PaginatedFoo>()
+    private val selection = SimpleSelection(setOf(FieldNode(PaginatedFoxtrot::infos.name)))
 
+    private fun generateData(): List<PaginatedFoxtrot> {
+        val createdBy = listOf("Hans", "Peter", "Alexander")
+        val created = mutableListOf<PaginatedFoxtrot>()
+
+        var relations = 0
         for (i in 1..100) {
-            val foo = PaginatedFoo(
-                createdBy = if (i <= hansCount) createdBy[0] else if (i <= 50) createdBy[1] else createdBy[2],
+            val name = if (i <= hansCount) createdBy[0] else if (i <= 50) createdBy[1] else createdBy[2]
+            val foxtrot = PaginatedFoxtrot(
+                createdBy = name,
                 createdOn = Instant.now()
                     .plusSeconds(i.toLong() * 3)
                     .plusMillis(Random.nextLong(1000))
                     .truncatedTo(ChronoUnit.MICROS)
-            )
-            created.add(foo)
-        }
+            ).let(paginatedFoxtrot::persist)
+            created.add(foxtrot)
 
+            for (j in 0..relations) {
+                info.persist(FoxtrotInfo(customCreatedBy = "$name!", foxtrotId = foxtrot.id))
+            }
+
+            // 0, 1, 2 and again 0, 1, 2
+            relations = ((relations + 1).mod(3))
+        }
         return created
     }
 
@@ -69,18 +83,19 @@ class PaginationTest {
     @AfterEach
     fun teardown() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.deleteAll()
+            info.deleteAll()
+            paginatedFoxtrot.deleteAll()
         }
     }
 
     @Test
     fun `when fetching all elements ascending in first page have no previous and next page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            generateData()
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", first = hansCount)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter("Hans!", first = hansCount)
+        val result = paginatedFoxtrot.pagination(params, selection)
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -91,6 +106,7 @@ class PaginationTest {
         var lastDate = Instant.MIN
         for (message in edges) {
             assertEquals("Hans", message.node.createdBy, "is not createdBy")
+            assertNotNull(message.node.infos)
             assertTrue(message.node.createdOn.isAfter(lastDate), "is not ascending")
             lastDate = message.node.createdOn
         }
@@ -98,18 +114,18 @@ class PaginationTest {
 
     @Test
     fun `when fetching all elements ascending in first page with first cursor have previous but no next page`() {
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val start = data[0] //1st element
 
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             first = hansCount,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedFoxtrotRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, selection)
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -120,6 +136,7 @@ class PaginationTest {
         var lastDate = Instant.MIN
         for (message in edges) {
             assertEquals("Hans", message.node.createdBy, "is not createdBy")
+            assertNotNull(message.node.infos)
             assertTrue(message.node.createdOn.isAfter(lastDate), "is not ascending")
             lastDate = message.node.createdOn
         }
@@ -128,11 +145,11 @@ class PaginationTest {
     @Test
     fun `when fetching all elements descending in first page have no previous and next page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            generateData()
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", last = hansCount)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter("Hans!", last = hansCount)
+        val result = paginatedFoxtrot.pagination(params, selection)
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -143,6 +160,7 @@ class PaginationTest {
         var lastDate = Instant.MAX
         for (message in edges) {
             assertEquals("Hans", message.node.createdBy, "is not createdBy")
+            assertNotNull(message.node.infos)
             assertTrue(message.node.createdOn.isBefore(lastDate), "is not descending")
             lastDate = message.node.createdOn
         }
@@ -150,18 +168,18 @@ class PaginationTest {
 
     @Test
     fun `when fetching all elements descending in first page with last cursor have next but no previous page`() {
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val last = data[24] //25th element
 
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             last = hansCount,
-            before = PaginatedFooRepository.encodeCursor(last)
+            before = PaginatedFoxtrotRepository.encodeCursor(last)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, selection)
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -172,6 +190,7 @@ class PaginationTest {
         var lastDate = Instant.MAX
         for (message in edges) {
             assertEquals("Hans", message.node.createdBy, "is not createdBy")
+            assertNotNull(message.node.infos)
             assertTrue(message.node.createdOn.isBefore(lastDate), "is not descending")
             lastDate = message.node.createdOn
         }
@@ -180,11 +199,11 @@ class PaginationTest {
     @Test
     fun `when fetching 10 elements ascending, should have next but no previous page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            generateData()
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", first = 10)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter("Hans!", first = 10)
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -203,11 +222,11 @@ class PaginationTest {
     @Test
     fun `when fetching 10 elements descending, should have previous but no next page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            generateData()
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", last = 10)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter("Hans!", last = 10)
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -226,20 +245,20 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 10 elements ascending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val start = data[9] //10th element
         assertTrue(start.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             first = 10,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedFoxtrotRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -261,20 +280,20 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 10 elements descending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val end = data[14] //15th element
         assertTrue(end.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             last = 10,
-            before = PaginatedFooRepository.encodeCursor(end)
+            before = PaginatedFoxtrotRepository.encodeCursor(end)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -296,20 +315,20 @@ class PaginationTest {
     @Test
     fun `when cursor fetching last elements ascending, should have previous and no next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val start = data[9]  //10th element
         assertTrue(start.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             first = 15,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedFoxtrotRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -331,20 +350,20 @@ class PaginationTest {
     @Test
     fun `when cursor fetching last elements descending, should have next and no previous page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val end = data[15] //16th element
         assertTrue(end.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             last = 15,
-            before = PaginatedFooRepository.encodeCursor(end)
+            before = PaginatedFoxtrotRepository.encodeCursor(end)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -366,20 +385,20 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 1 element ascending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val start = data[0] //1st element
         assertTrue(start.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             first = 1,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedFoxtrotRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -401,20 +420,20 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 1 element descending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val end = data[24] //25th element
         assertTrue(end.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             last = 1,
-            before = PaginatedFooRepository.encodeCursor(end)
+            before = PaginatedFoxtrotRepository.encodeCursor(end)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -436,21 +455,21 @@ class PaginationTest {
     @Test
     fun `when cursor fetching before first element, should have no page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = generateData()
         }
         val start = data[0] //1st element
         assertTrue(start.createdBy == "Hans")
         val modifiedStart = start.copy(createdOn = start.createdOn.minusSeconds(60))
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             first = 1,
-            after = PaginatedFooRepository.encodeCursor(modifiedStart)
+            after = PaginatedFoxtrotRepository.encodeCursor(modifiedStart)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
 
         //assert
@@ -461,21 +480,21 @@ class PaginationTest {
     @Test
     fun `when cursor fetching after last element, should have no page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedFoxtrot>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedFoxtrot.persistAll(generateData())
         }
         val end = data[24] //25th element
         assertTrue(end.createdBy == "Hans")
         val modifiedEnd = end.copy(createdOn = end.createdOn.plusSeconds(60))
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
-            "Hans",
+        val params = PaginatedFoxtrotRepository.PaginatedFoxtrotParameter(
+            "Hans!",
             last = 1,
-            before = PaginatedFooRepository.encodeCursor(modifiedEnd)
+            before = PaginatedFoxtrotRepository.encodeCursor(modifiedEnd)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedFoxtrot.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
 
         //assert

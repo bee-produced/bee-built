@@ -3,8 +3,8 @@ package com.beeproduced.bee.persistent
 import com.beeproduced.bee.persistent.selection.EmptySelection
 import com.beeproduced.bee.persistent.config.DummyApplication
 import com.beeproduced.bee.persistent.config.PaginationTestConfiguration
-import com.beeproduced.bee.persistent.pagination.PaginatedFoo
-import com.beeproduced.bee.persistent.pagination.PaginatedFooRepository
+import com.beeproduced.bee.persistent.pagination.PaginatedBar
+import com.beeproduced.bee.persistent.pagination.PaginatedBarRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -16,6 +16,7 @@ import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.*
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -30,10 +31,10 @@ import kotlin.test.assertTrue
     classes = [DummyApplication::class, PaginationTestConfiguration::class]
 )
 @TestPropertySource("classpath:application.properties")
-class PaginationTest {
+class PaginationCompositeTest {
 
     @Autowired
-    lateinit var paginatedFooRepository: PaginatedFooRepository
+    lateinit var paginatedBarRepository: PaginatedBarRepository
 
     @Qualifier("orderTransactionManager")
     @Autowired
@@ -43,19 +44,25 @@ class PaginationTest {
 
     private val hansCount = 25
 
-    private fun generateData(): List<PaginatedFoo> {
+    private fun generateData(): List<PaginatedBar> {
         val createdBy = listOf("Hans", "Peter", "Alexander")
-        val created = mutableListOf<PaginatedFoo>()
+        val created = mutableListOf<PaginatedBar>()
 
+        var lastId = UUID.fromString("00000000-0000-0000-0000-000000000000")
         for (i in 1..100) {
-            val foo = PaginatedFoo(
+            val idA = lastId
+            val idB = UUID.randomUUID()
+            lastId = idB
+            val bar = PaginatedBar(
+                idA = idA,
+                idB = idB,
                 createdBy = if (i <= hansCount) createdBy[0] else if (i <= 50) createdBy[1] else createdBy[2],
                 createdOn = Instant.now()
                     .plusSeconds(i.toLong() * 3)
                     .plusMillis(Random.nextLong(1000))
                     .truncatedTo(ChronoUnit.MICROS)
             )
-            created.add(foo)
+            created.add(bar)
         }
 
         return created
@@ -69,18 +76,18 @@ class PaginationTest {
     @AfterEach
     fun teardown() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.deleteAll()
+            paginatedBarRepository.deleteAll()
         }
     }
 
     @Test
     fun `when fetching all elements ascending in first page have no previous and next page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            paginatedBarRepository.persistAll(generateData())
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", first = hansCount)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedBarRepository.PaginatedBarParameter("Hans", first = hansCount)
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -98,18 +105,18 @@ class PaginationTest {
 
     @Test
     fun `when fetching all elements ascending in first page with first cursor have previous but no next page`() {
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val start = data[0] //1st element
 
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             first = hansCount,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedBarRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -128,11 +135,11 @@ class PaginationTest {
     @Test
     fun `when fetching all elements descending in first page have no previous and next page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            paginatedBarRepository.persistAll(generateData())
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", last = hansCount)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedBarRepository.PaginatedBarParameter("Hans", last = hansCount)
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -150,18 +157,18 @@ class PaginationTest {
 
     @Test
     fun `when fetching all elements descending in first page with last cursor have next but no previous page`() {
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val last = data[24] //25th element
 
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             last = hansCount,
-            before = PaginatedFooRepository.encodeCursor(last)
+            before = PaginatedBarRepository.encodeCursor(last)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -177,14 +184,15 @@ class PaginationTest {
         }
     }
 
+
     @Test
     fun `when fetching 10 elements ascending, should have next but no previous page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            paginatedBarRepository.persistAll(generateData())
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", first = 10)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedBarRepository.PaginatedBarParameter("Hans", first = 10)
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -203,11 +211,11 @@ class PaginationTest {
     @Test
     fun `when fetching 10 elements descending, should have previous but no next page`() {
         transaction.executeWithoutResult {
-            paginatedFooRepository.persistAll(generateData())
+            paginatedBarRepository.persistAll(generateData())
         }
 
-        val params = PaginatedFooRepository.PaginatedFooParameter("Hans", last = 10)
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val params = PaginatedBarRepository.PaginatedBarParameter("Hans", last = 10)
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
@@ -226,27 +234,27 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 10 elements ascending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val start = data[9] //10th element
         assertTrue(start.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             first = 10,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedBarRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
         //assert
         assertTrue(info.hasNextPage, "hasNextPage should be true")
         assertTrue(info.hasPreviousPage, "hasPreviousPage should be true")
-        assertTrue("Cursor should not be in result") { edges.none { it.node.id == start.id } }
+        assertTrue("Cursor should not be in result") { edges.none { it.node.idA == start.idA && it.node.idB == start.idB } }
         assertTrue(edges.size == 10)
 
         var lastDate = Instant.MIN
@@ -261,27 +269,27 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 10 elements descending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val end = data[14] //15th element
         assertTrue(end.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             last = 10,
-            before = PaginatedFooRepository.encodeCursor(end)
+            before = PaginatedBarRepository.encodeCursor(end)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
         //assert
         assertTrue(info.hasNextPage, "hasNextPage should be true")
         assertTrue(info.hasPreviousPage, "hasPreviousPage should be true")
-        assertTrue("Cursor should not be in result") { edges.none { it.node.id == end.id } }
+        assertTrue("Cursor should not be in result") { edges.none { it.node.idA == end.idA && it.node.idB == end.idB } }
         assertTrue(edges.size == 10)
 
         var lastDate = Instant.MAX
@@ -296,27 +304,27 @@ class PaginationTest {
     @Test
     fun `when cursor fetching last elements ascending, should have previous and no next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val start = data[9]  //10th element
         assertTrue(start.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             first = 15,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedBarRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
         //assert
         assertFalse(info.hasNextPage, "hasNextPage should be false")
         assertTrue(info.hasPreviousPage, "hasPreviousPage should be true")
-        assertTrue("Cursor should not be in result") { edges.none { it.node.id == start.id } }
+        assertTrue("Cursor should not be in result") { edges.none { it.node.idA == start.idA && it.node.idB == start.idB } }
         assertTrue(edges.size == 15)
 
         var lastDate = Instant.MIN
@@ -331,27 +339,27 @@ class PaginationTest {
     @Test
     fun `when cursor fetching last elements descending, should have next and no previous page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val end = data[15] //16th element
         assertTrue(end.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             last = 15,
-            before = PaginatedFooRepository.encodeCursor(end)
+            before = PaginatedBarRepository.encodeCursor(end)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
         //assert
         assertTrue(info.hasNextPage, "hasNextPage should be true")
         assertFalse(info.hasPreviousPage, "hasPreviousPage should be false")
-        assertTrue("Cursor should not be in result") { edges.none { it.node.id == end.id } }
+        assertTrue("Cursor should not be in result") { edges.none { it.node.idA == end.idA && it.node.idB == end.idB } }
         assertTrue(edges.size == 15)
 
         var lastDate = Instant.MAX
@@ -366,27 +374,27 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 1 element ascending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val start = data[0] //1st element
         assertTrue(start.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             first = 1,
-            after = PaginatedFooRepository.encodeCursor(start)
+            after = PaginatedBarRepository.encodeCursor(start)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
         //assert
         assertTrue(info.hasNextPage, "hasNextPage should be true")
         assertTrue(info.hasPreviousPage, "hasPreviousPage should be true")
-        assertTrue("Cursor should not be in result") { edges.none { it.node.id == start.id } }
+        assertTrue("Cursor should not be in result") { edges.none { it.node.idA == start.idA && it.node.idB == start.idB } }
         assertTrue(edges.size == 1)
 
         var lastDate = Instant.MIN
@@ -401,27 +409,27 @@ class PaginationTest {
     @Test
     fun `when cursor fetching 1 element descending, should have previous and next page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val end = data[24] //25th element
         assertTrue(end.createdBy == "Hans")
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             last = 1,
-            before = PaginatedFooRepository.encodeCursor(end)
+            before = PaginatedBarRepository.encodeCursor(end)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
         val info = requireNotNull(result.pageInfo)
 
         //assert
         assertTrue(info.hasNextPage, "hasNextPage should be true")
         assertTrue(info.hasPreviousPage, "hasPreviousPage should be true")
-        assertTrue("Cursor should not be in result") { edges.none { it.node.id == end.id } }
+        assertTrue("Cursor should not be in result") { edges.none { it.node.idA == end.idA && it.node.idB == end.idB } }
         assertTrue(edges.size == 1)
 
         var lastDate = Instant.MAX
@@ -436,21 +444,21 @@ class PaginationTest {
     @Test
     fun `when cursor fetching before first element, should have no page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val start = data[0] //1st element
         assertTrue(start.createdBy == "Hans")
         val modifiedStart = start.copy(createdOn = start.createdOn.minusSeconds(60))
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             first = 1,
-            after = PaginatedFooRepository.encodeCursor(modifiedStart)
+            after = PaginatedBarRepository.encodeCursor(modifiedStart)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
 
         //assert
@@ -461,21 +469,21 @@ class PaginationTest {
     @Test
     fun `when cursor fetching after last element, should have no page`() {
         //setup
-        var data = listOf<PaginatedFoo>()
+        var data = listOf<PaginatedBar>()
         transaction.executeWithoutResult {
-            data = paginatedFooRepository.persistAll(generateData())
+            data = paginatedBarRepository.persistAll(generateData())
         }
         val end = data[24] //25th element
         assertTrue(end.createdBy == "Hans")
         val modifiedEnd = end.copy(createdOn = end.createdOn.plusSeconds(60))
 
         //act
-        val params = PaginatedFooRepository.PaginatedFooParameter(
+        val params = PaginatedBarRepository.PaginatedBarParameter(
             "Hans",
             last = 1,
-            before = PaginatedFooRepository.encodeCursor(modifiedEnd)
+            before = PaginatedBarRepository.encodeCursor(modifiedEnd)
         )
-        val result = paginatedFooRepository.pagination(params, EmptySelection())
+        val result = paginatedBarRepository.pagination(params, EmptySelection())
         val edges = requireNotNull(result.edges)
 
         //assert

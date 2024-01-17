@@ -1,9 +1,7 @@
 package com.beeproduced.bee.persistent.jpa.meta
 
-import jakarta.persistence.EmbeddedId
 import jakarta.persistence.IdClass
 import java.lang.reflect.Field
-import java.lang.reflect.Method
 
 
 /**
@@ -21,7 +19,7 @@ class EntityInfo(
 
     data class EntityToIdField(val entityField: Field, val idField: Field)
 
-    val compositeKeyMapping: Set<EntityToIdField>?
+    val compositeKeyMapping: List<EntityToIdField>?
 
     // https://www.baeldung.com/jpa-entity-table-names#defaultNames
     // https://stackoverflow.com/a/634629/12347616
@@ -33,7 +31,7 @@ class EntityInfo(
         if (type.isAnnotationPresent(IdClass::class.java)) {
             // Map id properties if composite key
             nonPrimitiveIdType = idType
-            compositeKeyMapping = idType.declaredFields.mapTo(HashSet()) { idField ->
+            compositeKeyMapping = idType.declaredFields.map { idField ->
                 idField.isAccessible = true
                 val entityField = type.getDeclaredField(idField.name)
                 EntityToIdField(entityField, idField)
