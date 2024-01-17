@@ -230,7 +230,7 @@ On default, all select methods default to `BeeSelection.empty()` which loads no 
 
 ```kotlin
 val selection = BeeSelection.create {
-	field("works")
+    field("works")
 }
 ```
 
@@ -356,7 +356,7 @@ fun select(
 ): List<T>
 ```
 
-> ⚠️ `bee.persistance` does not support currently all blaze-persistance clauses/operators. They will be gradually implemented
+> ⚠️ `bee.persistance` does not support currently all blaze-persistance clauses/operators. They will be gradually implemented.
 
 The following example shows how to query with a `WHERE` clause referencing an entity from a  `JOINED` table.
 
@@ -398,16 +398,17 @@ transaction.executeWithoutResult {
 
 ## Future Implementation Roadmap
 
-Following features will be implemented after benchmarking this proof of concept againts `bee.persistent.jpa`
+Following features will be implemented after benchmarking this proof of concept againts `bee.persistent.jpa`:
 
 - [ ] `BeeBlazeRepository`: `delete` methods
 - [ ] `BeeBlazeRepository`: `exists` methods
+- [ ] `BeeBlazeRepository`: `count` methods
 - [ ] `Predicate`: Implement [basic predicates (`greater`, `greaterThan`, ...)](https://persistence.blazebit.com/documentation/1.6/core/manual/en_US/index.html#expressions)
 - [ ] `Predicate`: Implement [string functions](https://persistence.blazebit.com/documentation/1.6/core/manual/en_US/index.html#string-functions)
 - [ ] `Predicate`: Provide [subquery support](https://persistence.blazebit.com/documentation/1.6/core/manual/en_US/index.html#subquery-expressions)
 - [ ] `Instantiators`: Map primitive nullable Foreign Keys (e.g. `Long?`) to `null` instead of `0`
 - [ ] `Instantiators`: Map empty `1:n` relations to `null` instead of empty collection
 - [ ] `Pagination`: Provide pagination support via blaze-persistence keyset pagination
-- [ ] `SelectQuery`: Provide `unsafe` access  to `CriteriaBuilder`
+- [ ] `SelectQuery`: Provide `unsafe` access to `CriteriaBuilder`
 - [ ] `Config`: Generate spring config that creates blaze beans
 - [ ] `DGS`: Provide DGS adapters (alternative names / skip overs)

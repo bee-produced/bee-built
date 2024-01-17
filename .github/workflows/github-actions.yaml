@@ -31,6 +31,9 @@ jobs:
       - name: Build & Test bee.persistent
         working-directory: ./bee.persistent
         run: ./gradlew build
+      - name: Test bee.persistent.blaze
+        working-directory: ./bee.persistent.test
+        run: ./gradlew build
       - name: Build & Test bee.generative
         working-directory: ./bee.generative
         run: ./gradlew build
