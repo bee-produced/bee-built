@@ -156,6 +156,7 @@ class BeePersistentRepoCodegen(
                 .buildPersist()
                 .buildUpdate()
                 .buildSelect()
+                .buildSelectById()
                 .buildSelectionInfo()
                 .build()
         )
@@ -390,6 +391,27 @@ class BeePersistentRepoCodegen(
         addStatement("$padding  .where(\"$idSimpleName\").eq(entity.$idSimpleName)")
         addStatement("$padding  .executeUpdate()")
         addStatement("${padding}return entity")
+    }
+
+    private fun TypeSpec.Builder.buildSelectById(): TypeSpec.Builder = apply {
+        val entityClassName = entity.declaration.toClassName()
+        val idClassname = entity.id.type.toTypeName()
+        val dslClassname = ClassName(config.dslPackageName, "${entity.simpleName}DSL")
+        val idName = entity.id.simpleName
+
+        val selectFN = FunSpec.builder("selectById")
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter("id", idClassname)
+            .addParameter("selection", poetMap.classMapping(BEE_SELECTION))
+            .returns(entityClassName.copy(nullable = true))
+        selectFN.apply {
+            addNamedStmt("return select(selection) {")
+            val eqStmt = if (!entity.id.isValueClass) "eq" else "eqInline"
+            addStatement("  where(%T.$idName.$eqStmt(id))", dslClassname)
+            addNamedStmt("}.firstOrNull()")
+        }
+
+        addFunction(selectFN.build())
     }
 
     private fun TypeSpec.Builder.buildSelect(): TypeSpec.Builder = apply {

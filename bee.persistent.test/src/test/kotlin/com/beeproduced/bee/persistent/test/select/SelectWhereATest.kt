@@ -84,6 +84,26 @@ class SelectWhereATest(
     }
 
     @Test
+    fun `where inside selectById`() {
+        transaction.executeWithoutResult {
+            val id1 = UUID.randomUUID()
+            val id2 = UUID.randomUUID()
+            circularRepo.persist(Circular(id1, null, null))
+            circularRepo.persist(Circular(id2, id1, null))
+            circularRepo.cbf.update(em, Circular::class.java)
+                .set("cId", id2)
+                .where("id").eq(id1)
+                .executeUpdate()
+
+            val selection = CircularDSL.select { this.circular { this.circular { } } }
+            val circle = circularRepo.selectById(id2, selection)
+
+            assertNotNull(circle)
+            assertEquals(id2, circle.id)
+        }
+    }
+
+    @Test
     fun whereAnd() {
         transaction.executeWithoutResult {
             val id1 = UUID.randomUUID()
