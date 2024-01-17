@@ -11,9 +11,11 @@ import com.beeproduced.bee.persistent.selection.EmptySelection
 import com.linecorp.kotlinjdsl.QueryFactoryImpl
 import com.linecorp.kotlinjdsl.query.creator.CriteriaQueryCreatorImpl
 import com.linecorp.kotlinjdsl.query.creator.SubqueryCreatorImpl
+import com.linecorp.kotlinjdsl.query.spec.expression.ColumnSpec
 import com.linecorp.kotlinjdsl.query.spec.expression.EntitySpec
 import com.linecorp.kotlinjdsl.querydsl.CriteriaDeleteQueryDsl
 import com.linecorp.kotlinjdsl.querydsl.CriteriaQueryDsl
+import com.linecorp.kotlinjdsl.selectQuery
 import jakarta.persistence.EntityManager
 import org.hibernate.metamodel.model.domain.internal.MappingMetamodelImpl
 import org.slf4j.Logger
@@ -41,8 +43,9 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
     protected val relations: Relations
     protected val generated: Generated
 
-    protected val selectIdColumns: CriteriaQueryDsl<*>.() -> Unit
-    protected val selectCount: CriteriaQueryDsl<Long>.() -> Unit
+    protected val selectDistinctIdColumns: CriteriaQueryDsl<*>.() -> Unit
+    protected val selectDistinctIdAndOrderColumns: CriteriaQueryDsl<*>.(List<ColumnSpec<*>>) -> Unit
+    protected val selectCount: CriteriaQueryDsl<Long>.(forceDistinct: Boolean) -> Unit
     protected val queryFactory = QueryFactoryImpl(
         criteriaQueryCreator = CriteriaQueryCreatorImpl(entityManager),
         subqueryCreator = SubqueryCreatorImpl()
@@ -78,8 +81,11 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
         // Is needed, as there is a difference between selecting entity with single primary key
         // and with composite key
         @Suppress("UNCHECKED_CAST")
-        selectIdColumns = QueryBuilder.selectIdsFromEntity(this.type, ids)
-                as CriteriaQueryDsl<*>.() -> Unit
+        selectDistinctIdColumns = QueryBuilder.selectDistinctIdsFromEntity(this.type, ids)
+            as CriteriaQueryDsl<*>.() -> Unit
+        @Suppress("UNCHECKED_CAST")
+        selectDistinctIdAndOrderColumns = QueryBuilder.selectDistinctIdAndOrderColumnsFromEntity(this.type, ids)
+            as CriteriaQueryDsl<*>.(List<ColumnSpec<*>>) -> Unit
         selectCount = QueryBuilder.selectCount(this.type, ids)
     }
 
@@ -199,7 +205,7 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
         dsl: CriteriaQueryDsl<*>.() -> Unit = {}
     ): List<T> {
         val testDsl = DummyCriteriaQueryDsl().apply(dsl)
-        val query = if (testDsl.hasLimitClause) {
+        val query = if (testDsl.hasLimitClause && !testDsl.hasOrderByClause) {
             // Query ids first, then query with where!
             // Hibernate cannot use `LIMIT` when joining tables!
             // To be precise, it returns a “limited” result but queries EVERYTHING and limits in memory!
@@ -207,7 +213,7 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
             // https://hibernate.atlassian.net/browse/HHH-15964?focusedCommentId=110593
             val resultIds: List<Any> = queryFactory.selectQuery(info.nonPrimitiveIdType) {
                 // select(selectIdColumns)
-                selectIdColumns(this)
+                selectDistinctIdColumns(this)
                 from(EntitySpec(type))
                 dsl(this)
             }.resultList
@@ -218,7 +224,25 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
                 select(EntitySpec(type))
                 from(EntitySpec(type))
                 where(QueryBuilder.whereClauseFromIds(type, info.compositeKeyMapping, resultIds, ids))
+            }
+        } else if (testDsl.hasLimitClause && testDsl.hasOrderByClause) {
+            val orderByColumns = testDsl.orderByColumns()
+            val idsAndOrderBy: List<List<Any>> = queryFactory.selectQuery<List<Any>> {
+                selectDistinctIdAndOrderColumns(this, orderByColumns)
+                from(EntitySpec(type))
                 dsl(this)
+            }.resultList
+
+            if (idsAndOrderBy.isEmpty()) return emptyList()
+            val resultIds = idsAndOrderBy.map {
+                it.dropLast(orderByColumns.count())
+            }
+
+            queryFactory.selectQuery(type) {
+                select(EntitySpec(type))
+                from(EntitySpec(type))
+                where(QueryBuilder.whereClauseFromIds(type, info.compositeKeyMapping, resultIds, ids))
+                orderBy(testDsl.orders)
             }
         } else {
             queryFactory.selectQuery(type) {
@@ -242,8 +266,12 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
     }
 
     open fun count(dsl: CriteriaQueryDsl<*>.() -> Unit = {}): Long {
+        return count(true, dsl)
+    }
+
+    open fun count(distinct: Boolean, dsl: CriteriaQueryDsl<*>.() -> Unit = {}): Long {
         val count = queryFactory.selectQuery(Long::class.javaObjectType) {
-            selectCount(this)
+            selectCount(this, distinct)
             from(EntitySpec(type))
             dsl(this)
         }
@@ -255,7 +283,7 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
      */
     open fun exists(id: ID): Boolean {
         val resultIds: List<Any> = queryFactory.selectQuery(info.nonPrimitiveIdType) {
-            selectIdColumns(this)
+            selectDistinctIdColumns(this)
             from(EntitySpec(type))
             where(QueryBuilder.whereClauseFromId(type, info.compositeKeyMapping, id, ids))
         }.resultList
@@ -270,7 +298,7 @@ abstract class BaseDataRepository<T : DataEntity<T>, ID : Any>(
     open fun existsAll(ids: Collection<ID>): Boolean {
         val uniqueIds = ids.toSet()
         val resultIds: List<Any> = queryFactory.selectQuery(info.nonPrimitiveIdType) {
-            selectIdColumns(this)
+            selectDistinctIdColumns(this)
             from(EntitySpec(type))
             where(
                 QueryBuilder.whereClauseFromIds(
