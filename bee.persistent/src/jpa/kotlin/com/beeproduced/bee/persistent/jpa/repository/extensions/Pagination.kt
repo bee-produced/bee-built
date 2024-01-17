@@ -21,7 +21,7 @@ class Pagination<V, CV, C, W>(
     private val repository: BaseDataRepository<V, *>,
     private val orderBy: ColumnSpec<CV>,
     private val cursor: Cursor<V, CV, C>,
-    private val where: (W) -> PredicateSpec,
+    private val where: (W) -> PredicateSpec = { PredicateSpec.empty },
     private val dsl: CriteriaQueryDsl<*>.() -> Unit = {}
 ) where V : DataEntity<V>, CV : Comparable<CV> {
     private val logger = LoggerFactory.getLogger(this::class.java)
