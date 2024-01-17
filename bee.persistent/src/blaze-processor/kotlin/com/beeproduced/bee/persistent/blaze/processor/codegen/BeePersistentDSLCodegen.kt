@@ -231,7 +231,7 @@ class BeePersistentDSLCodegen(
             viewDSL.addFunction(selectorFn.build())
         }
 
-        for (embeddedColumn in lazyColumns.filter { it.isEmbedded }) {
+        for (embeddedColumn in allLazyColumns.filter { it.isEmbedded }) {
             val simpleName = embeddedColumn.simpleName
             val embedded = requireNotNull(embeddedColumn.embedded)
             val name = traverseDSL(embeddedColumn, visitedEmbeddedViews, true)
@@ -299,6 +299,13 @@ class BeePersistentDSLCodegen(
         }
 
         viewDSL.addProperty(viewDSLFields.build())
+
+        for (lazyColumn in lazyColumns) {
+            val simpleName = lazyColumn.simpleName
+            val selectorFn = FunSpec.builder(simpleName)
+                .addNamedStmt("fields.add(${TYPED_FIELD_NODE}(\"$simpleName\", \"$embeddedSimpleName\"))")
+            viewDSL.addFunction(selectorFn.build())
+        }
 
         addType(viewDSL.build())
         return viewDSLName
@@ -453,20 +460,6 @@ class BeePersistentDSLCodegen(
         addType(registration.build())
 
         resourcesCodegen.addSpringListener("$packageName.$registrationName")
-    }
-
-
-    private fun writeToFile(resourceName: String, content: String) {
-        codeGenerator
-            .createNewFileByPath(Dependencies(false), "META-INF/$resourceName", "factories")
-            .also {
-                it.write(content.toByteArray())
-            }
-            .close()
-
-        // codeGenerator.generatedFile.firstOrNull { it.name.endsWith(".factories") }?.let {
-        //     it.appendText("!!!")
-        // }
     }
 
     private fun findView(repo: RepoInfo): EntityViewInfo {
