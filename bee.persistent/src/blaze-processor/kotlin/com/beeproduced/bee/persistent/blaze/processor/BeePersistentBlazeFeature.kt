@@ -183,6 +183,10 @@ class BeePersistentBlazeFeature : BeeGenerativeFeature {
         }
 
         // Validate
+        if (inheritedEntities.values.isEmpty()) {
+            logger.info("No entities found. Stopping codegen betimes.")
+            return
+        }
         for (entityInfo in inheritedEntities.values) {
             if (entityInfo.id === IdProperty.PLACEHOLDER) {
                 throw IllegalArgumentException("Entity [${entityInfo.simpleName}] has no ID")
