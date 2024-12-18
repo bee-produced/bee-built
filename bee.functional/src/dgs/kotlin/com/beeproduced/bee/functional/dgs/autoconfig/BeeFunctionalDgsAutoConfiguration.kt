@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-10-23
  */
