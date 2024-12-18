@@ -9,16 +9,14 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-10-23
  */
 @Configuration
 @ConditionalOnClass(value = [EventManager::class, Mediator::class, Scheduler::class])
 open class BeeBuzzAutoConfiguration {
-    @Bean
-    open fun beeBuzzEventManager() : EventManager {
-        return SimpleEventManager()
-    }
+  @Bean
+  open fun beeBuzzEventManager(): EventManager {
+    return SimpleEventManager()
+  }
 }
