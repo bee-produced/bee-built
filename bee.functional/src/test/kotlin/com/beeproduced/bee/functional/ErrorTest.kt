@@ -1,13 +1,14 @@
 package com.beeproduced.bee.functional
 
-import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.mapBadRequestError
-import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.mapInternalError
+import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.mapToBadRequestError
+import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.mapWhenInternalError
 import com.beeproduced.bee.functional.result.errors.BadRequestError
 import com.beeproduced.bee.functional.result.errors.ExceptionError
 import com.beeproduced.bee.functional.result.errors.InternalAppError
 import com.beeproduced.bee.functional.result.errors.ResultError
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.getErrorOrElse
+import com.github.michaelbull.result.mapError
 import java.io.OutputStream
 import java.io.PrintStream
 import kotlin.test.Ignore
@@ -148,7 +149,7 @@ class ErrorTest {
     val error1StackTrace = error1.stackTraceToString()
     val error2 =
       Err(error1)
-        .mapBadRequestError { e -> BadRequestError(error2Description, e) }
+        .mapError { e -> BadRequestError(error2Description, e) }
         .getErrorOrElse { throw IllegalArgumentException() }
     val error2LineNumber = lineNumberBefore() - 1
     val error2StackTrace = error2.stackTraceToString()
@@ -171,10 +172,10 @@ class ErrorTest {
     val error1LineNumber = lineNumberBefore()
     val error1StackTrace = error1.stackTraceToString()
     val error2 =
-      Err(error1).mapBadRequestError(error2Description).getErrorOrElse {
+      Err(error1).mapToBadRequestError(error2Description).getErrorOrElse {
         throw IllegalArgumentException()
       }
-    val error2LineNumber = lineNumberBefore() - 1
+    val error2LineNumber = lineNumberBefore() - 2
     val error2StackTrace = error2.stackTraceToString()
     val error2LineCount = lineCount(error2StackTrace)
 
@@ -196,7 +197,7 @@ class ErrorTest {
     val error1StackTrace = error1.stackTraceToString()
     val error2 =
       Err(error1)
-        .mapInternalError { e -> InternalAppError(error2Description, e) }
+        .mapWhenInternalError { e -> InternalAppError(error2Description, e) }
         .getErrorOrElse { throw IllegalArgumentException() }
     val error2LineNumber = lineNumberBefore() - 1
     val error2StackTrace = error2.stackTraceToString()
@@ -219,7 +220,7 @@ class ErrorTest {
     val error1LineNumber = lineNumberBefore()
     val error1StackTrace = error1.stackTraceToString()
     val error2 =
-      Err(error1).mapInternalError(error2Description).getErrorOrElse {
+      Err(error1).mapWhenInternalError(error2Description).getErrorOrElse {
         throw IllegalArgumentException()
       }
     val error2LineNumber = lineNumberBefore() - 1
@@ -247,7 +248,7 @@ class ErrorTest {
     val error1StackTrace = error1.stackTraceToString()
     val error2 =
       Err(error1)
-        .mapBadRequestError { e -> CustomBadRequest(error2Description, e) }
+        .mapError { e -> CustomBadRequest(error2Description, e) }
         .getErrorOrElse { throw IllegalArgumentException() }
     val error2LineNumber = lineNumberBefore() - 1
     val error2StackTrace = error2.stackTraceToString()

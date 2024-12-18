@@ -17,7 +17,7 @@ import kotlin.contracts.contract
  */
 @OptIn(ExperimentalContracts::class)
 @PublishedApi
-internal inline fun <V, reified E : AppError> Result<V, AppError>.mapInternalErrorGeneric(
+internal inline fun <V, reified E : AppError> Result<V, AppError>.mapWhenErrorGeneric(
   transform: (E) -> E
 ): Result<V, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
@@ -35,9 +35,10 @@ internal inline fun <V, reified E : AppError> Result<V, AppError>.mapInternalErr
 }
 
 @PublishedApi
-internal inline fun <V, reified E : AppError> Result<V, AppError>.mapInternalErrorGeneric(
-  constructor: (String, ResultError, Long, Long) -> E,
+internal inline fun <V, reified E : AppError> Result<V, AppError>.mapWhenErrorGeneric(
+  constructor: (String, ResultError, Map<String, Any?>?, Long, Long) -> E,
   description: String,
+  debugInfo: Map<String, Any?>?,
 ): Result<V, AppError> {
 
   return when (this) {
@@ -47,30 +48,63 @@ internal inline fun <V, reified E : AppError> Result<V, AppError>.mapInternalErr
         when (e) {
           // Third parameter skip traces +1 to omit outer function call
           // Inline functions like this are NOT counted!
-          is E -> Err(constructor(description, e, 1, 1))
+          is E -> Err(constructor(description, e, debugInfo, 2, 1))
           else -> Err(e)
         }
       }
   }
 }
 
-inline infix fun <V> Result<V, AppError>.mapInternalError(
+inline infix fun <V> Result<V, AppError>.mapWhenInternalError(
   transform: (InternalAppError) -> InternalAppError
 ): Result<V, AppError> {
-  return mapInternalErrorGeneric(transform)
+  return mapWhenErrorGeneric(transform)
 }
 
-infix fun <V> Result<V, AppError>.mapInternalError(description: String): Result<V, AppError> {
+fun <V> Result<V, AppError>.mapWhenInternalError(
+  description: String,
+  debugInfo: Map<String, Any?>? = null,
+): Result<V, AppError> {
   // See: https://stackoverflow.com/a/50511988/12347616
-  return mapInternalErrorGeneric(::InternalAppError, description)
+  return mapWhenErrorGeneric(::InternalAppError, description, debugInfo)
 }
 
-inline infix fun <V> Result<V, AppError>.mapBadRequestError(
+inline infix fun <V> Result<V, AppError>.mapWhenBadRequestError(
   transform: (BadRequestError) -> BadRequestError
 ): Result<V, AppError> {
-  return mapInternalErrorGeneric(transform)
+  return mapWhenErrorGeneric(transform)
 }
 
-infix fun <V> Result<V, AppError>.mapBadRequestError(description: String): Result<V, AppError> {
-  return mapInternalErrorGeneric(::BadRequestError, description)
+fun <V> Result<V, AppError>.mapWhenBadRequestError(
+  description: String,
+  debugInfo: Map<String, Any?>? = null,
+): Result<V, AppError> {
+  return mapWhenErrorGeneric(::BadRequestError, description, debugInfo)
+}
+
+@PublishedApi
+internal inline fun <V, reified E : AppError> Result<V, AppError>.mapErrorGeneric(
+  constructor: (String, ResultError, Map<String, Any?>?, Long, Long) -> E,
+  description: String,
+  debugInfo: Map<String, Any?>?,
+): Result<V, AppError> {
+
+  return when (this) {
+    is Ok -> this
+    is Err -> Err(constructor(description, error, debugInfo, 2, 1))
+  }
+}
+
+fun <V> Result<V, AppError>.mapToInternalError(
+  description: String,
+  debugInfo: Map<String, Any?>? = null,
+): Result<V, AppError> {
+  return mapErrorGeneric(::InternalAppError, description, debugInfo)
+}
+
+fun <V> Result<V, AppError>.mapToBadRequestError(
+  description: String,
+  debugInfo: Map<String, Any?>? = null,
+): Result<V, AppError> {
+  return mapErrorGeneric(::BadRequestError, description, debugInfo)
 }

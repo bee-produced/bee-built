@@ -48,7 +48,8 @@ sourceSets {
   //         srcDir("src/dgs/kotlin")
   //         compileClasspath += sourceSets.getByName("dgs").output + test.get().output
   //         runtimeClasspath += sourceSets.getByName("dgs").output + test.get().output
-  //         configurations["dgsTestImplementation"].extendsFrom(configurations.implementation.get())
+  //
+  // configurations["dgsTestImplementation"].extendsFrom(configurations.implementation.get())
   //         configurations["dgsTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
   //     }
   // }

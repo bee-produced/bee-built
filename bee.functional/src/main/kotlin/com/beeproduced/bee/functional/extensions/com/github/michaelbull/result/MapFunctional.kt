@@ -157,6 +157,18 @@ inline fun <V, B, C> Result<V, AppError>.andThenToTriple(
   }
 }
 
+@OptIn(ExperimentalContracts::class)
+inline fun <V, B, C> Result<Pair<V, B>, AppError>.andThenPairToTriple(
+  transform: (Pair<V, B>) -> Result<C, AppError>
+): Result<Triple<V, B, C>, AppError> {
+  contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
+
+  return when (this) {
+    is Ok -> transform(value).map { c -> Triple(value.first, value.second, c) }
+    is Err -> this
+  }
+}
+
 fun <A, B> Result<Pair<A, B>, AppError>.reversePair(): Result<Pair<B, A>, AppError> {
   return when (this) {
     is Ok -> Ok(Pair(value.second, value.first))
