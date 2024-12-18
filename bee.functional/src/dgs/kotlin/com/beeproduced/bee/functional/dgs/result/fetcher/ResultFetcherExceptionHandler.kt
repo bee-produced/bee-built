@@ -2,6 +2,8 @@ package com.beeproduced.bee.functional.dgs.result.fetcher
 
 import com.beeproduced.bee.functional.dgs.result.fetcher.helper.DataFetcherErrThrower
 import com.beeproduced.bee.functional.dgs.result.fetcher.helper.extendWithHandlerParameters
+import com.beeproduced.bee.functional.dgs.result.fetcher.hook.ErrorHandler
+import com.beeproduced.bee.functional.result.errors.AppError
 import com.netflix.graphql.dgs.exceptions.DefaultDataFetcherExceptionHandler
 import com.netflix.graphql.types.errors.TypedGraphQLError
 import graphql.execution.DataFetcherExceptionHandler
@@ -21,12 +23,6 @@ class ResultFetcherExceptionHandler : DataFetcherExceptionHandler {
   override fun handleException(
     handlerParameters: DataFetcherExceptionHandlerParameters
   ): CompletableFuture<DataFetcherExceptionHandlerResult> {
-    return CompletableFuture.supplyAsync { onExceptionHandler(handlerParameters) }
-  }
-
-  private fun onExceptionHandler(
-    handlerParameters: DataFetcherExceptionHandlerParameters
-  ): DataFetcherExceptionHandlerResult {
     return when (val ex = handlerParameters.exception) {
       is DataFetcherErrThrower -> onDataFetcherErrThrowerException(ex, handlerParameters)
       else -> onUnexpectedException(ex, handlerParameters)
@@ -36,7 +32,7 @@ class ResultFetcherExceptionHandler : DataFetcherExceptionHandler {
   private fun onDataFetcherErrThrowerException(
     ex: DataFetcherErrThrower,
     handlerParameters: DataFetcherExceptionHandlerParameters,
-  ): DataFetcherExceptionHandlerResult {
+  ): CompletableFuture<DataFetcherExceptionHandlerResult> {
     val error = ex.error
     val graphQLErrors =
       error.errors.map {
@@ -44,15 +40,23 @@ class ResultFetcherExceptionHandler : DataFetcherExceptionHandler {
           it.extendWithHandlerParameters(handlerParameters)
         } else it
       }
-    return DataFetcherExceptionHandlerResult.newResult().errors(graphQLErrors).build()
+    val result = DataFetcherExceptionHandlerResult.newResult().errors(graphQLErrors).build()
+    // Execute hook, on default EmptyErrorHook is used
+    val appError = error.localContext
+    if (appError is AppError) {
+      ErrorHandler.hook.handleError(appError, ex, handlerParameters, graphQLErrors)
+    }
+    return CompletableFuture.completedFuture(result)
   }
 
   private fun onUnexpectedException(
     ex: Throwable,
     handlerParameters: DataFetcherExceptionHandlerParameters,
-  ): DataFetcherExceptionHandlerResult {
+  ): CompletableFuture<DataFetcherExceptionHandlerResult> {
     logger.error("Encountered unexpected error")
     logger.error(ex.stackTraceToString())
-    return defaultHandler.onException(handlerParameters)
+    // Execute hook, on default EmptyErrorHook is used
+    ErrorHandler.hook.handleException(ex, handlerParameters)
+    return defaultHandler.handleException(handlerParameters)
   }
 }

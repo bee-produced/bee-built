@@ -19,8 +19,10 @@ fun <V> Result<V, AppError>.getDataFetcher(): DataFetcherResult<V> {
     is Err ->
       error.let { e ->
         when (e) {
-          is InternalAppError -> DataFetcherResultHelper.InternalErr(e.description())
-          is BadRequestError -> DataFetcherResultHelper.BadRequestErr(e.description())
+          is InternalAppError ->
+            DataFetcherResultHelper.InternalErr(error.description(), error.debugInfo(), e)
+          is BadRequestError ->
+            DataFetcherResultHelper.BadRequestErr(error.description(), error.debugInfo(), e)
         }
       }
   }
@@ -31,7 +33,9 @@ inline fun <V> Result<V, AppError>.getDataFetcher(
 ): DataFetcherResult<V> {
   return when (this) {
     is Ok -> DataFetcherResultHelper.Ok(value)
-    is Err -> transform(error)
+    is Err -> {
+      transform(error)
+    }
   }
 }
 
@@ -41,6 +45,8 @@ inline fun <V, D> Result<V, AppError>.getDataFetcher(
 ): DataFetcherResult<D> {
   return when (this) {
     is Ok -> success(value)
-    is Err -> failure(error)
+    is Err -> {
+      failure(error)
+    }
   }
 }

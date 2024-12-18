@@ -21,6 +21,7 @@ fun TypedGraphQLError.extendWithHandlerParameters(
   return TypedGraphQLError.newBuilder()
     .message(this.message)
     .errorType(this.errorType())
+    .extensions(this.extensions)
     .path(handlerParameters.path)
     .build()
 }
