@@ -12,98 +12,99 @@ import com.linecorp.kotlinjdsl.querydsl.from.Relation
 import jakarta.persistence.criteria.JoinType
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-02-23
  */
 class DummyCriteriaQueryDsl : CriteriaQueryDsl<Any> {
 
-    private var limitClause = false
-    val hasLimitClause get() = limitClause
+  private var limitClause = false
+  val hasLimitClause
+    get() = limitClause
 
-    override fun limit(maxResults: Int) {
-        limitClause = true
-    }
+  override fun limit(maxResults: Int) {
+    limitClause = true
+  }
 
-    override fun limit(offset: Int, maxResults: Int) {
-        limitClause = true
-    }
+  override fun limit(offset: Int, maxResults: Int) {
+    limitClause = true
+  }
 
-    override fun maxResults(maxResults: Int) {
-        limitClause = true
-    }
+  override fun maxResults(maxResults: Int) {
+    limitClause = true
+  }
 
-    override fun offset(offset: Int) {
-        limitClause = true
-    }
+  override fun offset(offset: Int) {
+    limitClause = true
+  }
 
-    override fun <T, R> associate(
-        left: EntitySpec<T>,
-        right: EntitySpec<R>,
-        relation: Relation<T, R?>,
-        joinType: JoinType
-    ) {
-    }
+  override fun <T, R> associate(
+    left: EntitySpec<T>,
+    right: EntitySpec<R>,
+    relation: Relation<T, R?>,
+    joinType: JoinType,
+  ) {}
 
-    override fun <T, R> fetch(
-        left: EntitySpec<T>,
-        right: EntitySpec<R>,
-        relation: Relation<T, R?>,
-        joinType: JoinType
-    ) {
-    }
+  override fun <T, R> fetch(
+    left: EntitySpec<T>,
+    right: EntitySpec<R>,
+    relation: Relation<T, R?>,
+    joinType: JoinType,
+  ) {}
 
-    override fun from(entity: EntitySpec<*>) {}
+  override fun from(entity: EntitySpec<*>) {}
 
-    override fun groupBy(columns: List<ExpressionSpec<*>>) {}
+  override fun groupBy(columns: List<ExpressionSpec<*>>) {}
 
-    override fun having(predicate: PredicateSpec) {}
+  override fun having(predicate: PredicateSpec) {}
 
-    override fun hints(hints: Map<String, Any>) {}
+  override fun hints(hints: Map<String, Any>) {}
 
-    override fun <T, R> join(
-        left: EntitySpec<T>,
-        right: EntitySpec<R>,
-        relation: Relation<T, R?>,
-        joinType: JoinType
-    ) {
-    }
+  override fun <T, R> join(
+    left: EntitySpec<T>,
+    right: EntitySpec<R>,
+    relation: Relation<T, R?>,
+    joinType: JoinType,
+  ) {}
 
-    override fun <T> join(entity: EntitySpec<T>, predicate: PredicateSpec) {}
+  override fun <T> join(entity: EntitySpec<T>, predicate: PredicateSpec) {}
 
-    private val orderByClauses = mutableListOf<OrderSpec>()
+  private val orderByClauses = mutableListOf<OrderSpec>()
 
-    val hasOrderByClause get() = orderByClauses.isNotEmpty()
+  val hasOrderByClause
+    get() = orderByClauses.isNotEmpty()
 
-    val orders: List<OrderSpec> get() = orderByClauses
-    fun orderByColumns() = orderByClauses.map { it.getColumnSpec() }
+  val orders: List<OrderSpec>
+    get() = orderByClauses
 
-    override fun orderBy(orders: List<OrderSpec>) {
-        orderByClauses.addAll(orders)
-    }
+  fun orderByColumns() = orderByClauses.map { it.getColumnSpec() }
 
-    override fun select(distinct: Boolean, expression: ExpressionSpec<Any>): SingleSelectClause<Any> {
-        throw IllegalAccessException("Should not be invoked")
-    }
+  override fun orderBy(orders: List<OrderSpec>) {
+    orderByClauses.addAll(orders)
+  }
 
-    override fun select(distinct: Boolean, expressions: List<ExpressionSpec<*>>): MultiSelectClause<Any> {
-        throw IllegalAccessException("Should not be invoked")
-    }
+  override fun select(distinct: Boolean, expression: ExpressionSpec<Any>): SingleSelectClause<Any> {
+    throw IllegalAccessException("Should not be invoked")
+  }
 
-    override fun sqlHints(hints: List<String>) {}
+  override fun select(
+    distinct: Boolean,
+    expressions: List<ExpressionSpec<*>>,
+  ): MultiSelectClause<Any> {
+    throw IllegalAccessException("Should not be invoked")
+  }
 
-    override fun <P, C : P> treat(
-        root: ColumnSpec<*>,
-        parent: EntitySpec<P>,
-        child: EntitySpec<C>,
-        parentJoinType: JoinType
-    ) {
-    }
+  override fun sqlHints(hints: List<String>) {}
 
-    override fun where(predicate: PredicateSpec?) {}
+  override fun <P, C : P> treat(
+    root: ColumnSpec<*>,
+    parent: EntitySpec<P>,
+    child: EntitySpec<C>,
+    parentJoinType: JoinType,
+  ) {}
 
-    override fun whereAnd(predicates: List<PredicateSpec?>) {}
+  override fun where(predicate: PredicateSpec?) {}
 
-    override fun whereOr(predicates: List<PredicateSpec?>) {}
+  override fun whereAnd(predicates: List<PredicateSpec?>) {}
+
+  override fun whereOr(predicates: List<PredicateSpec?>) {}
 }

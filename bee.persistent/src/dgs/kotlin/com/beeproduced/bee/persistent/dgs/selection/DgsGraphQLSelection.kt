@@ -7,15 +7,15 @@ import graphql.schema.SelectedField
 
 fun toDataSelection(node: SelectedField): FieldNodeDefinition {
 
-    val field = node.qualifiedName
-    val fieldType = node.fullyQualifiedName.substringBeforeOrNull(".")
-    val immediateFields = node.selectionSet.immediateFields
+  val field = node.qualifiedName
+  val fieldType = node.fullyQualifiedName.substringBeforeOrNull(".")
+  val immediateFields = node.selectionSet.immediateFields
 
-    val nodeFields = if (immediateFields.isNullOrEmpty()) null
+  val nodeFields =
+    if (immediateFields.isNullOrEmpty()) null
     else {
-        immediateFields.mapTo(HashSet()) { toDataSelection(it) }
+      immediateFields.mapTo(HashSet()) { toDataSelection(it) }
     }
 
-    return SimpleSelection.TypedFiledNode(field, fieldType, nodeFields)
-
+  return SimpleSelection.TypedFiledNode(field, fieldType, nodeFields)
 }

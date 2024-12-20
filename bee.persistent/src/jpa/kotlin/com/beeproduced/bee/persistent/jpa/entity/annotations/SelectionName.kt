@@ -1,15 +1,12 @@
 package com.beeproduced.bee.persistent.jpa.entity.annotations
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-01-30
  */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class SelectionName(val field: String)
-
 
 // TODO: DataSelectionContinue
 // GraphQL: A -> C

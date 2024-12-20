@@ -5,14 +5,12 @@ import com.beeproduced.bee.persistent.blaze.dsl.sort.OrderBySort
 import com.beeproduced.bee.persistent.blaze.dsl.sort.Sort
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2024-01-12
  */
-interface SortableExpression <T : Any> : Expression<T> {
+interface SortableExpression<T : Any> : Expression<T> {
 
-    fun asc(): Sort = OrderBySort(this, Sort.Order.ASC)
+  fun asc(): Sort = OrderBySort(this, Sort.Order.ASC)
 
-    fun desc(): Sort = OrderBySort(this, Sort.Order.DESC)
+  fun desc(): Sort = OrderBySort(this, Sort.Order.DESC)
 }
