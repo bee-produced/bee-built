@@ -4,6 +4,7 @@ import com.beeproduced.bee.functional.dgs.result.fetcher.helper.DataFetcherErrTh
 import com.beeproduced.bee.functional.dgs.result.fetcher.helper.DataFetcherResultHelper
 import com.beeproduced.bee.functional.result.errors.BadRequestError
 import com.beeproduced.bee.functional.result.errors.InternalAppError
+import com.beeproduced.bee.functional.result.errors.ResultError
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrThrow
 import graphql.execution.DataFetcherResult
@@ -78,8 +79,10 @@ open class DataFetcherFactoriesRedefinition {
     private fun <U : Any?> handleResult(u: Result<U, *>): U {
       return u.getOrThrow { e ->
         when (e) {
-          is InternalAppError -> DataFetcherResultHelper.InternalErr(e.description())
-          is BadRequestError -> DataFetcherResultHelper.BadRequestErr(e.description())
+          is BadRequestError ->
+            DataFetcherResultHelper.BadRequestErr(e.description(), e.debugInfo())
+          is InternalAppError -> DataFetcherResultHelper.InternalErr(e.description(), e.debugInfo())
+          is ResultError -> DataFetcherResultHelper.InternalErr(e.description(), e.debugInfo())
           else -> DataFetcherResultHelper.InternalErr<U>(e.toString())
         }.let(::DataFetcherErrThrower)
       }
