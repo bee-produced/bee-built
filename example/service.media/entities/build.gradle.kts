@@ -1,36 +1,33 @@
-
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.jpa)
-    alias(libs.plugins.kotlin.kapt)
-    alias(libs.plugins.kotlin.noarg)
-    alias(libs.plugins.kotlin.allopen)
+  alias(libs.plugins.kotlin.jvm)
+  alias(libs.plugins.kotlin.jpa)
+  alias(libs.plugins.kotlin.kapt)
+  alias(libs.plugins.kotlin.noarg)
+  alias(libs.plugins.kotlin.allopen)
+  alias(libs.plugins.ktfmt)
 }
 
 group = "com.beeproduced"
+
 version = libs.versions.bee.built.get()
+
 java.sourceCompatibility = JavaVersion.VERSION_17
+
 java.targetCompatibility = JavaVersion.VERSION_17
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
-    implementation(project(":service.organisation.entities"))
-    implementation(project(":utils"))
-    api(libs.jakarta.persistence.api)
-    api(libs.hibernate.core)
-    api("com.beeproduced:bee.persistent")
-    api("com.beeproduced:bee.persistent") {
-        capabilities { requireCapability("com.beeproduced:bee.persistent-jpa") }
-    }
+  implementation(project(":service.organisation.entities"))
+  implementation(project(":utils"))
+  api(libs.jakarta.persistence.api)
+  api(libs.hibernate.core)
+  api("com.beeproduced:bee.persistent")
+  api("com.beeproduced:bee.persistent") {
+    capabilities { requireCapability("com.beeproduced:bee.persistent-jpa") }
+  }
 }
 
-noArg {
-    annotations("jakarta.persistence.Entity", "jakarta.persistence.Embeddable")
-}
+noArg { annotations("jakarta.persistence.Entity", "jakarta.persistence.Embeddable") }
 
-allOpen {
-    annotations("jakarta.persistence.Entity")
-}
+allOpen { annotations("jakarta.persistence.Entity") }

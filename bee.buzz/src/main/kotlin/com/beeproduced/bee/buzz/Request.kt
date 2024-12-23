@@ -9,18 +9,19 @@ import com.github.michaelbull.result.Result
  * @author Kacper Urbaniec
  * @version 2022-02-10
  */
-
 interface Request<T>
 
 interface RequestHandler<R : Request<T>, T> {
-    val requestClass: Class<R>
+  val requestClass: Class<R>
 
-    fun handle(request: R): Result<T, AppError>
+  fun handle(request: R): Result<T, AppError>
 }
 
 inline fun <reified R : Request<T>, reified T> requestHandler(
-    crossinline handler: (request: R) -> Result<T, AppError>
-): RequestHandler<R, T> = object : RequestHandler<R, T> {
+  crossinline handler: (request: R) -> Result<T, AppError>
+): RequestHandler<R, T> =
+  object : RequestHandler<R, T> {
     override val requestClass: Class<R> = R::class.java
+
     override fun handle(request: R): Result<T, AppError> = handler(request)
-}
+  }

@@ -10,39 +10,43 @@ import com.github.michaelbull.result.Result
 import graphql.execution.DataFetcherResult
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2022-10-11
  */
-
 fun <V> Result<V, AppError>.getDataFetcher(): DataFetcherResult<V> {
-    return when (this) {
-        is Ok -> DataFetcherResultHelper.Ok(value)
-        is Err -> error.let { e ->
-            when (e) {
-                is InternalAppError -> DataFetcherResultHelper.InternalErr(e.description())
-                is BadRequestError -> DataFetcherResultHelper.BadRequestErr(e.description())
-            }
+  return when (this) {
+    is Ok -> DataFetcherResultHelper.Ok(value)
+    is Err ->
+      error.let { e ->
+        when (e) {
+          is InternalAppError ->
+            DataFetcherResultHelper.InternalErr(error.description(), error.debugInfo(), e)
+          is BadRequestError ->
+            DataFetcherResultHelper.BadRequestErr(error.description(), error.debugInfo(), e)
         }
-    }
+      }
+  }
 }
 
 inline fun <V> Result<V, AppError>.getDataFetcher(
-    transform: (AppError) -> DataFetcherResult<V>
+  transform: (AppError) -> DataFetcherResult<V>
 ): DataFetcherResult<V> {
-    return when (this) {
-        is Ok -> DataFetcherResultHelper.Ok(value)
-        is Err -> transform(error)
+  return when (this) {
+    is Ok -> DataFetcherResultHelper.Ok(value)
+    is Err -> {
+      transform(error)
     }
+  }
 }
 
 inline fun <V, D> Result<V, AppError>.getDataFetcher(
-    success: (V) -> DataFetcherResult<D>,
-    failure: (AppError) -> DataFetcherResult<D>
+  success: (V) -> DataFetcherResult<D>,
+  failure: (AppError) -> DataFetcherResult<D>,
 ): DataFetcherResult<D> {
-    return when (this) {
-        is Ok -> success(value)
-        is Err -> failure(error)
+  return when (this) {
+    is Ok -> success(value)
+    is Err -> {
+      failure(error)
     }
+  }
 }

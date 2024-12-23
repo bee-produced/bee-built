@@ -11,48 +11,44 @@ import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-09-26
  */
-
 @Configuration
 @EnableWebSecurity
-class SecurityConfig(
-    private val env: Environment,
-) {
+class SecurityConfig(private val env: Environment) {
 
-    @Throws(Exception::class)
-    @Bean
-    fun filterChain(http: HttpSecurity, introspector: HandlerMappingIntrospector): SecurityFilterChain {
-        val mvcMatcherBuilder = MvcRequestMatcher.Builder(introspector)
-        // Disable csrf
-        // See: https://github.com/graphql-java-kickstart/graphql-spring-boot/issues/184
-        http
-            .csrf().disable()
-            .headers { headers ->
-                headers.frameOptions().disable()
-            }
-            .authorizeHttpRequests { authorize ->
-                var auth = authorize
-                    .requestMatchers(
-                        mvcMatcherBuilder.pattern("/graphql"),
-                        mvcMatcherBuilder.pattern("/graphiql"),
-                        mvcMatcherBuilder.pattern("/schema.json"),
-                        mvcMatcherBuilder.pattern("/subscriptions"),
-                        mvcMatcherBuilder.pattern("/actuator/**"),
-                        mvcMatcherBuilder.pattern("/graphiql/**"),
-                        mvcMatcherBuilder.pattern("/h2-console")
-                    )
-                    .permitAll()
-                if (env.activeProfiles.contains("dev")) {
-                    auth = auth.requestMatchers(PathRequest.toH2Console()).permitAll()
-                }
-                auth
-                    .anyRequest()
-                    .authenticated()
-            }
-        return http.build()
-    }
+  @Throws(Exception::class)
+  @Bean
+  fun filterChain(
+    http: HttpSecurity,
+    introspector: HandlerMappingIntrospector,
+  ): SecurityFilterChain {
+    val mvcMatcherBuilder = MvcRequestMatcher.Builder(introspector)
+    // Disable csrf
+    // See: https://github.com/graphql-java-kickstart/graphql-spring-boot/issues/184
+    http
+      .csrf()
+      .disable()
+      .headers { headers -> headers.frameOptions().disable() }
+      .authorizeHttpRequests { authorize ->
+        var auth =
+          authorize
+            .requestMatchers(
+              mvcMatcherBuilder.pattern("/graphql"),
+              mvcMatcherBuilder.pattern("/graphiql"),
+              mvcMatcherBuilder.pattern("/schema.json"),
+              mvcMatcherBuilder.pattern("/subscriptions"),
+              mvcMatcherBuilder.pattern("/actuator/**"),
+              mvcMatcherBuilder.pattern("/graphiql/**"),
+              mvcMatcherBuilder.pattern("/h2-console"),
+            )
+            .permitAll()
+        if (env.activeProfiles.contains("dev")) {
+          auth = auth.requestMatchers(PathRequest.toH2Console()).permitAll()
+        }
+        auth.anyRequest().authenticated()
+      }
+    return http.build()
+  }
 }

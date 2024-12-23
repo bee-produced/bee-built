@@ -5,68 +5,66 @@ import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsQuery
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-10-16
  */
 @DgsComponent
 class TestUnsafeController {
-    @DgsQuery
-    fun alpha(): Alpha {
-        return Alpha("Alpha")
-    }
+  @DgsQuery
+  fun alpha(): Alpha {
+    return Alpha("Alpha")
+  }
 
-    @DgsQuery
-    fun bravo(): Bravo {
-        return Bravo(listOf("Bravo"))
-    }
+  @DgsQuery
+  fun bravo(): Bravo {
+    return Bravo(listOf("Bravo"))
+  }
 
-    @DgsQuery
-    fun charlie(): Charlie {
-        return Charlie("Charlie")
-    }
+  @DgsQuery
+  fun charlie(): Charlie {
+    return Charlie("Charlie")
+  }
 
-    @DgsQuery
-    fun delta(): Delta {
-        return Delta(listOf("Delta"))
-    }
+  @DgsQuery
+  fun delta(): Delta {
+    return Delta(listOf("Delta"))
+  }
 
-    @DgsQuery
-    fun echo(): Echo {
-        return Echo("Echo")
-    }
+  @DgsQuery
+  fun echo(): Echo {
+    return Echo("Echo")
+  }
 
-    data class MyFoxtrot(val zuluId: String)
+  data class MyFoxtrot(val zuluId: String)
 
-    @DgsQuery
-    fun foxtrot(): MyFoxtrot {
-        return MyFoxtrot("Foxtrot")
-    }
+  @DgsQuery
+  fun foxtrot(): MyFoxtrot {
+    return MyFoxtrot("Foxtrot")
+  }
 
-    data class MyGolf(val zuluId: String?)
+  data class MyGolf(val zuluId: String?)
 
-    @DgsQuery
-    fun golf(): MyGolf {
-        return MyGolf("Golf")
-    }
+  @DgsQuery
+  fun golf(): MyGolf {
+    return MyGolf("Golf")
+  }
 
-    data class MyHotel(val zuluIds: List<String>)
+  data class MyHotel(val zuluIds: List<String>)
 
-    @DgsQuery
-    fun hotel(): MyHotel {
-        return MyHotel(listOf("Hotel"))
-    }
+  @DgsQuery
+  fun hotel(): MyHotel {
+    return MyHotel(listOf("Hotel"))
+  }
 
-    data class MyIndia(val zuluIds: List<String>?)
+  data class MyIndia(val zuluIds: List<String>?)
 
-    @DgsQuery
-    fun india(): MyIndia {
-        return MyIndia(listOf("India"))
-    }
+  @DgsQuery
+  fun india(): MyIndia {
+    return MyIndia(listOf("India"))
+  }
 
-    @DgsQuery
-    fun juliet(): Juliet {
-        return Juliet()
-    }
+  @DgsQuery
+  fun juliet(): Juliet {
+    return Juliet()
+  }
 }

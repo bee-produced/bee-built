@@ -1,1 +1,2 @@
 com.beeproduced.bee.functional.dgs.autoconfig.BeeFunctionalDgsAutoConfiguration
+com.beeproduced.bee.functional.dgs.autoconfig.BeeFunctionalDgsAspectAutoConfiguration

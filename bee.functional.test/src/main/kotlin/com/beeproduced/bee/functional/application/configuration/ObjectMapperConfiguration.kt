@@ -8,25 +8,24 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2022-02-11
  */
 @Configuration
 class ObjectMapperConfiguration {
-    @Bean
-    @Primary
-    fun objectMapper() = ObjectMapper().apply {
-        registerModule(
-            KotlinModule.Builder()
-                .withReflectionCacheSize(512)
-                .configure(KotlinFeature.NullToEmptyCollection, false)
-                .configure(KotlinFeature.NullToEmptyMap, false)
-                .configure(KotlinFeature.NullIsSameAsDefault, false)
-                .configure(KotlinFeature.SingletonSupport, false)
-                .configure(KotlinFeature.StrictNullChecks, false)
-                .build()
-        )
+  @Bean
+  @Primary
+  fun objectMapper() =
+    ObjectMapper().apply {
+      registerModule(
+        KotlinModule.Builder()
+          .withReflectionCacheSize(512)
+          .configure(KotlinFeature.NullToEmptyCollection, false)
+          .configure(KotlinFeature.NullToEmptyMap, false)
+          .configure(KotlinFeature.NullIsSameAsDefault, false)
+          .configure(KotlinFeature.SingletonSupport, false)
+          .configure(KotlinFeature.StrictNullChecks, false)
+          .build()
+      )
     }
 }

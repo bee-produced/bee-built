@@ -9,110 +9,107 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import java.util.*
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-08-07
  */
 typealias Options = Map<String, String>
 
 class DataProcessor(
-    private val codeGenerator: CodeGenerator,
-    private val logger: KSPLogger,
-    private val options: Options,
+  private val codeGenerator: CodeGenerator,
+  private val logger: KSPLogger,
+  private val options: Options,
 ) : SymbolProcessor {
-    private var invoked = false
-    private val shared: Shared = mutableMapOf()
+  private var invoked = false
+  private val shared: Shared = mutableMapOf()
 
-    private val beeFeatures = ServiceLoader.load(
-        BeeGenerativeFeature::class.java,
-        DataProcessor::class.java.classLoader
-    ).sortedBy { feature -> feature.order() }
+  private val beeFeatures =
+    ServiceLoader.load(BeeGenerativeFeature::class.java, DataProcessor::class.java.classLoader)
+      .sortedBy { feature -> feature.order() }
 
-    override fun process(resolver: Resolver): List<KSAnnotated> {
-        if (beeFeatures.isEmpty()) {
-            logger.warn("No bee.features found")
-            logger.warn("Possible misconfiguration detected")
-            return emptyList()
-        }
-
-        // Not every feature supports ksp multiple round processing
-        val features = if (!invoked) {
-            invoked = true
-            beeFeatures
-        }
-        else beeFeatures.filter { it.multipleRoundProcessing() }
-        if (features.isEmpty()) return emptyList()
-
-        // Acquire config per feature & merge them
-        logger.info("Received Options $options")
-        val config = features
-            .map { it.setup(options, shared) }
-            .let(BeeGenerativeConfig.Companion::merge)
-        logger.info("Received Config to parse $config")
-
-        // Get symbols mandated by config
-        val symbols = getSymbols(resolver, config)
-
-        // Process feature implementations
-        val dependencies = Dependencies(false, *resolver.getAllFiles().toList().toTypedArray())
-        val input = BeeGenerativeInput(
-            codeGenerator = codeGenerator,
-            dependencies = dependencies,
-            logger = logger,
-            symbols = symbols,
-            options = options,
-            shared = shared,
-        )
-        features.forEach { feature ->
-            logger.info("Processing ${feature::class.java.name} ...")
-            feature.process(input)
-        }
-
-        logger.info( "Process finished")
-        return emptyList()
+  override fun process(resolver: Resolver): List<KSAnnotated> {
+    if (beeFeatures.isEmpty()) {
+      logger.warn("No bee.features found")
+      logger.warn("Possible misconfiguration detected")
+      return emptyList()
     }
 
-    private fun getSymbols(resolver: Resolver, config: BeeGenerativeConfig): BeeGenerativeSymbols {
-        return getSymbols(resolver, config, mutableMapOf(), mutableMapOf(), mutableMapOf())
+    // Not every feature supports ksp multiple round processing
+    val features =
+      if (!invoked) {
+        invoked = true
+        beeFeatures
+      } else beeFeatures.filter { it.multipleRoundProcessing() }
+    if (features.isEmpty()) return emptyList()
+
+    // Acquire config per feature & merge them
+    logger.info("Received Options $options")
+    val config =
+      features.map { it.setup(options, shared) }.let(BeeGenerativeConfig.Companion::merge)
+    logger.info("Received Config to parse $config")
+
+    // Get symbols mandated by config
+    val symbols = getSymbols(resolver, config)
+
+    // Process feature implementations
+    val dependencies = Dependencies(false, *resolver.getAllFiles().toList().toTypedArray())
+    val input =
+      BeeGenerativeInput(
+        codeGenerator = codeGenerator,
+        dependencies = dependencies,
+        logger = logger,
+        symbols = symbols,
+        options = options,
+        shared = shared,
+      )
+    features.forEach { feature ->
+      logger.info("Processing ${feature::class.java.name} ...")
+      feature.process(input)
     }
 
-    @OptIn(KspExperimental::class)
-    private fun getSymbols(
-        resolver: Resolver,
-        config: BeeGenerativeConfig,
-        packages: MutableMap<String, MutableSet<KSClassDeclaration>>,
-        annotatedBy: MutableMap<String, MutableSet<KSClassDeclaration>>,
-        classes: MutableMap<String, KSClassDeclaration>,
-    ): BeeGenerativeSymbols {
-        logger.info("getSymbols($resolver, $config, $packages, $annotatedBy, $classes)")
-        for (p in config.packages) {
-            val symbols = resolver
-                .getDeclarationsFromPackage(p)
-                .mapNotNull { if (it is KSClassDeclaration) it else null }
-                .toMutableSet()
-            packages[p] = symbols
-        }
-        for (ab in config.annotatedBy) {
-            val symbols = resolver
-                .getSymbolsWithAnnotation(ab)
-                .mapNotNull { if (it is KSClassDeclaration) it else null }
-                .toMutableSet()
-            annotatedBy[ab] = symbols
-        }
-        for (cls in config.classes) {
-            val symbol = resolver
-                .getClassDeclarationByName(cls)
-                ?: continue
-            classes[cls] = symbol
-        }
+    logger.info("Process finished")
+    return emptyList()
+  }
 
-        val symbols = BeeGenerativeSymbols(packages, annotatedBy, classes)
-        for (callback in config.callbacks) {
-            val recursiveConfig = callback(symbols, options, shared)
-            getSymbols(resolver, recursiveConfig, packages, annotatedBy, classes)
-        }
+  private fun getSymbols(resolver: Resolver, config: BeeGenerativeConfig): BeeGenerativeSymbols {
+    return getSymbols(resolver, config, mutableMapOf(), mutableMapOf(), mutableMapOf())
+  }
 
-        return symbols
+  @OptIn(KspExperimental::class)
+  private fun getSymbols(
+    resolver: Resolver,
+    config: BeeGenerativeConfig,
+    packages: MutableMap<String, MutableSet<KSClassDeclaration>>,
+    annotatedBy: MutableMap<String, MutableSet<KSClassDeclaration>>,
+    classes: MutableMap<String, KSClassDeclaration>,
+  ): BeeGenerativeSymbols {
+    logger.info("getSymbols($resolver, $config, $packages, $annotatedBy, $classes)")
+    for (p in config.packages) {
+      val symbols =
+        resolver
+          .getDeclarationsFromPackage(p)
+          .mapNotNull { if (it is KSClassDeclaration) it else null }
+          .toMutableSet()
+      packages[p] = symbols
     }
+    for (ab in config.annotatedBy) {
+      val symbols =
+        resolver
+          .getSymbolsWithAnnotation(ab)
+          .mapNotNull { if (it is KSClassDeclaration) it else null }
+          .toMutableSet()
+      annotatedBy[ab] = symbols
+    }
+    for (cls in config.classes) {
+      val symbol = resolver.getClassDeclarationByName(cls) ?: continue
+      classes[cls] = symbol
+    }
+
+    val symbols = BeeGenerativeSymbols(packages, annotatedBy, classes)
+    for (callback in config.callbacks) {
+      val recursiveConfig = callback(symbols, options, shared)
+      getSymbols(resolver, recursiveConfig, packages, annotatedBy, classes)
+    }
+
+    return symbols
+  }
 }

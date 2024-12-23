@@ -21,45 +21,48 @@ import org.springframework.transaction.support.TransactionTemplate
 @Order(-1)
 @Component
 @ConditionalOnClass(Result::class)
-class TransactionalResultAspect(
-    private val context: ApplicationContext
-) {
-    private val logger = LoggerFactory.getLogger(TransactionalResultAspect::class.java)
-    @Pointcut("execution(@com.beeproduced.bee.functional.persistent.transactional.TransactionalResult com.github.michaelbull.result.Result *(..))")
-    fun transactionalMethodReturningResult() = Unit
+class TransactionalResultAspect(private val context: ApplicationContext) {
+  private val logger = LoggerFactory.getLogger(TransactionalResultAspect::class.java)
 
-    @Suppress("UNCHECKED_CAST")
-    @Around("transactionalMethodReturningResult() && @annotation(transactionalAnnotation)")
-    fun runInTransactionAndRollbackOnErr(
-        joinPoint: ProceedingJoinPoint,
-        transactionalAnnotation: TransactionalResult
-    ): Any? {
-        val transactionManager: PlatformTransactionManager = if (transactionalAnnotation.value == "") {
-            context.getBean(PlatformTransactionManager::class.java)
-        } else {
-            context.getBean(transactionalAnnotation.value, PlatformTransactionManager::class.java)
+  @Pointcut(
+    "execution(@com.beeproduced.bee.functional.persistent.transactional.TransactionalResult com.github.michaelbull.result.Result *(..))"
+  )
+  fun transactionalMethodReturningResult() = Unit
+
+  @Suppress("UNCHECKED_CAST")
+  @Around("transactionalMethodReturningResult() && @annotation(transactionalAnnotation)")
+  fun runInTransactionAndRollbackOnErr(
+    joinPoint: ProceedingJoinPoint,
+    transactionalAnnotation: TransactionalResult,
+  ): Any? {
+    val transactionManager: PlatformTransactionManager =
+      if (transactionalAnnotation.value == "") {
+        context.getBean(PlatformTransactionManager::class.java)
+      } else {
+        context.getBean(transactionalAnnotation.value, PlatformTransactionManager::class.java)
+      }
+
+    val template =
+      TransactionTemplate(transactionManager).apply {
+        isolationLevel = transactionalAnnotation.isolation.value()
+        isReadOnly = transactionalAnnotation.readOnly
+        propagationBehavior = transactionalAnnotation.propagation.value()
+        timeout = transactionalAnnotation.timeout
+      }
+
+    return template.execute { transaction ->
+      val result =
+        try {
+          joinPoint.proceed() as Result<*, AppError>
+        } catch (ex: Throwable) {
+          Err(InternalAppError(transactionalAnnotation.exceptionDescription, ex))
         }
 
-        val template = TransactionTemplate(transactionManager).apply {
-            isolationLevel = transactionalAnnotation.isolation.value()
-            isReadOnly = transactionalAnnotation.readOnly
-            propagationBehavior = transactionalAnnotation.propagation.value()
-            timeout = transactionalAnnotation.timeout
-        }
-
-        return template.execute { transaction ->
-            val result = try {
-                joinPoint.proceed() as Result<*, AppError>
-            } catch (ex: Throwable) {
-                Err(InternalAppError(transactionalAnnotation.exceptionDescription, ex))
-            }
-
-            result.onFailure {
-                logger.debug("Transaction failed, rolling back. Error: ${it.stackTraceToString()}")
-                transaction.setRollbackOnly()
-            }
-            result
-        }
+      result.onFailure {
+        logger.debug("Transaction failed, rolling back. Error: ${it.stackTraceToString()}")
+        transaction.setRollbackOnly()
+      }
+      result
     }
-
+  }
 }

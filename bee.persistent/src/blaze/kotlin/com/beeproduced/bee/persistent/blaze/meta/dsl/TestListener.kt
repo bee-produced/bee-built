@@ -1,17 +1,9 @@
 package com.beeproduced.bee.persistent.blaze.meta.dsl
 
-import org.springframework.boot.context.event.ApplicationStartedEvent
 import org.springframework.boot.context.event.ApplicationStartingEvent
-import org.springframework.context.ApplicationEvent
-
 import org.springframework.context.ApplicationListener
 
-
-
-
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2024-01-12
  */
@@ -19,7 +11,7 @@ import org.springframework.context.ApplicationListener
 // TODO: Remove
 
 class TestListener : ApplicationListener<ApplicationStartingEvent> {
-    override fun onApplicationEvent(event: ApplicationStartingEvent) {
-        println("event: $event")
-    }
+  override fun onApplicationEvent(event: ApplicationStartingEvent) {
+    println("event: $event")
+  }
 }

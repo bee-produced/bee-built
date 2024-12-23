@@ -4,14 +4,12 @@ import graphql.execution.DataFetcherExceptionHandler
 import org.springframework.context.annotation.Bean
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-11-04
  */
 abstract class ResultFetcherConfiguration {
-    @Bean
-    open fun beeFunctionalResultFetcherExceptionHandler(): DataFetcherExceptionHandler {
-        return ResultFetcherExceptionHandler()
-    }
+  @Bean
+  open fun beeFunctionalResultFetcherExceptionHandler(): DataFetcherExceptionHandler {
+    return ResultFetcherExceptionHandler()
+  }
 }

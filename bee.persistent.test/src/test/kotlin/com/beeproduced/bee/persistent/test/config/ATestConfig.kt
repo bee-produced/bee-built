@@ -7,18 +7,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2024-01-14
  */
 @SpringBootApplication(
-    scanBasePackages = ["com.beeproduced.datasource.a"],
-    exclude = [
-        DgsAutoConfiguration::class,
-        DgsWebMvcAutoConfiguration::class,
-        DgsWebSocketAutoConfig::class,
-    ]
+  scanBasePackages = ["com.beeproduced.datasource.a"],
+  exclude =
+    [DgsAutoConfiguration::class, DgsWebMvcAutoConfiguration::class, DgsWebSocketAutoConfig::class],
 )
 @EnableConfigurationProperties
 class ATestConfig

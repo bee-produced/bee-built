@@ -1,5 +1,5 @@
 [versions]
-bee-built = "0.4.0-SNAPSHOT"
+bee-built = "0.5.0-SNAPSHOT"
 springboot-base = "3.1.4"
 springboot-dependencymanagement = "1.1.3"
 kotlin-base = "1.9.10"
@@ -73,14 +73,14 @@ jakarta-mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version 
 jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.1" }
 ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-base" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp-base" }
-kotlin-poet = { group = "com.squareup", name = "kotlinpoet-ksp", version = "1.14.2"}
+kotlin-poet = { group = "com.squareup", name = "kotlinpoet-ksp", version = "1.14.2" }
 bytebuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "bytebuddy" }
 bytebuddy-agent = { group = "net.bytebuddy", name = "byte-buddy-agent", version.ref = "bytebuddy" }
 blaze-core-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-core-impl-jakarta", version.ref = "blaze" }
 blaze-integration-hibernate = { group = "com.blazebit", name = "blaze-persistence-integration-hibernate-6.2", version.ref = "blaze" }
 blaze-entity-view-api-jakarta = { group = "com.blazebit", name = "blaze-persistence-entity-view-api-jakarta", version.ref = "blaze" }
 blaze-entity-view-impl-jakarta = { group = "com.blazebit", name = "blaze-persistence-entity-view-impl-jakarta", version.ref = "blaze" }
-blaze-integration-spring = { group = "com.blazebit", name = "blaze-persistence-integration-spring-data-3.1", version.ref = "blaze"}
+blaze-integration-spring = { group = "com.blazebit", name = "blaze-persistence-integration-spring-data-3.1", version.ref = "blaze" }
 
 [plugins]
 kotlinter = { id = "org.jmailen.kotlinter", version = "3.13.0" }
@@ -94,5 +94,6 @@ spring-boot = { id = "org.springframework.boot", version.ref = "springboot-base"
 spring-dependencymanagement = { id = "io.spring.dependency-management", version.ref = "springboot-dependencymanagement" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-base" }
 dgs-codegen = { id = "com.netflix.dgs.codegen", version.ref = "dgs-codegen" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-base"}
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-base" }
 jreleaser = { id = "org.jreleaser", version = "1.8.0" }
+ktfmt = { id = "com.ncorti.ktfmt.gradle", version = "0.20.1" }
