@@ -6,449 +6,498 @@ import com.beeproduced.example.application.Application
 import com.netflix.graphql.dgs.DgsQueryExecutor
 import com.netflix.graphql.dgs.client.codegen.BaseSubProjectionNode
 import com.netflix.graphql.dgs.client.codegen.GraphQLQueryRequest
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-10-14
  */
 @SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    classes = [Application::class]
+  webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+  classes = [Application::class],
 )
 class BeeFetchedTest {
-    @Autowired
-    private lateinit var dgsQueryExecutor: DgsQueryExecutor
+  @Autowired private lateinit var dgsQueryExecutor: DgsQueryExecutor
 
-    // SafeMode = true
-    // ====================================================================
+  // SafeMode = true
+  // ====================================================================
 
-    @Test
-    fun `query singular id dataloader (foo)`() {
-        val query = GraphQLQueryRequest(
-            FooGraphQLQuery(),
-            projection(::FooProjectionRoot)
-                .waldoId()
-                .waldo().select {
-                    waldo()
-                }
-        ).serialize()
-
-        val foo = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.foo", emptyMap(), Foo::class.java
+  @Test
+  fun `query singular id dataloader (foo)`() {
+    val query =
+      GraphQLQueryRequest(
+          FooGraphQLQuery(),
+          projection(::FooProjectionRoot).waldoId().waldo().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(foo)
-        val waldo = foo.waldo
-        assertNotNull(waldo)
-        assertEquals("Foo", waldo.waldo)
-    }
+    val foo =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.foo",
+        emptyMap(),
+        Foo::class.java,
+      )
 
-    @Test
-    fun `query plural ids dataloader (bar)`() {
-        val query = GraphQLQueryRequest(
-            BarGraphQLQuery(),
-            projection(::BarProjectionRoot)
-                .waldoIds()
-                .waldos().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(foo)
+    val waldo = foo.waldo
+    assertNotNull(waldo)
+    assertEquals("Foo", waldo.waldo)
+  }
 
-        val bar = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.bar", emptyMap(), Bar::class.java
+  @Test
+  fun `query plural ids dataloader (bar)`() {
+    val query =
+      GraphQLQueryRequest(
+          BarGraphQLQuery(),
+          projection(::BarProjectionRoot).waldoIds().waldos().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(bar)
-        val waldos = bar.waldos
-        assertNotNull(waldos)
-        waldos.forEach { waldo -> assertEquals("Bar", waldo.waldo) }
-    }
+    val bar =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.bar",
+        emptyMap(),
+        Bar::class.java,
+      )
 
-    @Test
-    fun `query singular nullable id dataloader (qux)`() {
-        val query = GraphQLQueryRequest(
-            QuxGraphQLQuery(),
-            projection(::QuxProjectionRoot)
-                .waldoId()
-                .waldo().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(bar)
+    val waldos = bar.waldos
+    assertNotNull(waldos)
+    waldos.forEach { waldo -> assertEquals("Bar", waldo.waldo) }
+  }
 
-        val qux = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.qux", emptyMap(), Qux::class.java
+  @Test
+  fun `query singular nullable id dataloader (qux)`() {
+    val query =
+      GraphQLQueryRequest(
+          QuxGraphQLQuery(),
+          projection(::QuxProjectionRoot).waldoId().waldo().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(qux)
-        val waldo = qux.waldo
-        assertNotNull(waldo)
-        assertEquals("Qux", waldo.waldo)
-    }
+    val qux =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.qux",
+        emptyMap(),
+        Qux::class.java,
+      )
 
-    @Test
-    fun `query plural nullable ids dataloader (quux)`() {
-        val query = GraphQLQueryRequest(
-            QuuxGraphQLQuery(),
-            projection(::QuuxProjectionRoot)
-                .waldoIds()
-                .waldos().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(qux)
+    val waldo = qux.waldo
+    assertNotNull(waldo)
+    assertEquals("Qux", waldo.waldo)
+  }
 
-        val quux = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.quux", emptyMap(), Quux::class.java
+  @Test
+  fun `query plural nullable ids dataloader (quux)`() {
+    val query =
+      GraphQLQueryRequest(
+          QuuxGraphQLQuery(),
+          projection(::QuuxProjectionRoot).waldoIds().waldos().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(quux)
-        val waldos = quux.waldos
-        assertNotNull(waldos)
-        waldos.forEach { waldo -> assertEquals("Quux", waldo.waldo) }
-    }
+    val quux =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.quux",
+        emptyMap(),
+        Quux::class.java,
+      )
 
-    @Test
-    fun `query singular unrelated id dataloader (corge)`() {
-        val query = GraphQLQueryRequest(
-            CorgeGraphQLQuery(),
-            projection(::CorgeProjectionRoot)
-                .corgeToWaldoId()
-                .waldo().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(quux)
+    val waldos = quux.waldos
+    assertNotNull(waldos)
+    waldos.forEach { waldo -> assertEquals("Quux", waldo.waldo) }
+  }
 
-        val corge = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.corge", emptyMap(), Corge::class.java
+  @Test
+  fun `query singular unrelated id dataloader (corge)`() {
+    val query =
+      GraphQLQueryRequest(
+          CorgeGraphQLQuery(),
+          projection(::CorgeProjectionRoot).corgeToWaldoId().waldo().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(corge)
-        val waldo = corge.waldo
-        assertNotNull(waldo)
-        assertEquals("Corge", waldo.waldo)
-    }
+    val corge =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.corge",
+        emptyMap(),
+        Corge::class.java,
+      )
 
-    @Test
-    fun `query singular id internal type dataloader (grault)`() {
-        val query = GraphQLQueryRequest(
-            GraultGraphQLQuery(),
-            projection(::GraultProjectionRoot)
-                .waldo().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(corge)
+    val waldo = corge.waldo
+    assertNotNull(waldo)
+    assertEquals("Corge", waldo.waldo)
+  }
 
-        val grault = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.grault", emptyMap(), Grault::class.java
+  @Test
+  fun `query singular id internal type dataloader (grault)`() {
+    val query =
+      GraphQLQueryRequest(
+          GraultGraphQLQuery(),
+          projection(::GraultProjectionRoot).waldo().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(grault)
-        val waldo = grault.waldo
-        assertNotNull(waldo)
-        assertEquals("Grault", waldo.waldo)
-    }
+    val grault =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.grault",
+        emptyMap(),
+        Grault::class.java,
+      )
 
-    @Test
-    fun `query singular nullable id internal type dataloader (fred)`() {
-        val query = GraphQLQueryRequest(
-            FredGraphQLQuery(),
-            projection(::FredProjectionRoot)
-                .waldo().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(grault)
+    val waldo = grault.waldo
+    assertNotNull(waldo)
+    assertEquals("Grault", waldo.waldo)
+  }
 
-        val fred = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.fred", emptyMap(), Fred::class.java
+  @Test
+  fun `query singular nullable id internal type dataloader (fred)`() {
+    val query =
+      GraphQLQueryRequest(
+          FredGraphQLQuery(),
+          projection(::FredProjectionRoot).waldo().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(fred)
-        val waldo = fred.waldo
-        assertNotNull(waldo)
-        assertEquals("Fred", waldo.waldo)
-    }
+    val fred =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.fred",
+        emptyMap(),
+        Fred::class.java,
+      )
 
-    @Test
-    fun `query plural nullable ids internal type dataloader (xyzzy)`() {
-        val query = GraphQLQueryRequest(
-            XyzzyGraphQLQuery(),
-            projection(::XyzzyProjectionRoot)
-                .waldos().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(fred)
+    val waldo = fred.waldo
+    assertNotNull(waldo)
+    assertEquals("Fred", waldo.waldo)
+  }
 
-        val xyzzy = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.xyzzy", emptyMap(), Xyzzy::class.java
+  @Test
+  fun `query plural nullable ids internal type dataloader (xyzzy)`() {
+    val query =
+      GraphQLQueryRequest(
+          XyzzyGraphQLQuery(),
+          projection(::XyzzyProjectionRoot).waldos().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(xyzzy)
-        val waldos = xyzzy.waldos
-        assertNotNull(waldos)
-        waldos.forEach { waldo -> assertEquals("Xyzzy", waldo.waldo) }
-    }
+    val xyzzy =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.xyzzy",
+        emptyMap(),
+        Xyzzy::class.java,
+      )
 
-    @Test
-    fun `query plural ids internal type dataloader (plugh)`() {
-        val query = GraphQLQueryRequest(
-            PlughGraphQLQuery(),
-            projection(::PlughProjectionRoot)
-                .waldos().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(xyzzy)
+    val waldos = xyzzy.waldos
+    assertNotNull(waldos)
+    waldos.forEach { waldo -> assertEquals("Xyzzy", waldo.waldo) }
+  }
 
-        val plugh = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.plugh", emptyMap(), Plugh::class.java
+  @Test
+  fun `query plural ids internal type dataloader (plugh)`() {
+    val query =
+      GraphQLQueryRequest(
+          PlughGraphQLQuery(),
+          projection(::PlughProjectionRoot).waldos().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(plugh)
-        val waldos = plugh.waldos
-        assertNotNull(waldos)
-        waldos.forEach { waldo -> assertEquals("Plugh", waldo.waldo) }
-    }
+    val plugh =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.plugh",
+        emptyMap(),
+        Plugh::class.java,
+      )
 
-    @Test
-    fun `query not generated dataloader (garply)`() {
-        val query = GraphQLQueryRequest(
-            GarplyGraphQLQuery(),
-            projection(::GarplyProjectionRoot)
-                .waldo().select {
-                    waldo()
-                }
-        ).serialize()
+    assertNotNull(plugh)
+    val waldos = plugh.waldos
+    assertNotNull(waldos)
+    waldos.forEach { waldo -> assertEquals("Plugh", waldo.waldo) }
+  }
 
-        val garply = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.garply", emptyMap(), Garply::class.java
+  @Test
+  fun `query not generated dataloader (garply)`() {
+    val query =
+      GraphQLQueryRequest(
+          GarplyGraphQLQuery(),
+          projection(::GarplyProjectionRoot).waldo().select { waldo() },
         )
+        .serialize()
 
-        assertNotNull(garply)
-        val waldo = garply.waldo
-        assertNull(waldo)
-    }
+    val garply =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.garply",
+        emptyMap(),
+        Garply::class.java,
+      )
 
-    // SafeMode = false
-    // ====================================================================
+    assertNotNull(garply)
+    val waldo = garply.waldo
+    assertNull(waldo)
+  }
 
-    @Test
-    fun `query unsafe singular id dataloader (alpha)`() {
-        val query = GraphQLQueryRequest(
-            AlphaGraphQLQuery(),
-            projection(::AlphaProjectionRoot)
-                .zuluId()
-                .zulu().select {
-                    zulu()
-                }
-        ).serialize()
+  // SafeMode = false
+  // ====================================================================
 
-        val alpha = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.alpha", emptyMap(), Alpha::class.java
+  @Test
+  fun `query unsafe singular id dataloader (alpha)`() {
+    val query =
+      GraphQLQueryRequest(
+          AlphaGraphQLQuery(),
+          projection(::AlphaProjectionRoot).zuluId().zulu().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(alpha)
-        val zulu = alpha.zulu
-        assertNotNull(zulu)
-        assertEquals("Alpha", zulu.zulu)
-    }
+    val alpha =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.alpha",
+        emptyMap(),
+        Alpha::class.java,
+      )
 
-    @Test
-    fun `query unsafe plural ids dataloader (bravo)`() {
-        val query = GraphQLQueryRequest(
-            BravoGraphQLQuery(),
-            projection(::BravoProjectionRoot)
-                .zuluIds()
-                .zulus().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(alpha)
+    val zulu = alpha.zulu
+    assertNotNull(zulu)
+    assertEquals("Alpha", zulu.zulu)
+  }
 
-        val bravo = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.bravo", emptyMap(), Bravo::class.java
+  @Test
+  fun `query unsafe plural ids dataloader (bravo)`() {
+    val query =
+      GraphQLQueryRequest(
+          BravoGraphQLQuery(),
+          projection(::BravoProjectionRoot).zuluIds().zulus().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(bravo)
-        val zulus = bravo.zulus
-        assertNotNull(zulus)
-        zulus.forEach { zulu -> assertEquals("Bravo", zulu.zulu) }
-    }
+    val bravo =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.bravo",
+        emptyMap(),
+        Bravo::class.java,
+      )
 
-    @Test
-    fun `query unsafe singular nullable id dataloader (charlie)`() {
-        val query = GraphQLQueryRequest(
-            CharlieGraphQLQuery(),
-            projection(::CharlieProjectionRoot)
-                .zuluId()
-                .zulu().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(bravo)
+    val zulus = bravo.zulus
+    assertNotNull(zulus)
+    zulus.forEach { zulu -> assertEquals("Bravo", zulu.zulu) }
+  }
 
-        val charlie = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.charlie", emptyMap(), Charlie::class.java
+  @Test
+  fun `query unsafe singular nullable id dataloader (charlie)`() {
+    val query =
+      GraphQLQueryRequest(
+          CharlieGraphQLQuery(),
+          projection(::CharlieProjectionRoot).zuluId().zulu().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(charlie)
-        val zulu = charlie.zulu
-        assertNotNull(zulu)
-        assertEquals("Charlie", zulu.zulu)
-    }
+    val charlie =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.charlie",
+        emptyMap(),
+        Charlie::class.java,
+      )
 
-    @Test
-    fun `query unsafe plural nullable ids dataloader (delta)`() {
-        val query = GraphQLQueryRequest(
-            DeltaGraphQLQuery(),
-            projection(::DeltaProjectionRoot)
-                .zuluIds()
-                .zulus().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(charlie)
+    val zulu = charlie.zulu
+    assertNotNull(zulu)
+    assertEquals("Charlie", zulu.zulu)
+  }
 
-        val delta = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.delta", emptyMap(), Delta::class.java
+  @Test
+  fun `query unsafe plural nullable ids dataloader (delta)`() {
+    val query =
+      GraphQLQueryRequest(
+          DeltaGraphQLQuery(),
+          projection(::DeltaProjectionRoot).zuluIds().zulus().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(delta)
-        val zulus = delta.zulus
-        assertNotNull(zulus)
-        zulus.forEach { zulu -> assertEquals("Delta", zulu.zulu) }
-    }
+    val delta =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.delta",
+        emptyMap(),
+        Delta::class.java,
+      )
 
-    @Test
-    fun `query unsafe singular unrelated id dataloader (echo)`() {
-        val query = GraphQLQueryRequest(
-            EchoGraphQLQuery(),
-            projection(::EchoProjectionRoot)
-                .echoToZuluId()
-                .zulu().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(delta)
+    val zulus = delta.zulus
+    assertNotNull(zulus)
+    zulus.forEach { zulu -> assertEquals("Delta", zulu.zulu) }
+  }
 
-        val echo = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.echo", emptyMap(), Echo::class.java
+  @Test
+  fun `query unsafe singular unrelated id dataloader (echo)`() {
+    val query =
+      GraphQLQueryRequest(
+          EchoGraphQLQuery(),
+          projection(::EchoProjectionRoot).echoToZuluId().zulu().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(echo)
-        val zulu = echo.zulu
-        assertNotNull(zulu)
-        assertEquals("Echo", zulu.zulu)
-    }
+    val echo =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.echo",
+        emptyMap(),
+        Echo::class.java,
+      )
 
-    @Test
-    fun `query unsafe singular id internal type dataloader (foxtrot)`() {
-        val query = GraphQLQueryRequest(
-            FoxtrotGraphQLQuery(),
-            projection(::FoxtrotProjectionRoot)
-                .zulu().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(echo)
+    val zulu = echo.zulu
+    assertNotNull(zulu)
+    assertEquals("Echo", zulu.zulu)
+  }
 
-        val foxtrot = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.foxtrot", emptyMap(), Foxtrot::class.java
+  @Test
+  fun `query unsafe singular id internal type dataloader (foxtrot)`() {
+    val query =
+      GraphQLQueryRequest(
+          FoxtrotGraphQLQuery(),
+          projection(::FoxtrotProjectionRoot).zulu().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(foxtrot)
-        val zulu = foxtrot.zulu
-        assertNotNull(zulu)
-        assertEquals("Foxtrot", zulu.zulu)
-    }
+    val foxtrot =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.foxtrot",
+        emptyMap(),
+        Foxtrot::class.java,
+      )
 
-    @Test
-    fun `query unsafe singular nullable id internal type dataloader (golf)`() {
-        val query = GraphQLQueryRequest(
-            GolfGraphQLQuery(),
-            projection(::GolfProjectionRoot)
-                .zulu().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(foxtrot)
+    val zulu = foxtrot.zulu
+    assertNotNull(zulu)
+    assertEquals("Foxtrot", zulu.zulu)
+  }
 
-        val golf = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.golf", emptyMap(), Golf::class.java
+  @Test
+  fun `query unsafe singular nullable id internal type dataloader (golf)`() {
+    val query =
+      GraphQLQueryRequest(
+          GolfGraphQLQuery(),
+          projection(::GolfProjectionRoot).zulu().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(golf)
-        val zulu = golf.zulu
-        assertNotNull(zulu)
-        assertEquals("Golf", zulu.zulu)
-    }
+    val golf =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.golf",
+        emptyMap(),
+        Golf::class.java,
+      )
 
-    @Test
-    fun `query unsafe plural ids internal type dataloader (hotel)`() {
-        val query = GraphQLQueryRequest(
-            HotelGraphQLQuery(),
-            projection(::HotelProjectionRoot)
-                .zulus().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(golf)
+    val zulu = golf.zulu
+    assertNotNull(zulu)
+    assertEquals("Golf", zulu.zulu)
+  }
 
-        val hotel = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.hotel", emptyMap(), Hotel::class.java
+  @Test
+  fun `query unsafe plural ids internal type dataloader (hotel)`() {
+    val query =
+      GraphQLQueryRequest(
+          HotelGraphQLQuery(),
+          projection(::HotelProjectionRoot).zulus().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(hotel)
-        val zulus = hotel.zulus
-        assertNotNull(zulus)
-        zulus.forEach { zulu -> assertEquals("Hotel", zulu.zulu) }
-    }
+    val hotel =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.hotel",
+        emptyMap(),
+        Hotel::class.java,
+      )
 
-    @Test
-    fun `query unsafe plural nullable ids internal type dataloader (india)`() {
-        val query = GraphQLQueryRequest(
-            IndiaGraphQLQuery(),
-            projection(::IndiaProjectionRoot)
-                .zulus().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(hotel)
+    val zulus = hotel.zulus
+    assertNotNull(zulus)
+    zulus.forEach { zulu -> assertEquals("Hotel", zulu.zulu) }
+  }
 
-        val india = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.india", emptyMap(), Hotel::class.java
+  @Test
+  fun `query unsafe plural nullable ids internal type dataloader (india)`() {
+    val query =
+      GraphQLQueryRequest(
+          IndiaGraphQLQuery(),
+          projection(::IndiaProjectionRoot).zulus().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(india)
-        val zulus = india.zulus
-        assertNotNull(zulus)
-        zulus.forEach { zulu -> assertEquals("India", zulu.zulu) }
-    }
+    val india =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.india",
+        emptyMap(),
+        Hotel::class.java,
+      )
 
-    @Test
-    fun `query unsafe not generated dataloader (juliet)`() {
-        val query = GraphQLQueryRequest(
-            JulietGraphQLQuery(),
-            projection(::JulietProjectionRoot)
-                .zulu().select {
-                    zulu()
-                }
-        ).serialize()
+    assertNotNull(india)
+    val zulus = india.zulus
+    assertNotNull(zulus)
+    zulus.forEach { zulu -> assertEquals("India", zulu.zulu) }
+  }
 
-        val juliet = dgsQueryExecutor.executeAndExtractJsonPathAsObject(
-            query, "data.juliet", emptyMap(), Juliet::class.java
+  @Test
+  fun `query unsafe not generated dataloader (juliet)`() {
+    val query =
+      GraphQLQueryRequest(
+          JulietGraphQLQuery(),
+          projection(::JulietProjectionRoot).zulu().select { zulu() },
         )
+        .serialize()
 
-        assertNotNull(juliet)
-        val zulu = juliet.zulu
-        assertNull(zulu)
-    }
+    val juliet =
+      dgsQueryExecutor.executeAndExtractJsonPathAsObject(
+        query,
+        "data.juliet",
+        emptyMap(),
+        Juliet::class.java,
+      )
+
+    assertNotNull(juliet)
+    val zulu = juliet.zulu
+    assertNull(zulu)
+  }
 }
 
 inline fun <P, reified N : BaseSubProjectionNode<P, *>> N.select(selection: N.() -> Unit): P {
-    this.selection()
-    return this.parent()
+  this.selection()
+  return this.parent()
 }
 
 // Workaround as Kotlin does not support Java diamond operator
 // https://netflix.github.io/dgs/generating-code-from-schema/#client-api-v2
-inline fun <reified R : BaseSubProjectionNode<Nothing, Nothing>> projection(constructor: ()->R): R {
-    return constructor()
+inline fun <reified R : BaseSubProjectionNode<Nothing, Nothing>> projection(
+  constructor: () -> R
+): R {
+  return constructor()
 }
