@@ -10,17 +10,13 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-09-27
  */
 @Component
-class CompanyRepository(
-    @Qualifier("organisationEntityManager") em: EntityManager
-) : BaseDataRepository<Company, CompanyId>(em)
+class CompanyRepository(@Qualifier("organisationEntityManager") em: EntityManager) :
+  BaseDataRepository<Company, CompanyId>(em)
 
 @Component
-class CompanyMemberRepository(
-    @Qualifier("organisationEntityManager") em: EntityManager
-) : BaseDataRepository<CompanyMember, CompanyMemberId>(em)
+class CompanyMemberRepository(@Qualifier("organisationEntityManager") em: EntityManager) :
+  BaseDataRepository<CompanyMember, CompanyMemberId>(em)

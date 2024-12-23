@@ -8,13 +8,9 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-09-27
  */
-
 @Component
-class PersonRepository(
-    @Qualifier("organisationEntityManager") em: EntityManager
-) : BaseDataRepository<Person, PersonId>(em)
+class PersonRepository(@Qualifier("organisationEntityManager") em: EntityManager) :
+  BaseDataRepository<Person, PersonId>(em)

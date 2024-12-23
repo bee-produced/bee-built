@@ -1,7 +1,6 @@
 package com.beeproduced.example.application.media.service
 
 import com.beeproduced.bee.buzz.manager.EventManager
-import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.getDataFetcher
 import com.beeproduced.bee.functional.result.AppResult
 import com.beeproduced.bee.functional.result.errors.BadRequestError
 import com.beeproduced.bee.persistent.extensions.graphql.schema.toDataSelection
@@ -15,84 +14,69 @@ import com.beeproduced.service.media.events.UpdateFilm
 import com.beeproduced.utils.logFor
 import com.github.michaelbull.result.*
 import com.netflix.graphql.dgs.*
-import graphql.execution.DataFetcherResult
 import graphql.relay.Connection
 import graphql.schema.DataFetchingEnvironment
 
 /**
- *
- *
  * @author Kacper Urbaniec
  * @version 2023-09-27
  */
 @DgsComponent
-class MediaController(
-    val eventManager: EventManager,
-    val mapper: MediaMapper
-) {
-    private val logger = logFor<MediaController>()
+class MediaController(val eventManager: EventManager, val mapper: MediaMapper) {
+  private val logger = logFor<MediaController>()
 
-    @DgsQuery
-    fun recentlyAddedFilms(
-        @InputArgument("last") last: Int?,
-        @InputArgument("before") before: String?,
-        @InputArgument("first") first: Int?,
-        @InputArgument("after") after: String?,
-        dfe: DataFetchingEnvironment
-    ): AppResult<Connection<FilmDto>> {
-        return Ok(mapper.toPagination(first, after, last, before))
-            .onSuccess { dfe.setContext(dfe) }
-            .map { input -> GetRecentlyAddedFilms(input, dfe.selectionSet.toDataSelection()) }
-            .andThen(eventManager::send)
-            .map(mapper::toDto)
-            .onFailure { e -> logger.error(e.stackTraceToString()) }
-    }
+  @DgsQuery
+  fun recentlyAddedFilms(
+    @InputArgument("last") last: Int?,
+    @InputArgument("before") before: String?,
+    @InputArgument("first") first: Int?,
+    @InputArgument("after") after: String?,
+    dfe: DataFetchingEnvironment,
+  ): AppResult<Connection<FilmDto>> {
+    return Ok(mapper.toPagination(first, after, last, before))
+      .onSuccess { dfe.setContext(dfe) }
+      .map { input -> GetRecentlyAddedFilms(input, dfe.selectionSet.toDataSelection()) }
+      .andThen(eventManager::send)
+      .map(mapper::toDto)
+      .onFailure { e -> logger.error(e.stackTraceToString()) }
+  }
 
-    @DgsMutation
-    fun addFilm(
-        input: AddFilm,
-        dfe: DataFetchingEnvironment
-    ): AppResult<FilmDto> {
-        return Ok(mapper.toEntity(input))
-            .onSuccess { dfe.setContext(dfe) }
-            .map { create -> CreateFilm(create, dfe.selectionSet.toDataSelection()) }
-            .andThen(eventManager::send)
-            .map(mapper::toDto)
-            .onFailure { e -> logger.error(e.stackTraceToString()) }
-    }
+  @DgsMutation
+  fun addFilm(input: AddFilm, dfe: DataFetchingEnvironment): AppResult<FilmDto> {
+    return Ok(mapper.toEntity(input))
+      .onSuccess { dfe.setContext(dfe) }
+      .map { create -> CreateFilm(create, dfe.selectionSet.toDataSelection()) }
+      .andThen(eventManager::send)
+      .map(mapper::toDto)
+      .onFailure { e -> logger.error(e.stackTraceToString()) }
+  }
 
-    @DgsMutation
-    fun editFilm(
-        input: EditFilm,
-        dfe: DataFetchingEnvironment
-    ): AppResult<FilmDto> {
-        return Ok(mapper.toEntity(input))
-            .onSuccess { dfe.setContext(dfe) }
-            .map { edit -> UpdateFilm(edit, dfe.selectionSet.toDataSelection()) }
-            .andThen(eventManager::send)
-            .map(mapper::toDto)
-            .onFailure { e -> logger.error(e.stackTraceToString()) }
-    }
+  @DgsMutation
+  fun editFilm(input: EditFilm, dfe: DataFetchingEnvironment): AppResult<FilmDto> {
+    return Ok(mapper.toEntity(input))
+      .onSuccess { dfe.setContext(dfe) }
+      .map { edit -> UpdateFilm(edit, dfe.selectionSet.toDataSelection()) }
+      .andThen(eventManager::send)
+      .map(mapper::toDto)
+      .onFailure { e -> logger.error(e.stackTraceToString()) }
+  }
 
-    // TODO: Remove later
-    data class MyTest(
-        val id: Int,
-        val test: String
-    )
+  // TODO: Remove later
+  data class MyTest(val id: Int, val test: String)
 
-    @DgsQuery
-    fun test(): MyTest {
-        return MyTest(100, "Test!")
-    }
+  @DgsQuery
+  fun test(): MyTest {
+    return MyTest(100, "Test!")
+  }
 
-    @DgsData(parentType = "Test", field = "foo")
-    fun testFoo(dfe: DataFetchingEnvironment): AppResult<Foo> {
-        // val myTest = dfe.getSource<Test>() // java.lang.ClassCastException
-        // val myTest = dfe.getSource<MyTest>()
-        //
-        // logger.info(myTest.toString())
-        // return Foo("Foo!")
+  @DgsData(parentType = "Test", field = "foo")
+  fun testFoo(dfe: DataFetchingEnvironment): AppResult<Foo> {
+    // val myTest = dfe.getSource<Test>() // java.lang.ClassCastException
+    // val myTest = dfe.getSource<MyTest>()
+    //
+    // logger.info(myTest.toString())
+    // return Foo("Foo!")
 
-        return Err(BadRequestError("Foo!"))
-    }
+    return Err(BadRequestError("Foo!"))
+  }
 }
