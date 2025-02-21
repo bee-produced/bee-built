@@ -11,9 +11,9 @@ group = "com.beeproduced"
 
 version = libs.versions.bee.built.get()
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
 repositories { mavenCentral() }
 

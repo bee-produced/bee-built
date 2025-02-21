@@ -2,7 +2,7 @@
 
 ### 🛠️ Requirements
 
-* JDK Version >17
+* JDK Version >21
 
 ### 🚀 Start
 

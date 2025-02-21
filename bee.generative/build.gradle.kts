@@ -18,11 +18,11 @@ version = libs.versions.bee.built.get()
 
 description = "Plugin for the `bee-built` platform."
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
-tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "17" } }
+tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "21" } }
 
 repositories { mavenCentral() }
 

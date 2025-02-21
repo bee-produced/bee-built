@@ -23,7 +23,7 @@ allprojects {
   tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
       freeCompilerArgs = listOf("-Xjsr305=strict")
-      jvmTarget = "17"
+      jvmTarget = "21"
     }
   }
 
@@ -45,9 +45,9 @@ group = "com.beeproduced"
 
 version = libs.versions.bee.built.get()
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
 configurations { compileOnly { extendsFrom(configurations.annotationProcessor.get()) } }
 
