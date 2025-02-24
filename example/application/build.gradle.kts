@@ -102,9 +102,10 @@ dependencies {
   testImplementation(libs.spring.boot.starter.test)
   testImplementation(libs.spring.boot.starter.data.jpa)
   testImplementation(libs.spring.security.test)
-  testImplementation(libs.junit.api)
   testImplementation(libs.kotlin.test)
-  testRuntimeOnly(libs.junit.engine)
+  testImplementation(platform(libs.junit.bom))
+  testImplementation(libs.junit.jupiter)
+  testRuntimeOnly(libs.junit.platform.launcher)
   implementation(libs.h2)
   testImplementation(libs.springmockk)
 

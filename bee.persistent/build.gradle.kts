@@ -124,9 +124,7 @@ dependencies {
   testImplementation(libs.spring.boot.starter.test)
   testImplementation(libs.spring.boot.starter.data.jpa)
   testImplementation(libs.jdsl)
-  testImplementation(libs.junit.api)
   testImplementation(libs.kotlin.test)
-  testRuntimeOnly(libs.junit.engine)
   implementation(libs.h2)
   // implementation("org.postgresql:postgresql:42.5.3")
 }

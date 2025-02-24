@@ -49,8 +49,9 @@ dependencies {
   implementation(libs.kotlin.stdlib)
   implementation(libs.ksp.plugin)
   testImplementation(libs.kotlin.test)
-  testImplementation(libs.junit.api)
-  testRuntimeOnly(libs.junit.engine)
+  testImplementation(platform(libs.junit.bom))
+  testImplementation(libs.junit.jupiter)
+  testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.withType<Test> { useJUnitPlatform() }

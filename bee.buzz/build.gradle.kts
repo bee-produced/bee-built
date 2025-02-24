@@ -56,8 +56,9 @@ dependencies {
   implementation("com.beeproduced:bee.functional:$version")
   implementation(libs.kotlin.stdlib)
   implementation(libs.spring.boot.starter.web)
-  testImplementation(libs.junit.api)
-  testRuntimeOnly(libs.junit.engine)
+  testImplementation(platform(libs.junit.bom))
+  testImplementation(libs.junit.jupiter)
+  testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.withType<Test> { useJUnitPlatform() }

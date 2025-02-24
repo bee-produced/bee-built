@@ -49,8 +49,9 @@ java {
 dependencies {
   implementation(libs.kotlin.stdlib)
   testImplementation(libs.kotlin.test)
-  testImplementation(libs.junit.api)
-  testRuntimeOnly(libs.junit.engine)
+  testImplementation(platform(libs.junit.bom))
+  testImplementation(libs.junit.jupiter)
+  testRuntimeOnly(libs.junit.platform.launcher)
   "processorImplementation"("com.beeproduced:bee.generative:$version")
   "processorImplementation"(sourceSets.main.get().output)
   "processorImplementation"(libs.dgs.spring.starter)

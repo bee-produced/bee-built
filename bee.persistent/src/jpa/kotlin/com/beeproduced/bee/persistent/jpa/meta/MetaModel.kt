@@ -1,6 +1,7 @@
 package com.beeproduced.bee.persistent.jpa.meta
 
 import com.beeproduced.bee.persistent.jpa.exceptions.EntityNotFound
+import org.hibernate.engine.spi.SharedSessionContractImplementor
 import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.jvm.kotlinProperty
@@ -59,7 +60,7 @@ object MetaModel {
         val isNullable = fieldType.isMarkedNullable
         if (!isNullable) {
           logger.warn(
-            "Relation [$member] of [$entityType] is not marked nullable, this can lead to errors when relation is lazy loaded"
+            "Relation [$member] of [$entityType] is not marked nullable, this can lead to errors when relation is lazy loaded",
           )
         }
 
@@ -100,7 +101,8 @@ object MetaModel {
     // https://stackoverflow.com/a/3335062/12347616
     // Directly without session
     // Reversed from source code
-    return entityPersisters.getValue(entityClass).getIdentifier(entity, null)
+    return entityPersisters.getValue(entityClass)
+      .getIdentifier(entity, null as SharedSessionContractImplementor?)
   }
 
   // Inspired by

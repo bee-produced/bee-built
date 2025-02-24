@@ -27,6 +27,7 @@ class SecurityConfig(private val env: Environment) {
     val mvcMatcherBuilder = MvcRequestMatcher.Builder(introspector)
     // Disable csrf
     // See: https://github.com/graphql-java-kickstart/graphql-spring-boot/issues/184
+    // TODO 17: Fix deprecated code
     http
       .csrf()
       .disable()
