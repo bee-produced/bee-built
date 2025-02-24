@@ -5,9 +5,9 @@ import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_LOADER
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DTO
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.ILLEGAL_STATE_EXCEPTION
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._DATA_LOADER_NAME
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._ID_PROPERTY
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._PROPERTY
-import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._DATA_LOADER_NAME
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DATA_LOADER_NAME
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DTO_NAME
 import com.beeproduced.bee.generative.util.*
@@ -200,7 +200,9 @@ class BeeFetchedCodegen(
       )
       .addParameter("dfe", dfeType)
       .returns(returnType)
-      .addNStatement("val data = dfe.getSource<$DTO>() ?: return CompletableFuture.completedFuture(null)")
+      .addNStatement(
+        "val data = dfe.getSource<$DTO>() ?: return CompletableFuture.completedFuture(null)"
+      )
       .apply {
         if (safeMode && hasProperty && property.isCollection)
           addNStatement(
