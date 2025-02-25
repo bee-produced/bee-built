@@ -40,15 +40,11 @@ dependencies {
   implementation(libs.spring.boot.starter.oauth2.client)
   testImplementation(libs.spring.security.test)
   testImplementation(libs.datafaker)
-  testRuntimeOnly(libs.junit.engine)
   testImplementation(libs.spring.boot.starter.test) { exclude("org.mockito", "mockito-core") }
   testImplementation(libs.spring.boot.starter.test)
   testImplementation(libs.spring.boot.starter.data.jpa)
   testImplementation(libs.jdsl)
   testImplementation(libs.kotlin.test)
-  testImplementation(platform(libs.junit.bom))
-  testImplementation(libs.junit.jupiter)
-  testRuntimeOnly(libs.junit.platform.launcher)
   testImplementation(libs.springmockk)
 }
 
