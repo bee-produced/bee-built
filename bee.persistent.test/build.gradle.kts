@@ -55,6 +55,11 @@ repositories { mavenCentral() }
 
 dependencyManagement { imports { mavenBom(libs.dgs.platform.get().toString()) } }
 
+// Set agent as defined by JEP 451
+// https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+// https://github.com/raphw/byte-buddy/discussions/1535
+val byteBuddyAgent = configurations.create("byteBuddyAgent")
+
 dependencies {
   // data sources
   implementation(project(":datasource.a"))
@@ -116,9 +121,14 @@ dependencies {
   testImplementation("com.beeproduced:bee.persistent") {
     capabilities { requireCapability("com.beeproduced:bee.persistent-blaze") }
   }
+
+  @Suppress("UnstableApiUsage") byteBuddyAgent(libs.bytebuddy.agent) { isTransitive = false }
 }
 
-tasks.withType<Test> { useJUnitPlatform() }
+tasks.withType<Test> {
+  useJUnitPlatform()
+  jvmArgs("-javaagent:${byteBuddyAgent.asPath}")
+}
 
 ktfmt { googleStyle() }
 

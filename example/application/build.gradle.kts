@@ -55,6 +55,11 @@ repositories { mavenCentral() }
 
 dependencyManagement { imports { mavenBom(libs.dgs.platform.get().toString()) } }
 
+// Set agent as defined by JEP 451
+// https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+// https://github.com/raphw/byte-buddy/discussions/1535
+val byteBuddyAgent = configurations.create("byteBuddyAgent")
+
 dependencies {
   // service modules & more
   implementation(project(":service.media"))
@@ -115,8 +120,8 @@ dependencies {
     runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.76.Final:osx-aarch_64")
   }
 
-  implementation("net.bytebuddy:byte-buddy:1.14.9")
-  implementation("net.bytebuddy:byte-buddy-agent:1.14.9")
+  implementation(libs.bytebuddy)
+  @Suppress("UnstableApiUsage") byteBuddyAgent(libs.bytebuddy.agent) { isTransitive = false }
 }
 
 tasks.withType<Test> { useJUnitPlatform() }
@@ -171,4 +176,6 @@ kapt {
 
 tasks.getByName<Jar>("jar") { enabled = false }
 
-tasks.bootRun { jvmArgs = listOf("-Dspring.output.ansi.enabled=ALWAYS") }
+tasks.bootRun {
+  jvmArgs = listOf("-Dspring.output.ansi.enabled=ALWAYS", "-javaagent:${byteBuddyAgent.asPath}")
+}

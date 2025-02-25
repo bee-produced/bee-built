@@ -55,6 +55,11 @@ repositories { mavenCentral() }
 
 dependencyManagement { imports { mavenBom(libs.dgs.platform.get().toString()) } }
 
+// Set agent as defined by JEP 451
+// https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+// https://github.com/raphw/byte-buddy/discussions/1535
+val byteBuddyAgent = configurations.create("byteBuddyAgent")
+
 dependencies {
   // in-house libraries
   implementation("com.beeproduced:bee.functional")
@@ -98,9 +103,14 @@ dependencies {
   if (System.getProperty("os.arch") == "aarch64" && System.getProperty("os.name") == "Mac OS X") {
     runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.76.Final:osx-aarch_64")
   }
+
+  @Suppress("UnstableApiUsage") byteBuddyAgent(libs.bytebuddy.agent) { isTransitive = false }
 }
 
-tasks.withType<Test> { useJUnitPlatform() }
+tasks.withType<Test> {
+  useJUnitPlatform()
+  jvmArgs("-javaagent:${byteBuddyAgent.asPath}")
+}
 
 allprojects {
   // https://github.com/cortinico/ktfmt-gradle
