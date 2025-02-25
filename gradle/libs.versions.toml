@@ -11,12 +11,12 @@ junit = "5.12.0"
 kotlinter = "3.13.0" # TODO 17: Remove?
 dgs-codegen = "7.0.3"
 jackson-module-kotlin = "2.13.4"
-h2 = "2.1.214"
+h2 = "2.3.232"
 konform = "0.4.0"
 michael-result = "1.1.18"
 jdsl = "2.2.0.RELEASE"
 aspectjrt = "1.9.19"
-jakarta-persistence-api = "3.1.0"
+jakarta-persistence-api = "3.1.0" # Version determined by Hibernate + Spring Boot Starter Data JPA
 hibernate-core = "6.6.9.Final"
 caffeine = "3.1.2"
 springmockk = "4.0.2"
@@ -53,10 +53,10 @@ dgs-starter = { group = "com.netflix.graphql.dgs", name = "dgs-starter" }
 dgs-extended-scalars = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-extended-scalars" }
 dgs-pagination = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-pagination" }
 multipart-spring-graphql = { group = "name.nkonev.multipart-spring-graphql", name = "multipart-spring-graphql", version = "1.5.3" }
-jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = "2.13.4" }
-h2 = { group = "com.h2database", name = "h2", version = "2.1.214" }
-konform = { group = "io.konform", name = "konform", version = "0.4.0" }
-michael-result = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version = "1.1.16" }
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+h2 = { group = "com.h2database", name = "h2", version.ref = "h2" }
+konform = { group = "io.konform", name = "konform", version.ref = "konform" }
+michael-result = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version.ref = "michael-result" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin-base" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin-base" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin-base" }
@@ -66,15 +66,15 @@ junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", ver
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
-jdsl = { group = "com.linecorp.kotlin-jdsl", name = "hibernate-kotlin-jdsl-jakarta", version = "2.2.0.RELEASE" }
-aspectjrt = { group = "org.aspectj", name = "aspectjrt", version = "1.9.19" }
-jakarta-persistence-api = { group = "jakarta.persistence", name = "jakarta.persistence-api", version = "3.1.0" }
-hibernate-core = { group = "org.hibernate", name = "hibernate-core", version = "6.1.6.Final" }
-caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version = "3.1.2" }
-springmockk = { group = "com.ninja-squad", name = "springmockk", version = "4.0.2" }
-datafaker = { group = "io.github.serpro69", name = "kotlin-faker", version = "1.14.0" }
-jakarta-mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.0.1" }
-jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.1" }
+jdsl = { group = "com.linecorp.kotlin-jdsl", name = "hibernate-kotlin-jdsl-jakarta", version.ref = "jdsl" }
+aspectjrt = { group = "org.aspectj", name = "aspectjrt", version.ref = "aspectjrt" }
+jakarta-persistence-api = { group = "jakarta.persistence", name = "jakarta.persistence-api", version.ref = "jakarta-persistence-api" }
+hibernate-core = { group = "org.hibernate", name = "hibernate-core", version.ref = "hibernate-core" }
+caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
+springmockk = { group = "com.ninja-squad", name = "springmockk", version.ref = "springmockk" }
+datafaker = { group = "io.github.serpro69", name = "kotlin-faker", version.ref = "datafaker" }
+jakarta-mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version.ref = "jakarta-mail-api" }
+jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version.ref = "jakarta-mail" }
 ksp-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-base" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp-base" }
 kotlin-poet = { group = "com.squareup", name = "kotlinpoet-ksp", version = "1.14.2" }

@@ -53,11 +53,7 @@ configurations { compileOnly { extendsFrom(configurations.annotationProcessor.ge
 
 repositories { mavenCentral() }
 
-dependencyManagement {
-  println("hey!")
-  println(libs.dgs.platform.get().toString())
-  imports { mavenBom(libs.dgs.platform.get().toString()) }
-}
+dependencyManagement { imports { mavenBom(libs.dgs.platform.get().toString()) } }
 
 dependencies {
   // service modules & more
