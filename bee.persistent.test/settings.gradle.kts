@@ -25,7 +25,4 @@ project(":datasource.b").projectDir = File("./datasource.b")
 
 include(":datasource.test")
 
-project(":datasource.test").projectDir =
-  File(
-    "./datasource.test"
-  )
+project(":datasource.test").projectDir = File("./datasource.test")
