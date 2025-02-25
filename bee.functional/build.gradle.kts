@@ -88,7 +88,7 @@ dependencies {
   testImplementation(libs.junit.jupiter)
   testRuntimeOnly(libs.junit.platform.launcher)
   "dgsImplementation"(platform(libs.dgs.platform))
-  "dgsImplementation"(libs.dgs.spring.starter)
+  "dgsImplementation"(libs.dgs.starter)
   "dgsImplementation"(libs.spring.boot.starter.aop)
   "dgsImplementation"(libs.bytebuddy)
   "dgsImplementation"(libs.bytebuddy.agent)

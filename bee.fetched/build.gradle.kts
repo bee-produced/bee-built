@@ -54,7 +54,8 @@ dependencies {
   testRuntimeOnly(libs.junit.platform.launcher)
   "processorImplementation"("com.beeproduced:bee.generative:$version")
   "processorImplementation"(sourceSets.main.get().output)
-  "processorImplementation"(libs.dgs.spring.starter)
+  "processorImplementation"(platform(libs.dgs.platform))
+  "processorImplementation"(libs.dgs.starter)
 }
 
 tasks.withType<Test> { useJUnitPlatform() }

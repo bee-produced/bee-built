@@ -4,12 +4,12 @@ springboot-base = "3.4.3"
 springboot-dependencymanagement = "1.1.7"
 kotlin-base = "1.9.25"
 kotlin-jvm = "1.9.25"
-dgs = "7.6.0"
+dgs = "10.0.3"
 spring-security = "6.4.3"
 mapstruct = "1.5.3.Final"
 junit = "5.12.0"
-kotlinter = "3.13.0"
-dgs-codegen = "6.0.2"
+kotlinter = "3.13.0" # TODO 17: Remove?
+dgs-codegen = "7.0.3"
 jackson-module-kotlin = "2.13.4"
 h2 = "2.1.214"
 konform = "0.4.0"
@@ -49,10 +49,10 @@ spring-security-test = { group = "org.springframework.security", name = "spring-
 mapstruct = { group = "org.mapstruct", name = "mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { group = "org.mapstruct", name = "mapstruct-processor", version.ref = "mapstruct" }
 dgs-platform = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-platform-dependencies", version.ref = "dgs" }
-dgs-spring-starter = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-spring-boot-starter", version.ref = "dgs" }
-dgs-subscription-websockets = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-subscriptions-websockets-autoconfigure", version.ref = "dgs" }
-dgs-extended-scalars = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-extended-scalars", version.ref = "dgs" }
-dgs-pagination = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-pagination", version.ref = "dgs" }
+dgs-starter = { group = "com.netflix.graphql.dgs", name = "dgs-starter" }
+dgs-extended-scalars = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-extended-scalars" }
+dgs-pagination = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-pagination" }
+multipart-spring-graphql = { group = "name.nkonev.multipart-spring-graphql", name = "multipart-spring-graphql", version = "1.5.3" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = "2.13.4" }
 h2 = { group = "com.h2database", name = "h2", version = "2.1.214" }
 konform = { group = "io.konform", name = "konform", version = "0.4.0" }

@@ -53,6 +53,12 @@ configurations { compileOnly { extendsFrom(configurations.annotationProcessor.ge
 
 repositories { mavenCentral() }
 
+dependencyManagement {
+  println("hey!")
+  println(libs.dgs.platform.get().toString())
+  imports { mavenBom(libs.dgs.platform.get().toString()) }
+}
+
 dependencies {
   // service modules & more
   implementation(project(":service.media"))
@@ -90,10 +96,10 @@ dependencies {
   implementation(libs.spring.security.web)
   implementation(libs.jackson.module.kotlin)
   implementation(platform(libs.dgs.platform))
-  implementation(libs.dgs.spring.starter)
+  implementation(libs.dgs.starter)
   implementation(libs.dgs.pagination)
-  implementation(libs.dgs.subscription.websockets)
   implementation(libs.dgs.extended.scalars)
+  implementation(libs.multipart.spring.graphql)
   implementation(libs.konform)
   implementation(libs.mapstruct)
   implementation(libs.datafaker)

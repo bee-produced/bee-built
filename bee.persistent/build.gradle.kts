@@ -98,7 +98,7 @@ dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.jakarta.persistence.api)
   "dgsImplementation"(platform(libs.dgs.platform))
-  "dgsImplementation"(libs.dgs.spring.starter)
+  "dgsImplementation"(libs.dgs.starter)
 
   // TODO: Discuss strong coupling with Hibernate
   // * e.g. Kotlin-JDSL depdendency relies on Hibernate
