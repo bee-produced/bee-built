@@ -6,6 +6,4 @@ dependencyResolutionManagement {
 
 includeBuild("../bee.generative")
 
-includeBuild(
-  "../bee.functional"
-)
+includeBuild("../bee.functional")
