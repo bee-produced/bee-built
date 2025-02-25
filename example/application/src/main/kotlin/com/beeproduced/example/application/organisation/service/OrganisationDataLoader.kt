@@ -39,7 +39,7 @@ fun BatchLoaderEnvironment.context(): DataFetchingEnvironment {
 const val PersonDataLoaderName = "Person"
 
 fun DataFetchingEnvironment.getPersonDataLoader(): DataLoader<String, PersonDto> {
-  return getDataLoader(PersonDataLoaderName)
+  return requireNotNull(getDataLoader(PersonDataLoaderName))
 }
 
 @BeeFetched(ignore = [FetcherIgnore(CompanyDto::class), FetcherIgnore(PersonDto::class)])
@@ -73,7 +73,7 @@ class PersonDataLoader(
 const val CompanyDataLoaderName = "Company"
 
 fun DataFetchingEnvironment.getCompanyDataLoader(): DataLoader<String, CompanyDto> {
-  return getDataLoader(CompanyDataLoaderName)
+  return requireNotNull(getDataLoader(CompanyDataLoaderName))
 }
 
 @BeeFetched(ignore = [FetcherIgnore(CompanyDto::class), FetcherIgnore(PersonDto::class)])
