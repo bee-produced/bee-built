@@ -6,25 +6,26 @@ kotlin-base = "1.9.25"
 kotlin-jvm = "1.9.25"
 dgs = "10.0.3"
 spring-security = "6.4.3"
-mapstruct = "1.5.3.Final"
+mapstruct = "1.6.3"
 junit = "5.12.0"
 kotlinter = "3.13.0" # TODO 17: Remove?
 dgs-codegen = "7.0.3"
-jackson-module-kotlin = "2.13.4"
+multipart-spring-graphql = "1.5.3"
+jackson-module-kotlin = "2.18.2"
 h2 = "2.3.232"
-konform = "0.4.0"
-michael-result = "1.1.18"
+konform = "0.10.0"
+michael-result = "1.1.21"
 jdsl = "2.2.0.RELEASE"
-aspectjrt = "1.9.19"
+aspectjrt = "1.9.22.1"
 jakarta-persistence-api = "3.1.0" # Version determined by Hibernate + Spring Boot Starter Data JPA
 hibernate-core = "6.6.9.Final"
-caffeine = "3.1.2"
+caffeine = "3.2.0"
 springmockk = "4.0.2"
-datafaker = "1.14.0"
+datafaker = "1.16.0"
 jakarta-mail-api = "2.0.1"
 jakarta-mail = "2.0.1"
 ksp-base = "1.9.25-1.0.20"
-bytebuddy = "1.14.9"
+bytebuddy = "1.17.1"
 blaze = "1.6.14"
 
 [libraries]
@@ -52,7 +53,7 @@ dgs-platform = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-platform
 dgs-starter = { group = "com.netflix.graphql.dgs", name = "dgs-starter" }
 dgs-extended-scalars = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-extended-scalars" }
 dgs-pagination = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-pagination" }
-multipart-spring-graphql = { group = "name.nkonev.multipart-spring-graphql", name = "multipart-spring-graphql", version = "1.5.3" }
+multipart-spring-graphql = { group = "name.nkonev.multipart-spring-graphql", name = "multipart-spring-graphql", version.ref = "multipart-spring-graphql" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 h2 = { group = "com.h2database", name = "h2", version.ref = "h2" }
 konform = { group = "io.konform", name = "konform", version.ref = "konform" }
