@@ -12,6 +12,4 @@ includeBuild("../bee.persistent")
 
 includeBuild("../bee.functional")
 
-includeBuild(
-  "../bee.buzz"
-)
+includeBuild("../bee.buzz")
