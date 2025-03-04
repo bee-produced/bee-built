@@ -49,9 +49,9 @@ spring-security-test = { group = "org.springframework.security", name = "spring-
 mapstruct = { group = "org.mapstruct", name = "mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { group = "org.mapstruct", name = "mapstruct-processor", version.ref = "mapstruct" }
 dgs-platform = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-platform-dependencies", version.ref = "dgs" }
-dgs-starter = { group = "com.netflix.graphql.dgs", name = "dgs-starter" }
-dgs-extended-scalars = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-extended-scalars" }
-dgs-pagination = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-pagination" }
+dgs-starter = { group = "com.netflix.graphql.dgs", name = "dgs-starter", version.ref = "dgs" }
+dgs-extended-scalars = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-extended-scalars", version.ref = "dgs" }
+dgs-pagination = { group = "com.netflix.graphql.dgs", name = "graphql-dgs-pagination", version.ref = "dgs" }
 multipart-spring-graphql = { group = "name.nkonev.multipart-spring-graphql", name = "multipart-spring-graphql", version.ref = "multipart-spring-graphql" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 h2 = { group = "com.h2database", name = "h2", version.ref = "h2" }
