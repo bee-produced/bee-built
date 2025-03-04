@@ -18,11 +18,11 @@ version = libs.versions.bee.built.get()
 
 description = "Easier data handling for GraphQL + JPA"
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
-tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "17" } }
+tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "21" } }
 
 repositories { mavenCentral() }
 
@@ -92,16 +92,21 @@ java {
   }
 }
 
+// Set agent as defined by JEP 451
+// https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+// https://github.com/raphw/byte-buddy/discussions/1535
+val byteBuddyAgent = configurations.create("byteBuddyAgent")
+
 dependencies {
   implementation(libs.aspectjrt)
   implementation(libs.kotlin.stdlib)
   implementation(libs.kotlin.reflect)
   implementation(libs.jakarta.persistence.api)
   "dgsImplementation"(platform(libs.dgs.platform))
-  "dgsImplementation"(libs.dgs.spring.starter)
+  "dgsImplementation"(libs.dgs.starter)
 
   // TODO: Discuss strong coupling with Hibernate
-  // * e.g. Kotlin-JDSL depdendency relies on Hibernate
+  // * e.g. Kotlin-JDSL dependency relies on Hibernate
   "jpaImplementation"(libs.spring.boot.starter.data.jpa)
   "jpaImplementation"(libs.spring.boot.starter.web)
   "jpaApi"(libs.jdsl)
@@ -117,28 +122,27 @@ dependencies {
   "blazeProcessorImplementation"("com.beeproduced:bee.generative:$version")
   "blazeProcessorImplementation"(sourceSets["blaze"].output)
 
-  // runtimeOnly("org.postgresql:postgresql")
-
   testImplementation(sourceSets["jpa"].output)
-  // testImplementation("org.springframework.boot:spring-boot-starter-web")
-  testImplementation(libs.spring.boot.starter.test)
+  testImplementation(libs.spring.boot.starter.test) { exclude("org.mockito", "mockito-core") }
   testImplementation(libs.spring.boot.starter.data.jpa)
   testImplementation(libs.jdsl)
-  testImplementation(libs.junit.api)
   testImplementation(libs.kotlin.test)
-  testRuntimeOnly(libs.junit.engine)
   implementation(libs.h2)
-  // implementation("org.postgresql:postgresql:42.5.3")
+
+  @Suppress("UnstableApiUsage") byteBuddyAgent(libs.bytebuddy.agent) { isTransitive = false }
 }
 
 tasks.withType<KotlinCompile> {
   kotlinOptions {
     freeCompilerArgs = listOf("-Xjsr305=strict")
-    jvmTarget = "17"
+    jvmTarget = "21"
   }
 }
 
-tasks.withType<Test> { useJUnitPlatform() }
+tasks.withType<Test> {
+  useJUnitPlatform()
+  jvmArgs("-javaagent:${byteBuddyAgent.asPath}")
+}
 
 /* // See: https://docs.gradle.org/current/samples/sample_jvm_multi_project_with_additional_test_types.html
 val springTestTask = tasks.register<Test>("jpaTest") {

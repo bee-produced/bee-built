@@ -28,9 +28,8 @@ class SecurityConfig(private val env: Environment) {
     // Disable csrf
     // See: https://github.com/graphql-java-kickstart/graphql-spring-boot/issues/184
     http
-      .csrf()
-      .disable()
-      .headers { headers -> headers.frameOptions().disable() }
+      .csrf { csrf -> csrf.disable() }
+      .headers { headers -> headers.frameOptions { frameOptions -> frameOptions.disable() } }
       .authorizeHttpRequests { authorize ->
         var auth =
           authorize

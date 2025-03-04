@@ -23,7 +23,7 @@ allprojects {
   tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
       freeCompilerArgs = listOf("-Xjsr305=strict")
-      jvmTarget = "17"
+      jvmTarget = "21"
     }
   }
 
@@ -45,13 +45,20 @@ group = "com.beeproduced"
 
 version = libs.versions.bee.built.get()
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
 configurations { compileOnly { extendsFrom(configurations.annotationProcessor.get()) } }
 
 repositories { mavenCentral() }
+
+dependencyManagement { imports { mavenBom(libs.dgs.platform.get().toString()) } }
+
+// Set agent as defined by JEP 451
+// https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+// https://github.com/raphw/byte-buddy/discussions/1535
+val byteBuddyAgent = configurations.create("byteBuddyAgent")
 
 dependencies {
   // data sources
@@ -88,10 +95,10 @@ dependencies {
   implementation(libs.spring.security.web)
   implementation(libs.jackson.module.kotlin)
   implementation(platform(libs.dgs.platform))
-  implementation(libs.dgs.spring.starter)
+  implementation(libs.dgs.starter)
   implementation(libs.dgs.pagination)
-  implementation(libs.dgs.subscription.websockets)
   implementation(libs.dgs.extended.scalars)
+  implementation(libs.multipart.spring.graphql)
   implementation(libs.konform)
   implementation(libs.mapstruct)
   implementation(libs.datafaker)
@@ -100,9 +107,7 @@ dependencies {
   testImplementation(libs.spring.boot.starter.test)
   testImplementation(libs.spring.boot.starter.data.jpa)
   testImplementation(libs.spring.security.test)
-  testImplementation(libs.junit.api)
   testImplementation(libs.kotlin.test)
-  testRuntimeOnly(libs.junit.engine)
   implementation(libs.h2)
   testImplementation(libs.springmockk)
 
@@ -116,9 +121,14 @@ dependencies {
   testImplementation("com.beeproduced:bee.persistent") {
     capabilities { requireCapability("com.beeproduced:bee.persistent-blaze") }
   }
+
+  @Suppress("UnstableApiUsage") byteBuddyAgent(libs.bytebuddy.agent) { isTransitive = false }
 }
 
-tasks.withType<Test> { useJUnitPlatform() }
+tasks.withType<Test> {
+  useJUnitPlatform()
+  jvmArgs("-javaagent:${byteBuddyAgent.asPath}")
+}
 
 ktfmt { googleStyle() }
 

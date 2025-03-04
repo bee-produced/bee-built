@@ -4,6 +4,7 @@ import com.beeproduced.bee.persistent.jpa.exceptions.EntityNotFound
 import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.jvm.kotlinProperty
+import org.hibernate.engine.spi.SharedSessionContractImplementor
 import org.hibernate.persister.entity.EntityPersister
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -100,7 +101,9 @@ object MetaModel {
     // https://stackoverflow.com/a/3335062/12347616
     // Directly without session
     // Reversed from source code
-    return entityPersisters.getValue(entityClass).getIdentifier(entity, null)
+    return entityPersisters
+      .getValue(entityClass)
+      .getIdentifier(entity, null as SharedSessionContractImplementor?)
   }
 
   // Inspired by

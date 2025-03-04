@@ -11,9 +11,9 @@ group = "com.beeproduced"
 
 version = libs.versions.bee.built.get()
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
 repositories { mavenCentral() }
 
@@ -38,16 +38,13 @@ dependencies {
   implementation(libs.spring.security.core)
   implementation(libs.spring.boot.starter.oauth2.client)
   testImplementation(libs.spring.security.test)
-  testImplementation(libs.junit.api)
+
   testImplementation(libs.datafaker)
-  testRuntimeOnly(libs.junit.engine)
   testImplementation(libs.spring.boot.starter.test) { exclude("org.mockito", "mockito-core") }
   testImplementation(libs.spring.boot.starter.test)
   testImplementation(libs.spring.boot.starter.data.jpa)
   testImplementation(libs.jdsl)
-  testImplementation(libs.junit.api)
   testImplementation(libs.kotlin.test)
-  testRuntimeOnly(libs.junit.engine)
   testImplementation(libs.springmockk)
 }
 

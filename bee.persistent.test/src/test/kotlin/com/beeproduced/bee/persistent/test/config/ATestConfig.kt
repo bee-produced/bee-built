@@ -1,9 +1,10 @@
 package com.beeproduced.bee.persistent.test.config
 
-import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration
-import com.netflix.graphql.dgs.subscriptions.websockets.DgsWebSocketAutoConfig
-import com.netflix.graphql.dgs.webmvc.autoconfigure.DgsWebMvcAutoConfiguration
+import com.netflix.graphql.dgs.autoconfig.DgsExtendedScalarsAutoConfiguration
+import com.netflix.graphql.dgs.pagination.DgsPaginationAutoConfiguration
+import name.nkonev.multipart.springboot.graphql.server.MultipartGraphQlWebMvcAutoconfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.autoconfigure.graphql.GraphQlAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 /**
@@ -13,7 +14,14 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @SpringBootApplication(
   scanBasePackages = ["com.beeproduced.datasource.a"],
   exclude =
-    [DgsAutoConfiguration::class, DgsWebMvcAutoConfiguration::class, DgsWebSocketAutoConfig::class],
+    [
+      GraphQlAutoConfiguration::class,
+      DgsPaginationAutoConfiguration::class,
+      DgsExtendedScalarsAutoConfiguration::class,
+      MultipartGraphQlWebMvcAutoconfiguration::class,
+    ],
+  excludeName =
+    ["com.netflix.graphql.dgs.springgraphql.autoconfig.DgsSpringGraphQLAutoConfiguration"],
 )
 @EnableConfigurationProperties
 class ATestConfig

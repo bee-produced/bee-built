@@ -18,11 +18,11 @@ version = libs.versions.bee.built.get()
 
 description = "Functional kotlin bindings, integration with DGS, `bee.persistent` & more."
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
-tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "17" } }
+tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "21" } }
 
 repositories { mavenCentral() }
 
@@ -84,10 +84,11 @@ dependencies {
   implementation(libs.kotlin.reflect)
   api(libs.michael.result)
   testImplementation(libs.kotlin.test)
-  testImplementation(libs.junit.api)
-  testRuntimeOnly(libs.junit.engine)
+  testImplementation(platform(libs.junit.bom))
+  testImplementation(libs.junit.jupiter)
+  testRuntimeOnly(libs.junit.platform.launcher)
   "dgsImplementation"(platform(libs.dgs.platform))
-  "dgsImplementation"(libs.dgs.spring.starter)
+  "dgsImplementation"(libs.dgs.starter)
   "dgsImplementation"(libs.spring.boot.starter.aop)
   "dgsImplementation"(libs.bytebuddy)
   "dgsImplementation"(libs.bytebuddy.agent)

@@ -16,11 +16,11 @@ version = libs.versions.bee.built.get()
 
 description = "Automatically generate nested data fetchers for usage with data loaders."
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
-tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "17" } }
+tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "21" } }
 
 repositories { mavenCentral() }
 
@@ -49,11 +49,13 @@ java {
 dependencies {
   implementation(libs.kotlin.stdlib)
   testImplementation(libs.kotlin.test)
-  testImplementation(libs.junit.api)
-  testRuntimeOnly(libs.junit.engine)
+  testImplementation(platform(libs.junit.bom))
+  testImplementation(libs.junit.jupiter)
+  testRuntimeOnly(libs.junit.platform.launcher)
   "processorImplementation"("com.beeproduced:bee.generative:$version")
   "processorImplementation"(sourceSets.main.get().output)
-  "processorImplementation"(libs.dgs.spring.starter)
+  "processorImplementation"(platform(libs.dgs.platform))
+  "processorImplementation"(libs.dgs.starter)
 }
 
 tasks.withType<Test> { useJUnitPlatform() }

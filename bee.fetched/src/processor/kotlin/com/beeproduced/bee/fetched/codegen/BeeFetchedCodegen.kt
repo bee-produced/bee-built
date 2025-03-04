@@ -5,6 +5,7 @@ import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DATA_LOADER
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.DTO
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.ILLEGAL_STATE_EXCEPTION
+import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._DATA_LOADER_NAME
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._ID_PROPERTY
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants._PROPERTY
 import com.beeproduced.bee.fetched.codegen.BeeFetchedCodegen.PoetConstants.__DATA_LOADER_NAME
@@ -52,6 +53,7 @@ class BeeFetchedCodegen(
   object PoetConstants {
     const val _ID_PROPERTY = "%idProperty:L"
     const val _PROPERTY = "%property:L"
+    const val _DATA_LOADER_NAME = "%dataloadername:L"
     const val __DATA_LOADER_NAME = "%dataloadername:S"
     const val __DTO_NAME = "%dtoname:S"
     const val COMPLETABLE_FUTURE = "%completed:T"
@@ -182,6 +184,7 @@ class BeeFetchedCodegen(
     poetMap.addMapping(_PROPERTY, property.name)
     poetMap.addMapping(COMPLETABLE_FUTURE, completed)
     poetMap.addMapping(DATA_LOADER, dataLoaderType)
+    poetMap.addMapping(_DATA_LOADER_NAME, dataLoader)
     poetMap.addMapping(__DATA_LOADER_NAME, dataLoader)
     poetMap.addMapping(DTO, dtoType)
     poetMap.addMapping(__DTO_NAME, dtoName)
@@ -197,7 +200,9 @@ class BeeFetchedCodegen(
       )
       .addParameter("dfe", dfeType)
       .returns(returnType)
-      .addNStatement("val data = dfe.getSource<$DTO>()")
+      .addNStatement(
+        "val data = dfe.getSource<$DTO>() ?: return CompletableFuture.completedFuture(null)"
+      )
       .apply {
         if (safeMode && hasProperty && property.isCollection)
           addNStatement(
@@ -208,7 +213,10 @@ class BeeFetchedCodegen(
             "if (data.$_PROPERTY != null) return $COMPLETABLE_FUTURE.completedFuture(data.$_PROPERTY)"
           )
       }
-      .addNStatement("val dataLoader: $DATA_LOADER = dfe.getDataLoader($__DATA_LOADER_NAME)")
+      .addNStatement("val dataLoader: $DATA_LOADER? = dfe.getDataLoader($__DATA_LOADER_NAME)")
+      .addNStatement("if (dataLoader == null) throw $ILLEGAL_STATE_EXCEPTION(")
+      .addNStatement("  \"DataLoader [$_DATA_LOADER_NAME] not found\"")
+      .addNStatement(")")
       .apply {
         if (property.isCollection) {
           addNStatement("val ids = data.$_ID_PROPERTY")
