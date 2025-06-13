@@ -1,7 +1,5 @@
 package com.beeproduced.bee.functional.extensions.com.github.michaelbull.result
 
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.mapError
 import kotlin.contracts.ExperimentalContracts
@@ -22,9 +20,9 @@ public inline fun <V, E> Result<V, E>.recoverIfPossible(
     callsInPlace(transform, InvocationKind.AT_MOST_ONCE)
   }
 
-  return when (this) {
-    is Ok -> this
-    is Err ->
+  return when {
+    isOk -> this
+    else ->
       if (predicate(error)) {
         transform(error).mapError { error }
       } else {

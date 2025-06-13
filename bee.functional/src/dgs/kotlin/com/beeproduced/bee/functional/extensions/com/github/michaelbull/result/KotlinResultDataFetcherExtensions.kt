@@ -4,8 +4,6 @@ import com.beeproduced.bee.functional.dgs.result.fetcher.helper.DataFetcherResul
 import com.beeproduced.bee.functional.result.errors.AppError
 import com.beeproduced.bee.functional.result.errors.BadRequestError
 import com.beeproduced.bee.functional.result.errors.InternalAppError
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import graphql.execution.DataFetcherResult
 
@@ -14,9 +12,9 @@ import graphql.execution.DataFetcherResult
  * @version 2022-10-11
  */
 fun <V> Result<V, AppError>.getDataFetcher(): DataFetcherResult<V> {
-  return when (this) {
-    is Ok -> DataFetcherResultHelper.Ok(value)
-    is Err ->
+  return when {
+    isOk -> DataFetcherResultHelper.Ok(value)
+    else ->
       error.let { e ->
         when (e) {
           is InternalAppError ->
@@ -31,9 +29,9 @@ fun <V> Result<V, AppError>.getDataFetcher(): DataFetcherResult<V> {
 inline fun <V> Result<V, AppError>.getDataFetcher(
   transform: (AppError) -> DataFetcherResult<V>
 ): DataFetcherResult<V> {
-  return when (this) {
-    is Ok -> DataFetcherResultHelper.Ok(value)
-    is Err -> {
+  return when {
+    isOk -> DataFetcherResultHelper.Ok(value)
+    else -> {
       transform(error)
     }
   }
@@ -43,9 +41,9 @@ inline fun <V, D> Result<V, AppError>.getDataFetcher(
   success: (V) -> DataFetcherResult<D>,
   failure: (AppError) -> DataFetcherResult<D>,
 ): DataFetcherResult<D> {
-  return when (this) {
-    is Ok -> success(value)
-    is Err -> {
+  return when {
+    isOk -> success(value)
+    else -> {
       failure(error)
     }
   }

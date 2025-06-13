@@ -29,16 +29,16 @@ import kotlin.contracts.contract
 inline fun <V, B> Result<V, AppError>.mapToPair(transform: (V) -> B): Result<Pair<V, B>, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> Ok(Pair(value, transform(value)))
-    is Err -> this
+  return when {
+    isOk -> Ok(Pair(value, transform(value)))
+    else -> asErr()
   }
 }
 
 fun <V, B> Result<V, AppError>.mapToPair(second: B): Result<Pair<V, B>, AppError> {
-  return when (this) {
-    is Ok -> Ok(Pair(value, second))
-    is Err -> this
+  return when {
+    isOk -> Ok(Pair(value, second))
+    else -> asErr()
   }
 }
 
@@ -62,13 +62,13 @@ inline fun <V, B, C> Result<V, AppError>.mapToTriple(
 ): Result<Triple<V, B, C>, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> {
+  return when {
+    isOk -> {
       val (b, c) = transform(value)
       Ok(Triple(value, b, c))
     }
 
-    is Err -> this
+    else -> asErr()
   }
 }
 
@@ -76,12 +76,12 @@ fun <V, B, C> Result<V, AppError>.mapToTriple(
   second: B,
   third: C,
 ): Result<Triple<V, B, C>, AppError> {
-  return when (this) {
-    is Ok -> {
+  return when {
+    isOk -> {
       Ok(Triple(value, second, third))
     }
 
-    is Err -> this
+    else -> asErr()
   }
 }
 
@@ -91,9 +91,9 @@ inline fun <A, B, U> Result<Pair<A, B>, AppError>.mapWithPair(
 ): Result<U, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> Ok(transform(value.first, value.second))
-    is Err -> this
+  return when {
+    isOk -> Ok(transform(value.first, value.second))
+    else -> asErr()
   }
 }
 
@@ -103,9 +103,9 @@ inline fun <A, B, C, U> Result<Triple<A, B, C>, AppError>.mapWithTriple(
 ): Result<U, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> Ok(transform(value.first, value.second, value.third))
-    is Err -> this
+  return when {
+    isOk -> Ok(transform(value.first, value.second, value.third))
+    else -> asErr()
   }
 }
 
@@ -115,9 +115,9 @@ inline fun <A, B, U> Result<Pair<A, B>, AppError>.andThenWithPair(
 ): Result<U, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> transform(value.first, value.second)
-    is Err -> this
+  return when {
+    isOk -> transform(value.first, value.second)
+    else -> asErr()
   }
 }
 
@@ -127,9 +127,9 @@ inline fun <V, B> Result<V, AppError>.andThenToPair(
 ): Result<Pair<V, B>, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> transform(value).map { b -> Pair(value, b) }
-    is Err -> this
+  return when {
+    isOk -> transform(value).map { b -> Pair(value, b) }
+    else -> asErr()
   }
 }
 
@@ -139,9 +139,9 @@ inline fun <A, B, C, U> Result<Triple<A, B, C>, AppError>.andThenWithTriple(
 ): Result<U, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> transform(value.first, value.second, value.third)
-    is Err -> this
+  return when {
+    isOk -> transform(value.first, value.second, value.third)
+    else -> asErr()
   }
 }
 
@@ -151,9 +151,9 @@ inline fun <V, B, C> Result<V, AppError>.andThenToTriple(
 ): Result<Triple<V, B, C>, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> transform(value).map { (b, c) -> Triple(value, b, c) }
-    is Err -> this
+  return when {
+    isOk -> transform(value).map { (b, c) -> Triple(value, b, c) }
+    else -> asErr()
   }
 }
 
@@ -163,22 +163,22 @@ inline fun <V, B, C> Result<Pair<V, B>, AppError>.andThenPairToTriple(
 ): Result<Triple<V, B, C>, AppError> {
   contract { callsInPlace(transform, InvocationKind.AT_MOST_ONCE) }
 
-  return when (this) {
-    is Ok -> transform(value).map { c -> Triple(value.first, value.second, c) }
-    is Err -> this
+  return when {
+    isOk -> transform(value).map { c -> Triple(value.first, value.second, c) }
+    else -> asErr()
   }
 }
 
 fun <A, B> Result<Pair<A, B>, AppError>.reversePair(): Result<Pair<B, A>, AppError> {
-  return when (this) {
-    is Ok -> Ok(Pair(value.second, value.first))
-    is Err -> this
+  return when {
+    isOk -> Ok(Pair(value.second, value.first))
+    else -> asErr()
   }
 }
 
 fun <A, B, C> Result<Triple<A, B, C>, AppError>.reverseTriple(): Result<Triple<C, B, A>, AppError> {
-  return when (this) {
-    is Ok -> Ok(Triple(value.third, value.second, value.first))
-    is Err -> this
+  return when {
+    isOk -> Ok(Triple(value.third, value.second, value.first))
+    else -> asErr()
   }
 }
