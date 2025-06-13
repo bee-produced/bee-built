@@ -18,7 +18,13 @@ import com.netflix.graphql.dgs.DgsQuery
 @DgsComponent
 class TestController {
 
-  @DgsQuery
+  // ⚠️ Always add parentType + field for endpoints with `AppResult` ⚠️
+  // Why? Change in com.netflix.graphql.dgs.internal.DgsSchemaProvider.registerDataFetcher:
+  //   val field = dgsDataAnnotation.getString("field").ifEmpty { method.name }
+  // For mangled methods this will result not in "foo" but "foo-HJRILA" which is not a valid field
+  // Working on fixing this in the future...
+
+  @DgsQuery(field = DgsConstants.QUERY.Foo)
   fun foo(): AppResult<Foo> {
     return Ok(Foo("Foo"))
   }
@@ -38,7 +44,7 @@ class TestController {
     return Err(BadRequestError("Bar"))
   }
 
-  @DgsQuery
+  @DgsQuery(field = DgsConstants.QUERY.Qux)
   fun qux(): AppResult<Qux> {
     return Err(InternalAppError("Qux"))
   }

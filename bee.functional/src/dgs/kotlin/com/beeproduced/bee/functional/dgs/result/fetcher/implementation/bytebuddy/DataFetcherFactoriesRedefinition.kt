@@ -2,6 +2,8 @@ package com.beeproduced.bee.functional.dgs.result.fetcher.implementation.bytebud
 
 import com.beeproduced.bee.functional.dgs.result.fetcher.helper.DataFetcherErrThrower
 import com.beeproduced.bee.functional.dgs.result.fetcher.helper.DataFetcherResultHelper
+import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.failureAsErr
+import com.beeproduced.bee.functional.extensions.com.github.michaelbull.result.isFailure
 import com.beeproduced.bee.functional.result.errors.BadRequestError
 import com.beeproduced.bee.functional.result.errors.InternalAppError
 import com.beeproduced.bee.functional.result.errors.ResultError
@@ -67,9 +69,9 @@ open class DataFetcherFactoriesRedefinition {
       .applyResultValue(t: T, u: U): R {
       @Suppress("UNCHECKED_CAST")
       val value =
-        when (u) {
-          is Result<*, *> -> handleResult(u)
-          is DataFetcherResult<*> -> handleDataFetcherResult(u)
+        when {
+          isFailure(u) -> handleResult(failureAsErr(u))
+          u is DataFetcherResult<*> -> handleDataFetcherResult(u)
           else -> u
         }
           as U
