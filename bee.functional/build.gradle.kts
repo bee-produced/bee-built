@@ -10,6 +10,7 @@ plugins {
   `maven-publish`
   signing
   java
+  id("com.gradleup.shadow") version "8.3.6"
 }
 
 group = "com.beeproduced"
@@ -24,7 +25,10 @@ java.targetCompatibility = JavaVersion.VERSION_21
 
 tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "21" } }
 
-repositories { mavenCentral() }
+repositories {
+  mavenCentral()
+  maven { url = uri("https://jitpack.io") }
+}
 
 dependencyManagement {
   imports { mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES) }
@@ -76,6 +80,13 @@ java {
     usingSourceSet(sourceSets["persistent"])
     withSourcesJar()
     withJavadocJar()
+  }
+}
+
+configurations {
+  create("michaelResultBase") {
+    isCanBeConsumed = false // we don’t want others to accidentally use it
+    isCanBeResolved = true // but we do want Gradle to pull it in
   }
 }
 

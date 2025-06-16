@@ -24,7 +24,10 @@ java.targetCompatibility = JavaVersion.VERSION_21
 
 tasks.withType<KotlinCompile>().configureEach { kotlinOptions { jvmTarget = "21" } }
 
-repositories { mavenCentral() }
+repositories {
+  mavenCentral()
+  maven { url = uri("https://jitpack.io") }
+}
 
 dependencyManagement {
   imports { mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES) }

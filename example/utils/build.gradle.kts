@@ -24,6 +24,8 @@ dependencies {
     capabilities { requireCapability("com.beeproduced:bee.functional-persistent") }
   }
   api(libs.michael.result)
+  // api(files("../etc.libs/kotlin-result-jvm-1.1.22-SNAPSHOT.jar"))
+  // api("com.github.bee-produced.kotlin-result:kotlin-result:v1.1.22-SNAPSHOT")
   implementation(libs.kotlin.stdlib)
   implementation(libs.spring.boot.starter.web)
   implementation(libs.spring.boot.starter.data.jpa)
