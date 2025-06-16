@@ -1,5 +1,5 @@
 [versions]
-bee-built = "0.7.0-SNAPSHOT"
+bee-built = "0.6.0-SNAPSHOT"
 springboot-base = "3.4.3"
 springboot-dependencymanagement = "1.1.7"
 kotlin-base = "1.9.25"
@@ -13,7 +13,7 @@ multipart-spring-graphql = "1.5.3"
 jackson-module-kotlin = "2.18.2"
 h2 = "2.3.232"
 konform = "0.10.0"
-michael-result = "2.0.1"
+michael-result = "1.1.21"
 jdsl = "2.2.0.RELEASE"
 aspectjrt = "1.9.22.1"
 jakarta-persistence-api = "3.1.0" # Version determined by Hibernate + Spring Boot Starter Data JPA

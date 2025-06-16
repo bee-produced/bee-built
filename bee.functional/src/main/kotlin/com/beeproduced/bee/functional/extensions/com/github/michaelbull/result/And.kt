@@ -1,8 +1,9 @@
 package com.beeproduced.bee.functional.extensions.com.github.michaelbull.result
 
 import com.beeproduced.bee.functional.result.errors.AppError
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.asErr
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -17,9 +18,9 @@ inline infix fun <V> Result<V, AppError>.andThenOnSuccess(
 ): Result<V, AppError> {
   contract { callsInPlace(action, InvocationKind.AT_MOST_ONCE) }
 
-  if (isOk) {
+  if (this is Ok) {
     val result = action(value)
-    if (result.isErr) return result.asErr()
+    if (result is Err) return result
   }
 
   return this
