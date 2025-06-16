@@ -51,7 +51,10 @@ java.targetCompatibility = JavaVersion.VERSION_21
 
 configurations { compileOnly { extendsFrom(configurations.annotationProcessor.get()) } }
 
-repositories { mavenCentral() }
+repositories {
+  mavenCentral()
+  maven { url = uri("https://jitpack.io") }
+}
 
 dependencyManagement { imports { mavenBom(libs.dgs.platform.get().toString()) } }
 
